@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
-import { applyChestMorph, bindChestMorph, defaultChestState, loadChestTargets } from "./chest-morph.js";
+import { applyChestMorph, bindChestMorph, defaultChestState, loadChestTargets } from "./chest-morph.js?v=fix2";
 
 const SIZES = ["A", "B", "C", "D", "E"];
 const AXIS_STEPS = 7;
@@ -8,7 +8,7 @@ const ZONES = {
   chest: {
     label: "грудь",
     yFrac: 0.73,
-    views: ["перед", "бок"],
+    views: ["front", "front34", "frontHalf", "side"],
     floors: [
       { id: "size", label: "чашка", kind: "size" },
       { id: "dist", label: "шире", kind: "axis" },
@@ -22,7 +22,7 @@ const ZONES = {
   stomach: {
     label: "живот",
     yFrac: 0.55,
-    views: ["перед", "бок"],
+    views: ["front", "front34", "side"],
     floors: [
       { id: "belly", label: "объём", kind: "axis" },
       { id: "tone", label: "тонус", kind: "axis" },
@@ -33,7 +33,7 @@ const ZONES = {
   hips: {
     label: "бёдра",
     yFrac: 0.52,
-    views: ["½"],
+    views: ["frontHalf", "backHalf"],
     floors: [
       { id: "hipHoriz", label: "ширина", kind: "axis" },
       { id: "hipDepth", label: "глубина", kind: "axis" },
@@ -43,7 +43,7 @@ const ZONES = {
   butt: {
     label: "попа",
     yFrac: 0.52,
-    views: ["зад", "¾"],
+    views: ["back", "back34"],
     floors: [{ id: "butt", label: "объём", kind: "axis" }],
   },
 };
@@ -70,10 +70,11 @@ function floorValue(floor) {
 
 function idleStatus() {
   if (!editZone) {
-    const view = currentViewName();
-    if (view === "½") return "на ½ нажми на бёдра";
-    if (view === "зад" || view === "¾") return "сзади и на ¾ нажми на попу";
-    return "спереди и сбоку — грудь или живот";
+    const view = currentView();
+    if (view === "frontHalf") return "на ½: грудь сверху, бёдра ниже";
+    if (view === "backHalf") return "на ½ сзади нажми на бёдра";
+    if (view === "back" || view === "back34") return "сзади и на задней ¾ нажми на попу";
+    return "спереди, на передней ¾ и сбоку — грудь или живот";
   }
   const floor = currentFloors().find((item) => item.id === lastFloor) || currentFloors()[0];
   const zone = ZONES[editZone];
@@ -121,7 +122,8 @@ function stepFloor(floor, delta) {
   if (floor.kind === "size") {
     bodyState.sizeIndex = Math.max(0, Math.min(SIZES.length - 1, bodyState.sizeIndex + delta));
   } else {
-    bodyState[floor.id] = Math.max(0, Math.min(AXIS_STEPS - 1, bodyState[floor.id] + delta));
+    const now = Number.isFinite(bodyState[floor.id]) ? bodyState[floor.id] : 3;
+    bodyState[floor.id] = Math.max(0, Math.min(AXIS_STEPS - 1, now + delta));
   }
   statusEl.textContent = idleStatus();
   updateFloorDisabled();
@@ -282,12 +284,20 @@ const TURN_STOPS = [
 ];
 const turnLabel = document.querySelector("#turnLabel");
 
-function currentViewName() {
-  return TURN_STOPS[yawIndex].name;
+function currentView() {
+  const yaw = TURN_STOPS[yawIndex].yaw;
+  if (yaw === 0) return "front";
+  if (yaw === 22.5 || yaw === 337.5) return "front34";
+  if (yaw === 45 || yaw === 315) return "frontHalf";
+  if (yaw === 90 || yaw === 270) return "side";
+  if (yaw === 135 || yaw === 225) return "backHalf";
+  if (yaw === 157.5 || yaw === 202.5) return "back34";
+  if (yaw === 180) return "back";
+  return "front";
 }
 
 function zoneAllowed(name) {
-  return Boolean(ZONES[name]?.views?.includes(currentViewName()));
+  return Boolean(ZONES[name]?.views?.includes(currentView()));
 }
 
 function partName(object) {
@@ -407,7 +417,7 @@ async function loadModel() {
       frameObject(dummy);
       statusEl.textContent = idleStatus();
       try {
-        const packed = await loadChestTargets(new URL("./data/body-targets.json?v=views1", import.meta.url));
+        const packed = await loadChestTargets(new URL("./data/body-targets.json?v=fix2", import.meta.url));
         chestBound = bindChestMorph(dummy, packed);
         applyChestMorph(chestBound, bodyState);
       } catch (error) {
