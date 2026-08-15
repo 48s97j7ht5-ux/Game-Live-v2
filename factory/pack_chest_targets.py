@@ -45,6 +45,8 @@ TARGET_FILES = {
     "hipHorizIncr": "hip/hip-scale-horiz-incr.target",
     "hipDepthDecr": "hip/hip-scale-depth-decr.target",
     "hipDepthIncr": "hip/hip-scale-depth-incr.target",
+    "hipVertDecr": "hip/hip-scale-vert-decr.target",
+    "hipVertIncr": "hip/hip-scale-vert-incr.target",
 }
 
 

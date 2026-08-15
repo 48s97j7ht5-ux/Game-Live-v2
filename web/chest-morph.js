@@ -1,3 +1,20 @@
+/**
+ * MakeHuman live morphs (hm08).
+ *
+ * UniversalModifier (apps/humanmodifier.py): value in [-1, 1], default 0.
+ *   value < 0 → left/min target, weight = -value
+ *   value > 0 → right/max target, weight = value
+ *   No extra gain, no vertex mask.
+ *
+ * Torso UI groups (data/modifiers/modeling_sliders.json):
+ *   Buttocks — buttocks-volume only
+ *   Hip — scale depth/horiz/vert (trans/waist not packed yet)
+ *   Stomach — tone, pregnant, navel bump, navel position
+ *   Pelvis — pelvis-tone / bulge (not mixed into buttocks)
+ *   Breast — BreastSize + BreastFirmness macros, then detail sliders
+ *
+ * MacroModifier: value in [0, 1]. Cup range starts above MH min-cup so A is not hollow.
+ */
 export const SIZE_T = [0.42, 0.56, 0.7, 0.85, 1];
 export const FIRMNESS = 0.5;
 export const AXIS_STEPS = 7;
@@ -17,24 +34,25 @@ const STOMACH_AXES = [
   { id: "navelY", decr: "navelDown", incr: "navelUp" },
   { id: "navelZ", decr: "navelIn", incr: "navelOut" },
 ];
-const BUTT_AXES = [
-  { id: "butt", decr: "buttDecr", incr: "buttIncr", gain: 2.4, mask: "back" },
-  { id: "pelvis", decr: "pelvisToneDecr", incr: "pelvisToneIncr", gain: 1.6, mask: "back" },
+const HIP_AXES = [
+  { id: "hipHoriz", decr: "hipHorizDecr", incr: "hipHorizIncr" },
+  { id: "hipDepth", decr: "hipDepthDecr", incr: "hipDepthIncr" },
+  { id: "hipVert", decr: "hipVertDecr", incr: "hipVertIncr" },
 ];
-const AXES = [...CHEST_AXES, ...STOMACH_AXES, ...BUTT_AXES];
+const BUTT_AXES = [{ id: "butt", decr: "buttDecr", incr: "buttIncr" }];
+const AXES = [...CHEST_AXES, ...STOMACH_AXES, ...HIP_AXES, ...BUTT_AXES];
 
 function key3(x, y, z) {
   return `${x.toFixed(4)},${y.toFixed(4)},${z.toFixed(4)}`;
 }
 
-function addWeighted(out, source, weight, rest, mask) {
+function addWeighted(out, source, weight) {
   if (!weight || !source) return;
   if (source.s && source.d) {
     const slots = source.s;
     const deltas = source.d;
     for (let i = 0; i < slots.length; i += 1) {
       const o = slots[i] * 3;
-      if (mask === "back" && rest && rest[o + 2] > 0.12) continue;
       const p = i * 3;
       out[o] += deltas[p] * weight;
       out[o + 1] += deltas[p + 1] * weight;
@@ -42,11 +60,8 @@ function addWeighted(out, source, weight, rest, mask) {
     }
     return;
   }
-  for (let i = 0; i < out.length; i += 3) {
-    if (mask === "back" && rest && rest[i + 2] > 0.12) continue;
+  for (let i = 0; i < out.length; i += 1) {
     out[i] += source[i] * weight;
-    out[i + 1] += source[i + 1] * weight;
-    out[i + 2] += source[i + 2] * weight;
   }
 }
 
@@ -67,12 +82,14 @@ export function defaultChestState() {
     tone: AXIS_MID,
     navelY: AXIS_MID,
     navelZ: AXIS_MID,
+    hipHoriz: AXIS_MID,
+    hipDepth: AXIS_MID,
+    hipVert: AXIS_MID,
     butt: AXIS_MID,
-    pelvis: AXIS_MID,
   };
 }
 
-export function mixChestDeltas(targets, state, restCount, rest) {
+export function mixChestDeltas(targets, state, restCount) {
   const sizeT = SIZE_T[state.sizeIndex];
   const firm = FIRMNESS;
   const mixed = new Float32Array(restCount);
@@ -84,7 +101,7 @@ export function mixChestDeltas(targets, state, restCount, rest) {
     const amount = axisAmount(state[axis.id]);
     if (!amount) continue;
     const source = amount < 0 ? targets[axis.decr] : targets[axis.incr];
-    addWeighted(mixed, source, Math.abs(amount) * (axis.gain || 1), rest, axis.mask);
+    addWeighted(mixed, source, Math.abs(amount));
   }
   return mixed;
 }
@@ -122,12 +139,7 @@ export function bindChestMorph(group, packed) {
 
 export function applyChestMorph(bound, state) {
   if (!bound) return;
-  const deltas = mixChestDeltas(
-    bound.packed.targets,
-    state,
-    bound.packed.index.length * 3,
-    bound.packed.rest,
-  );
+  const deltas = mixChestDeltas(bound.packed.targets, state, bound.packed.index.length * 3);
   for (const item of bound.bindings) {
     const position = item.mesh.geometry.getAttribute("position");
     const out = position.array;

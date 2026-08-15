@@ -30,14 +30,21 @@ const ZONES = {
       { id: "navelZ", label: "пупок", kind: "axis" },
     ],
   },
+  hips: {
+    label: "бёдра",
+    yFrac: 0.52,
+    side: "side",
+    floors: [
+      { id: "hipHoriz", label: "ширина", kind: "axis" },
+      { id: "hipDepth", label: "глубина", kind: "axis" },
+      { id: "hipVert", label: "высота", kind: "axis" },
+    ],
+  },
   butt: {
     label: "попа",
     yFrac: 0.52,
     side: "back",
-    floors: [
-      { id: "butt", label: "объём", kind: "axis" },
-      { id: "pelvis", label: "тонус", kind: "axis" },
-    ],
+    floors: [{ id: "butt", label: "объём", kind: "axis" }],
   },
 };
 
@@ -63,7 +70,9 @@ function floorValue(floor) {
 
 function idleStatus() {
   if (!editZone) {
-    return viewingBack() ? "сзади нажми на попу" : "нажми на грудь или живот";
+    if (viewingRear()) return "сзади нажми на попу";
+    if (viewingSide()) return "сбоку нажми на бёдра";
+    return "нажми на грудь или живот";
   }
   const floor = currentFloors().find((item) => item.id === lastFloor) || currentFloors()[0];
   const zone = ZONES[editZone];
@@ -179,12 +188,14 @@ function hitZone(clientY) {
   const rect = canvas.getBoundingClientRect();
   const y = clientY - rect.top;
   const half = Math.max(52, canvas.clientHeight * 0.08);
-  const back = viewingBack();
+  const back = viewingRear();
+  const side = viewingSide();
   let best = null;
   let bestDist = half;
   for (const [name, zone] of Object.entries(ZONES)) {
     if (zone.side === "back" && !back) continue;
-    if (zone.side === "front" && back) continue;
+    if (zone.side === "side" && !side) continue;
+    if (zone.side === "front" && (back || side)) continue;
     const dist = Math.abs(y - worldToCanvasY(bodyHeight * zone.yFrac));
     if (dist <= bestDist) {
       best = name;
@@ -274,14 +285,29 @@ const TURN_STOPS = [
 ];
 const turnLabel = document.querySelector("#turnLabel");
 
-function viewingBack() {
-  return TURN_STOPS[yawIndex].yaw > 90 && TURN_STOPS[yawIndex].yaw < 270;
+function viewingYaw() {
+  return TURN_STOPS[yawIndex].yaw;
+}
+
+function viewingRear() {
+  const yaw = viewingYaw();
+  return yaw > 110 && yaw < 250;
+}
+
+function viewingSide() {
+  const yaw = viewingYaw();
+  return yaw === 90 || yaw === 270;
+}
+
+function viewingFront() {
+  return !viewingRear() && !viewingSide();
 }
 
 function zoneAllowed(name) {
   const side = ZONES[name]?.side;
-  if (side === "back") return viewingBack();
-  if (side === "front") return !viewingBack();
+  if (side === "back") return viewingRear();
+  if (side === "side") return viewingSide();
+  if (side === "front") return viewingFront();
   return true;
 }
 
@@ -402,7 +428,7 @@ async function loadModel() {
       frameObject(dummy);
       statusEl.textContent = idleStatus();
       try {
-        const packed = await loadChestTargets(new URL("./data/body-targets.json?v=butt3", import.meta.url));
+        const packed = await loadChestTargets(new URL("./data/body-targets.json?v=mh1", import.meta.url));
         chestBound = bindChestMorph(dummy, packed);
         applyChestMorph(chestBound, bodyState);
       } catch (error) {
