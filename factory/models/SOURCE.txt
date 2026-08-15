@@ -1,3 +1,2 @@
-Michelle.glb is downloaded by GitHub Actions from
-https://github.com/mrdoob/three.js/raw/r170/examples/models/gltf/Michelle.glb
-(Mixamo character bundled in the three.js examples.)
+MakeHuman / MPFB female base.obj from Game-Live-Web:
+https://github.com/48s97j7ht5-ux/Game-Live-Web/blob/main/engine/anny/mpfb2/3dobjs/base.obj

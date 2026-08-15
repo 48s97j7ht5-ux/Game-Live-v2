@@ -6,7 +6,7 @@ on:
       yaw:
         description: "Поворот персонажа по вертикали (0 / 90 / 180 / 270)"
         required: false
-        default: "180"
+        default: "0"
   push:
     paths:
       - factory/blender/**
@@ -22,7 +22,7 @@ jobs:
     timeout-minutes: 25
     env:
       BLENDER_VERSION: 4.2.8
-      YAW: ${{ github.event.inputs.yaw || '180' }}
+      YAW: ${{ github.event.inputs.yaw || '0' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -38,19 +38,19 @@ jobs:
           tar -xJf blender.tar.xz -C "$HOME/blender" --strip-components=1
           echo "$HOME/blender" >> "$GITHUB_PATH"
 
-      - name: Download Michelle character
+      - name: Download volumetric body dummy
         run: |
           set -euo pipefail
           mkdir -p factory/models
-          curl -L --fail -o factory/models/michelle.glb \
-            "https://github.com/mrdoob/three.js/raw/r170/examples/models/gltf/Michelle.glb"
-          ls -la factory/models/michelle.glb
+          curl -L --fail -o factory/models/base.obj \
+            "https://raw.githubusercontent.com/48s97j7ht5-ux/Game-Live-Web/main/engine/anny/mpfb2/3dobjs/base.obj"
+          ls -la factory/models/base.obj
 
       - name: Render character
         run: |
           blender --background --python factory/blender/render_character.py -- \
             --out factory/out/render.png \
-            --model factory/models/michelle.glb \
+            --model factory/models/base.obj \
             --yaw "$YAW"
 
       - name: Pixelize

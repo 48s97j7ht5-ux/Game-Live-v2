@@ -70,9 +70,47 @@ def setup_world() -> None:
     scene.collection.objects.link(fill_obj)
 
 
+def toon_material(name: str, color: tuple[float, float, float], size: float = 0.4) -> bpy.types.Material:
+    mat = bpy.data.materials.new(name)
+    mat.use_nodes = True
+    nodes = mat.node_tree.nodes
+    links = mat.node_tree.links
+    nodes.clear()
+    output = nodes.new("ShaderNodeOutputMaterial")
+    toon = nodes.new("ShaderNodeBsdfToon")
+    toon.component = "DIFFUSE"
+    toon.inputs["Color"].default_value = (*color, 1.0)
+    toon.inputs["Size"].default_value = size
+    toon.inputs["Smooth"].default_value = 0.08
+    links.new(toon.outputs["BSDF"], output.inputs["Surface"])
+    return mat
+
+
+def import_model(path: Path) -> None:
+    suffix = path.suffix.lower()
+    if suffix == ".glb" or suffix == ".gltf":
+        bpy.ops.import_scene.gltf(filepath=str(path))
+        return
+    if suffix == ".obj":
+        bpy.ops.wm.obj_import(filepath=str(path), forward_axis="Y", up_axis="Z")
+        return
+    raise ValueError(f"unsupported model: {path}")
+
+
+def apply_body_material() -> None:
+    skin = toon_material("skin", (0.86, 0.70, 0.60), size=0.42)
+    for obj in bpy.context.scene.objects:
+        if obj.type != "MESH":
+            continue
+        obj.data.materials.clear()
+        obj.data.materials.append(skin)
+        for poly in obj.data.polygons:
+            poly.use_smooth = True
+
+
 def import_character(path: Path, yaw_degrees: float) -> None:
     before = set(bpy.context.scene.objects)
-    bpy.ops.import_scene.gltf(filepath=str(path))
+    import_model(path)
     bpy.context.view_layer.update()
     imported = [obj for obj in bpy.context.scene.objects if obj not in before]
     skip = {"key", "fill", "cam"}
@@ -88,6 +126,7 @@ def import_character(path: Path, yaw_degrees: float) -> None:
             obj.matrix_world = world
         if obj.type == "ARMATURE":
             obj.hide_render = True
+    apply_body_material()
     anchor.rotation_euler.z = math.radians(yaw_degrees)
     bpy.context.view_layer.update()
 
@@ -139,7 +178,7 @@ def render_to(path: Path) -> None:
 
 def main() -> None:
     out = Path(argv_value("--out", "factory/out/render.png")).resolve()
-    model = Path(argv_value("--model", "factory/models/michelle.glb"))
+    model = Path(argv_value("--model", "factory/models/base.obj"))
     yaw = float(argv_value("--yaw", "0"))
     if not model.is_file():
         raise FileNotFoundError(f"character model missing: {model}")
