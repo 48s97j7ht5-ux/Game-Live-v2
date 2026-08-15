@@ -8,12 +8,34 @@
   "yFrac": 0.92,
   "views": ["front", "front34", "frontHalf", "side", "backHalf", "back34", "back"],
   "floors": [
-    { "id": "style", "label": "стиль", "kind": "choice", "default": 0 }
-  ],
-  "choices": [
-    { "id": "short", "label": "короткая", "model": "./models/hair/short.obj" },
-    { "id": "bob", "label": "каре", "model": "./models/hair/bob.obj" },
-    { "id": "long", "label": "длинная", "model": "./models/hair/long.obj" },
-    { "id": "none", "label": "нет", "model": "" }
+    {
+      "id": "style",
+      "label": "стиль",
+      "kind": "choice",
+      "default": 0,
+      "choices": [
+        { "id": "short", "label": "короткая", "model": "./models/hair/short.obj" },
+        { "id": "bob", "label": "каре", "model": "./models/hair/bob.obj" },
+        { "id": "long", "label": "длинная", "model": "./models/hair/long.obj" },
+        { "id": "none", "label": "нет", "model": "" }
+      ]
+    },
+    {
+      "id": "color",
+      "label": "цвет",
+      "kind": "choice",
+      "default": 1,
+      "needsHair": true,
+      "choices": [
+        { "id": "black", "label": "чёрный", "hex": "#1a1210" },
+        { "id": "brown", "label": "каштан", "hex": "#3f2a1c" },
+        { "id": "auburn", "label": "русый", "hex": "#6b4a32" },
+        { "id": "blond", "label": "блонд", "hex": "#c4a06a" },
+        { "id": "red", "label": "рыжий", "hex": "#8a3a1a" },
+        { "id": "gray", "label": "седой", "hex": "#9a9590" }
+      ]
+    },
+    { "id": "length", "label": "длина", "kind": "axis", "needsHair": true },
+    { "id": "volume", "label": "объём", "kind": "axis", "needsHair": true }
   ]
 }

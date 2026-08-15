@@ -136,8 +136,11 @@ def test_hair_is_mhclo_style_overlay() -> None:
     assert hair["enabled"] is True
     assert hair["focus"] == "hair"
     viewer = (ROOT / "web/viewer.js").read_text()
-    assert "applyHair" in viewer
-    for choice in hair["choices"]:
+    assert "applyHairLook" in viewer
+    style = next(floor for floor in hair["floors"] if floor["id"] == "style")
+    color = next(floor for floor in hair["floors"] if floor["id"] == "color")
+    assert {floor["id"] for floor in hair["floors"]} >= {"style", "color", "length", "volume"}
+    for choice in style["choices"]:
         if not choice.get("model"):
             continue
         rel = choice["model"][2:] if choice["model"].startswith("./") else choice["model"]

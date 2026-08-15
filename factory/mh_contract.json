@@ -1,5 +1,5 @@
 {
-  "cache": "c16",
+  "cache": "c17",
   "official": "makehumancommunity/makehuman makehuman/data/modifiers/modeling_sliders.json",
   "parts": "web/parts/",
   "rules": [
@@ -13,7 +13,7 @@
   ],
   "packed_not_in_ui": ["pelvisToneDecr", "pelvisToneIncr"],
   "next": [
-    { "id": "hair", "kind": "overlay", "note": "MHCLO clothes in data/hair fitted to helper-hair; workbench shells in models/hair, cycle with head arrows" },
+    { "id": "hair", "kind": "overlay", "note": "MPFB hair editor has length/density/frizz/curl/color; workbench exposes style, color, length, volume on the helper-hair mesh" },
     { "id": "clothes", "kind": "overlay", "note": "models/clothes.obj then set enabled true in web/parts/clothes.json" },
     { "mh_group": "Hip", "mod": "hip/hip-trans-in|out", "note": "add floors to web/parts/hips.json" },
     { "mh_group": "Pelvis", "note": "own part JSON, not buttocks" },

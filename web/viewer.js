@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
-import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c16";
+import { applyMorph, axisAmount, bindMorph, loadTargets } from "./chest-morph.js?v=c17";
 import {
   bodyModel,
   bodyPart,
@@ -12,7 +12,7 @@ import {
   overlays,
   sizeLabels,
   tapZones,
-} from "./registry.js?v=c16";
+} from "./registry.js?v=c17";
 
 const AXIS_STEPS = 7;
 const FOCUS = {
@@ -38,36 +38,63 @@ let currentBody = "clay";
 let currentVariant = "";
 let bodyLoad = 0;
 let focusMode = "body";
+const HAIR_PIVOT_Y = 8.2;
 
 function zoneById(id) {
   return zones.find((zone) => zone.id === id);
 }
 
 function currentFloors() {
-  return zoneById(editZone)?.floors || [];
+  const floors = zoneById(editZone)?.floors || [];
+  if (editZone !== "hair") return floors;
+  const hasHair = Boolean(hairChoice()?.model);
+  return floors.filter((floor) => !floor.needsHair || hasHair);
 }
 
-function hairChoices() {
-  return hairPart(catalog, currentBody)?.choices || [];
+function hairFloorChoices(floor) {
+  if (floor.choices) return floor.choices;
+  const part = hairPart(catalog, currentBody);
+  if (floor.id === "style") return part?.choices || [];
+  const found = (part?.floors || []).find((item) => item.id === floor.id);
+  return found?.choices || [];
+}
+
+function hairStyleFloor() {
+  return zoneById("hair")?.floors?.find((floor) => floor.id === "style") || { id: "style", choices: hairPart(catalog, currentBody)?.choices || [] };
 }
 
 function hairChoice() {
-  const list = hairChoices();
+  const floor = hairStyleFloor();
+  const list = hairFloorChoices(floor);
   if (!list.length) return null;
   const index = Math.max(0, Math.min(list.length - 1, bodyState.style ?? 0));
   return list[index];
 }
 
+function hairColorChoice() {
+  const floor = zoneById("hair")?.floors?.find((item) => item.id === "color");
+  const list = hairFloorChoices(floor || { id: "color", choices: [] });
+  if (!list.length) return { hex: "#3f2a1c", label: "каштан" };
+  const index = Math.max(0, Math.min(list.length - 1, bodyState.color ?? 1));
+  return list[index];
+}
+
 function floorValue(floor) {
   if (floor.kind === "size") return `${sizes[bodyState.sizeIndex] || ""}`;
-  if (floor.kind === "choice") return hairChoice()?.label || "";
+  if (floor.kind === "choice") {
+    const list = hairFloorChoices(floor);
+    const index = Math.max(0, Math.min(list.length - 1, bodyState[floor.id] ?? 0));
+    return list[index]?.label || "";
+  }
   return `${bodyState[floor.id] + 1}/${AXIS_STEPS}`;
 }
 
 function idleStatus() {
   if (focusMode === "hair") {
-    const choice = hairChoice();
-    return choice ? `причёска · ${choice.label}` : "причёска · кадр по грудь";
+    const style = hairChoice();
+    const color = hairColorChoice();
+    if (!style?.model) return "причёска · нет";
+    return `причёска · ${style.label} · ${color.label}`;
   }
   if (!editZone) {
     const body = bodyPart(catalog, currentBody);
@@ -121,13 +148,18 @@ function stepFloor(floor, delta) {
   if (floor.kind === "size") {
     bodyState.sizeIndex = Math.max(0, Math.min(sizes.length - 1, bodyState.sizeIndex + delta));
   } else if (floor.kind === "choice") {
-    const list = hairChoices();
+    const list = hairFloorChoices(floor);
     const now = Number.isFinite(bodyState[floor.id]) ? bodyState[floor.id] : 0;
     bodyState[floor.id] = Math.max(0, Math.min(list.length - 1, now + delta));
-    applyHair();
+    if (floor.id === "style") {
+      applyHair();
+      buildSideBars();
+      layoutFloorButtons();
+    } else applyHairLook();
   } else {
     const now = Number.isFinite(bodyState[floor.id]) ? bodyState[floor.id] : 3;
     bodyState[floor.id] = Math.max(0, Math.min(AXIS_STEPS - 1, now + delta));
+    if (editZone === "hair") applyHairLook();
   }
   statusEl.textContent = idleStatus();
   updateFloorDisabled();
@@ -140,9 +172,10 @@ function updateFloorDisabled() {
       item.left.disabled = bodyState.sizeIndex === 0;
       item.right.disabled = bodyState.sizeIndex === sizes.length - 1;
     } else if (item.floor.kind === "choice") {
+      const list = hairFloorChoices(item.floor);
       const index = bodyState[item.floor.id] ?? 0;
       item.left.disabled = index === 0;
-      item.right.disabled = index >= hairChoices().length - 1;
+      item.right.disabled = index >= list.length - 1;
     } else {
       item.left.disabled = bodyState[item.floor.id] === 0;
       item.right.disabled = bodyState[item.floor.id] === AXIS_STEPS - 1;
@@ -433,6 +466,16 @@ function disposeObject(object) {
 
 let hairLoad = 0;
 
+function applyHairLook() {
+  const hair = dummy?.getObjectByName("hair");
+  if (!hair) return;
+  const hex = hairColorChoice().hex || "#3f2a1c";
+  hairSkin.color.set(hex);
+  const length = axisAmount(bodyState.length ?? 3);
+  const volume = axisAmount(bodyState.volume ?? 3);
+  hair.scale.set(1 + volume * 0.2, 1 + length * 0.28, 1 + volume * 0.2);
+}
+
 async function applyHair() {
   if (!dummy) return;
   const token = (hairLoad += 1);
@@ -450,7 +493,10 @@ async function applyHair() {
       disposeObject(group);
       return;
     }
-    group.name = "hair";
+    const pivot = new THREE.Group();
+    pivot.name = "hair";
+    pivot.position.set(0, HAIR_PIVOT_Y, 0);
+    group.position.set(0, -HAIR_PIVOT_Y, 0);
     group.traverse((child) => {
       if (child.isMesh) {
         child.material = hairSkin;
@@ -458,7 +504,9 @@ async function applyHair() {
         child.visible = true;
       }
     });
-    dummy.add(group);
+    pivot.add(group);
+    dummy.add(pivot);
+    applyHairLook();
   } catch (error) {
     console.warn("hair skip", error);
   }
@@ -631,7 +679,7 @@ async function attachPixelFilter() {
   const box = document.querySelector("#pixelMode");
   if (!box) return;
   try {
-    const mod = await import("./pixel-mode.js?v=c16");
+    const mod = await import("./pixel-mode.js?v=c17");
     pixelFilter = mod.createPixelFilter(renderer);
     box.addEventListener("change", () => pixelFilter.setEnabled(box.checked));
   } catch (error) {
@@ -641,7 +689,7 @@ async function attachPixelFilter() {
 }
 
 async function boot() {
-  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c16", import.meta.url));
+  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c17", import.meta.url));
   currentBody = catalog.manifest.defaultBody || bodyParts(catalog)[0]?.id || "clay";
   buildBodySwitcher();
   await switchBody(currentBody);
