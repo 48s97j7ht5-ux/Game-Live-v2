@@ -41,6 +41,10 @@ TARGET_FILES = {
     "buttIncr": "buttocks/buttocks-volume-incr.target",
     "pelvisToneDecr": "pelvis/pelvis-tone-decr.target",
     "pelvisToneIncr": "pelvis/pelvis-tone-incr.target",
+    "hipHorizDecr": "hip/hip-scale-horiz-decr.target",
+    "hipHorizIncr": "hip/hip-scale-horiz-incr.target",
+    "hipDepthDecr": "hip/hip-scale-depth-decr.target",
+    "hipDepthIncr": "hip/hip-scale-depth-incr.target",
 }
 
 

@@ -18,8 +18,10 @@ const STOMACH_AXES = [
   { id: "navelZ", decr: "navelIn", incr: "navelOut" },
 ];
 const BUTT_AXES = [
-  { id: "butt", decr: "buttDecr", incr: "buttIncr" },
-  { id: "pelvis", decr: "pelvisToneDecr", incr: "pelvisToneIncr" },
+  { id: "butt", decr: "buttDecr", incr: "buttIncr", gain: 6 },
+  { id: "hipW", decr: "hipHorizDecr", incr: "hipHorizIncr", gain: 3 },
+  { id: "hipD", decr: "hipDepthDecr", incr: "hipDepthIncr", gain: 3 },
+  { id: "pelvis", decr: "pelvisToneDecr", incr: "pelvisToneIncr", gain: 3 },
 ];
 const AXES = [...CHEST_AXES, ...STOMACH_AXES, ...BUTT_AXES];
 
@@ -52,6 +54,8 @@ export function defaultChestState() {
     navelY: AXIS_MID,
     navelZ: AXIS_MID,
     butt: AXIS_MID,
+    hipW: AXIS_MID,
+    hipD: AXIS_MID,
     pelvis: AXIS_MID,
   };
 }
@@ -66,8 +70,8 @@ export function mixChestDeltas(targets, state) {
   addWeighted(mixed, targets.maxCupMaxFirm, sizeT * firm);
   for (const axis of AXES) {
     const amount = axisAmount(state[axis.id]);
-    if (amount < 0) addWeighted(mixed, targets[axis.decr], -amount);
-    else if (amount > 0) addWeighted(mixed, targets[axis.incr], amount);
+    if (amount < 0) addWeighted(mixed, targets[axis.decr], -amount * (axis.gain || 1));
+    else if (amount > 0) addWeighted(mixed, targets[axis.incr], amount * (axis.gain || 1));
   }
   return mixed;
 }

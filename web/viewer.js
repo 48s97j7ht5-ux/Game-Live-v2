@@ -36,6 +36,8 @@ const ZONES = {
     side: "back",
     floors: [
       { id: "butt", label: "объём", kind: "axis" },
+      { id: "hipW", label: "шире", kind: "axis" },
+      { id: "hipD", label: "выступ", kind: "axis" },
       { id: "pelvis", label: "тонус", kind: "axis" },
     ],
   },
@@ -386,7 +388,7 @@ function setHeight(px) {
 
 async function loadModel() {
   const loader = new OBJLoader();
-  const targetsPromise = loadChestTargets(new URL("./data/body-targets.json?v=butt", import.meta.url));
+  const targetsPromise = loadChestTargets(new URL("./data/body-targets.json?v=butt2", import.meta.url));
   let lastError = null;
   for (const url of MODEL_URLS) {
     try {

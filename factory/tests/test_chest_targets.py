@@ -34,6 +34,10 @@ needed = [
     "buttIncr",
     "pelvisToneDecr",
     "pelvisToneIncr",
+    "hipHorizDecr",
+    "hipHorizIncr",
+    "hipDepthDecr",
+    "hipDepthIncr",
 ]
 for name in needed:
     values = packed["targets"][name]
