@@ -24,7 +24,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Contract
-        run: python factory/tests/test_contract.py
+        run: python3 factory/tests/test_contract.py
 
       - name: Assemble site
         run: bash factory/assemble_pages.sh dist

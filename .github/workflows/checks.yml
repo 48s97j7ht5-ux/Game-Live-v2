@@ -14,5 +14,5 @@ jobs:
           python-version: "3.12"
       - name: Morph and Pages contract
         run: |
-          python factory/tests/test_chest_targets.py
-          python factory/tests/test_contract.py
+          python3 factory/tests/test_chest_targets.py
+          python3 factory/tests/test_contract.py
