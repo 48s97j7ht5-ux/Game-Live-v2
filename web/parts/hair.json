@@ -21,6 +21,18 @@
       ]
     },
     {
+      "id": "bangs",
+      "label": "чёлка",
+      "kind": "choice",
+      "default": 0,
+      "needsHair": true,
+      "choices": [
+        { "id": "off", "label": "нет", "model": "" },
+        { "id": "brow", "label": "брови", "model": "./models/hair/bangs_brow.obj" },
+        { "id": "face", "label": "в лицо", "model": "./models/hair/bangs_face.obj" }
+      ]
+    },
+    {
       "id": "color",
       "label": "цвет",
       "kind": "choice",

@@ -17,4 +17,7 @@ models/base.obj (MakeHuman hm08, CC0).
 
 The official MPFB Hair Editor also exposes length, density, thickness, frizz,
 roll, clump, noise, curl, and two-tone color. Those drive Blender hair curves.
-On the workbench mesh the live knobs are style, color, length and volume.
+Bangs are a separate clothes piece in community packs (straight_bangs,
+bob_with_bangs). The workbench keeps scalp hair and bangs as two meshes:
+bangs_brow.obj (to the brows) and bangs_face.obj (covers the eyes).
+

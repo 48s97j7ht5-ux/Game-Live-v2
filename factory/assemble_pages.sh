@@ -46,6 +46,8 @@ required=(
   models/hair/short.obj
   models/hair/bob.obj
   models/hair/long.obj
+  models/hair/bangs_brow.obj
+  models/hair/bangs_face.obj
   index.html
 )
 for rel in "${required[@]}"; do

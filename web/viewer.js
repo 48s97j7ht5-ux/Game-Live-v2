@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
-import { applyMorph, axisAmount, bindMorph, loadTargets } from "./chest-morph.js?v=c17";
+import { applyMorph, axisAmount, bindMorph, loadTargets } from "./chest-morph.js?v=c18";
 import {
   bodyModel,
   bodyPart,
@@ -12,7 +12,7 @@ import {
   overlays,
   sizeLabels,
   tapZones,
-} from "./registry.js?v=c17";
+} from "./registry.js?v=c18";
 
 const AXIS_STEPS = 7;
 const FOCUS = {
@@ -39,6 +39,7 @@ let currentVariant = "";
 let bodyLoad = 0;
 let focusMode = "body";
 const HAIR_PIVOT_Y = 8.2;
+const BANGS_PIVOT_Y = 7.95;
 
 function zoneById(id) {
   return zones.find((zone) => zone.id === id);
@@ -71,6 +72,14 @@ function hairChoice() {
   return list[index];
 }
 
+function hairBangsChoice() {
+  const floor = zoneById("hair")?.floors?.find((item) => item.id === "bangs");
+  const list = hairFloorChoices(floor || { id: "bangs", choices: [] });
+  if (!list.length) return { model: "", label: "нет" };
+  const index = Math.max(0, Math.min(list.length - 1, bodyState.bangs ?? 0));
+  return list[index];
+}
+
 function hairColorChoice() {
   const floor = zoneById("hair")?.floors?.find((item) => item.id === "color");
   const list = hairFloorChoices(floor || { id: "color", choices: [] });
@@ -94,7 +103,9 @@ function idleStatus() {
     const style = hairChoice();
     const color = hairColorChoice();
     if (!style?.model) return "причёска · нет";
-    return `причёска · ${style.label} · ${color.label}`;
+    const bangs = hairBangsChoice();
+    const fringe = bangs.model ? ` · чёлка ${bangs.label}` : "";
+    return `причёска · ${style.label} · ${color.label}${fringe}`;
   }
   if (!editZone) {
     const body = bodyPart(catalog, currentBody);
@@ -151,7 +162,7 @@ function stepFloor(floor, delta) {
     const list = hairFloorChoices(floor);
     const now = Number.isFinite(bodyState[floor.id]) ? bodyState[floor.id] : 0;
     bodyState[floor.id] = Math.max(0, Math.min(list.length - 1, now + delta));
-    if (floor.id === "style") {
+    if (floor.id === "style" || floor.id === "bangs") {
       applyHair();
       buildSideBars();
       layoutFloorButtons();
@@ -467,45 +478,55 @@ function disposeObject(object) {
 let hairLoad = 0;
 
 function applyHairLook() {
-  const hair = dummy?.getObjectByName("hair");
-  if (!hair) return;
   const hex = hairColorChoice().hex || "#3f2a1c";
   hairSkin.color.set(hex);
   const length = axisAmount(bodyState.length ?? 3);
   const volume = axisAmount(bodyState.volume ?? 3);
-  hair.scale.set(1 + volume * 0.2, 1 + length * 0.28, 1 + volume * 0.2);
+  const hair = dummy?.getObjectByName("hair");
+  const bangs = dummy?.getObjectByName("bangs");
+  if (hair) hair.scale.set(1 + volume * 0.2, 1 + length * 0.28, 1 + volume * 0.2);
+  if (bangs) bangs.scale.set(1 + volume * 0.1, 1, 1 + volume * 0.06);
+}
+
+async function attachHairPiece(name, url, pivotY, token) {
+  const old = dummy.getObjectByName(name);
+  if (old) {
+    dummy.remove(old);
+    disposeObject(old);
+  }
+  if (!url) return true;
+  const loader = new OBJLoader();
+  const group = await loader.loadAsync(`${url}?v=${catalog.manifest.cache}`);
+  if (token !== hairLoad || !dummy) {
+    disposeObject(group);
+    return false;
+  }
+  const pivot = new THREE.Group();
+  pivot.name = name;
+  pivot.position.set(0, pivotY, 0);
+  group.position.set(0, -pivotY, 0);
+  group.traverse((child) => {
+    if (child.isMesh) {
+      child.material = hairSkin;
+      child.geometry.computeVertexNormals();
+      child.visible = true;
+    }
+  });
+  pivot.add(group);
+  dummy.add(pivot);
+  return true;
 }
 
 async function applyHair() {
   if (!dummy) return;
   const token = (hairLoad += 1);
-  const old = dummy.getObjectByName("hair");
-  if (old) {
-    dummy.remove(old);
-    disposeObject(old);
-  }
-  const choice = hairChoice();
-  if (!choice?.model) return;
   try {
-    const loader = new OBJLoader();
-    const group = await loader.loadAsync(`${choice.model}?v=${catalog.manifest.cache}`);
-    if (token !== hairLoad || !dummy) {
-      disposeObject(group);
-      return;
-    }
-    const pivot = new THREE.Group();
-    pivot.name = "hair";
-    pivot.position.set(0, HAIR_PIVOT_Y, 0);
-    group.position.set(0, -HAIR_PIVOT_Y, 0);
-    group.traverse((child) => {
-      if (child.isMesh) {
-        child.material = hairSkin;
-        child.geometry.computeVertexNormals();
-        child.visible = true;
-      }
-    });
-    pivot.add(group);
-    dummy.add(pivot);
+    const style = hairChoice();
+    const ok = await attachHairPiece("hair", style?.model, HAIR_PIVOT_Y, token);
+    if (!ok) return;
+    const bangsUrl = style?.model ? hairBangsChoice()?.model : "";
+    const bangsOk = await attachHairPiece("bangs", bangsUrl, BANGS_PIVOT_Y, token);
+    if (!bangsOk) return;
     applyHairLook();
   } catch (error) {
     console.warn("hair skip", error);
@@ -679,7 +700,7 @@ async function attachPixelFilter() {
   const box = document.querySelector("#pixelMode");
   if (!box) return;
   try {
-    const mod = await import("./pixel-mode.js?v=c17");
+    const mod = await import("./pixel-mode.js?v=c18");
     pixelFilter = mod.createPixelFilter(renderer);
     box.addEventListener("change", () => pixelFilter.setEnabled(box.checked));
   } catch (error) {
@@ -689,7 +710,7 @@ async function attachPixelFilter() {
 }
 
 async function boot() {
-  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c17", import.meta.url));
+  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c18", import.meta.url));
   currentBody = catalog.manifest.defaultBody || bodyParts(catalog)[0]?.id || "clay";
   buildBodySwitcher();
   await switchBody(currentBody);

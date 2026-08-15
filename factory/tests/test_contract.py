@@ -139,15 +139,16 @@ def test_hair_is_mhclo_style_overlay() -> None:
     assert "applyHairLook" in viewer
     style = next(floor for floor in hair["floors"] if floor["id"] == "style")
     color = next(floor for floor in hair["floors"] if floor["id"] == "color")
-    assert {floor["id"] for floor in hair["floors"]} >= {"style", "color", "length", "volume"}
-    for choice in style["choices"]:
+    assert {floor["id"] for floor in hair["floors"]} >= {"style", "bangs", "color", "length", "volume"}
+    bangs = next(floor for floor in hair["floors"] if floor["id"] == "bangs")
+    for choice in list(style["choices"]) + list(bangs["choices"]):
         if not choice.get("model"):
             continue
         rel = choice["model"][2:] if choice["model"].startswith("./") else choice["model"]
         path = ROOT / rel
         assert path.is_file(), rel
         text = path.read_text()
-        assert "\ng hair\n" in text
+        assert "\ng hair\n" in text or "\ng bangs\n" in text
         assert "helper-hair" in text or "helper-hair" in (ROOT / "models/hair/NOTICE").read_text()
 
 
