@@ -92,6 +92,8 @@ const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
 controls.dampingFactor = 0.08;
 controls.enableZoom = false;
+controls.enablePan = false;
+controls.screenSpacePanning = false;
 controls.target.set(0, 0.9, 0);
 
 scene.add(new THREE.HemisphereLight(0xffffff, 0x334455, 1.1));
@@ -171,6 +173,15 @@ function frameObject(object) {
   setView("front");
 }
 
+function lockCenter() {
+  const y = bodyHeight * 0.5;
+  controls.target.set(0, y, 0);
+  if (dummy) {
+    dummy.position.x = 0;
+    dummy.position.z = 0;
+  }
+}
+
 function setHeight(px) {
   targetPx = px;
   applyScale();
@@ -191,6 +202,7 @@ function setView(name) {
   };
   camera.position.copy(views[name]);
   camera.up.set(0, 1, 0);
+  lockCenter();
   controls.update();
   document.querySelectorAll(".bottom button").forEach((button) => {
     button.classList.toggle("active", button.dataset.view === name);
@@ -232,6 +244,7 @@ document.querySelectorAll(".heights button").forEach((button) => {
 
 function tick() {
   controls.update();
+  lockCenter();
   renderer.render(scene, camera);
   layoutZoneButtons();
   requestAnimationFrame(tick);
