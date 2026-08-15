@@ -71,16 +71,24 @@ def setup_world() -> None:
 
 
 def import_character(path: Path, yaw_degrees: float) -> None:
+    before = set(bpy.context.scene.objects)
     bpy.ops.import_scene.gltf(filepath=str(path))
     bpy.context.view_layer.update()
+    imported = [obj for obj in bpy.context.scene.objects if obj not in before]
     skip = {"key", "fill", "cam"}
-    roots = [obj for obj in bpy.context.scene.objects if obj.parent is None and obj.name not in skip]
-    yaw = math.radians(yaw_degrees)
-    for root in roots:
-        root.rotation_euler.z += yaw
-    for obj in bpy.context.scene.objects:
+    anchor = bpy.data.objects.new("character_root", None)
+    bpy.context.scene.collection.objects.link(anchor)
+    for obj in imported:
+        if obj.name in skip:
+            continue
+        if obj.parent is None:
+            world = obj.matrix_world.copy()
+            obj.parent = anchor
+            obj.matrix_parent_inverse = anchor.matrix_world.inverted()
+            obj.matrix_world = world
         if obj.type == "ARMATURE":
             obj.hide_render = True
+    anchor.rotation_euler.z = math.radians(yaw_degrees)
     bpy.context.view_layer.update()
 
 

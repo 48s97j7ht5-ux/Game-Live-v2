@@ -6,7 +6,7 @@ on:
       yaw:
         description: "Поворот персонажа по вертикали (0 / 90 / 180 / 270)"
         required: false
-        default: "0"
+        default: "180"
   push:
     paths:
       - factory/blender/**
@@ -22,7 +22,7 @@ jobs:
     timeout-minutes: 25
     env:
       BLENDER_VERSION: 4.2.8
-      YAW: ${{ github.event.inputs.yaw || '0' }}
+      YAW: ${{ github.event.inputs.yaw || '180' }}
     steps:
       - uses: actions/checkout@v4
 
