@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
 import { applyChestMorph, bindChestMorph, defaultChestState, loadChestTargets } from "./chest-morph.js";
 
@@ -133,10 +132,7 @@ function inChestBand(clientY) {
   const half = Math.max(56, canvas.clientHeight * 0.09);
   return Math.abs(y - chestY) <= half;
 }
-const MODEL_URLS = [
-  "./models/base.obj",
-  "https://cdn.jsdelivr.net/gh/48s97j7ht5-ux/Game-Live-Web@main/engine/anny/mpfb2/3dobjs/base.obj",
-];
+const MODEL_URLS = ["./models/base.obj?v=local"];
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x2a2c31);
@@ -144,14 +140,6 @@ scene.background = new THREE.Color(0x2a2c31);
 const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.01, 2000);
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-const controls = new OrbitControls(camera, canvas);
-controls.enableDamping = true;
-controls.dampingFactor = 0.08;
-controls.enableZoom = false;
-controls.enablePan = false;
-controls.screenSpacePanning = false;
-controls.target.set(0, 0.9, 0);
 
 scene.add(new THREE.HemisphereLight(0xffffff, 0x334455, 1.1));
 const key = new THREE.DirectionalLight(0xffffff, 1.4);
@@ -168,6 +156,10 @@ let radius = 1.7;
 let bodyHeight = 1.6;
 let targetPx = 400;
 let currentView = "front";
+let threeIndex = 0;
+let profileIndex = 0;
+const THREE_YAWS = [32, 148, 212, 328];
+const PROFILE_YAWS = [90, 270];
 
 function partName(object) {
   let node = object;
@@ -222,9 +214,6 @@ function frameObject(object) {
   radius = Math.max(size.y, size.x, size.z);
   camera.near = Math.max(radius / 200, 0.01);
   camera.far = Math.max(radius * 40, 200);
-  controls.minDistance = radius * 0.8;
-  controls.maxDistance = radius * 12;
-  controls.target.set(0, size.y * 0.5, 0);
   key.position.set(-radius, radius * 1.4, radius);
   fill.position.set(radius * 0.9, radius * 0.4, radius * 0.5);
   setHeight(targetPx);
@@ -232,12 +221,43 @@ function frameObject(object) {
 }
 
 function lockCenter() {
-  const y = bodyHeight * 0.5;
-  controls.target.set(0, y, 0);
   if (dummy) {
     dummy.position.x = 0;
     dummy.position.z = 0;
   }
+}
+
+function lookAtYaw(yawDeg, lift = 1) {
+  const y = bodyHeight * 0.5;
+  const distance = radius * 3.4;
+  const yaw = (yawDeg * Math.PI) / 180;
+  camera.position.set(Math.sin(yaw) * distance, y * lift, Math.cos(yaw) * distance);
+  camera.up.set(0, 1, 0);
+  camera.lookAt(0, y, 0);
+}
+
+function placeCamera() {
+  if (currentView === "three") lookAtYaw(THREE_YAWS[threeIndex], 1.04);
+  else if (currentView === "side") lookAtYaw(PROFILE_YAWS[profileIndex]);
+  else if (currentView === "back") lookAtYaw(180);
+  else lookAtYaw(0);
+  lockCenter();
+  document.querySelectorAll(".bottom button").forEach((button) => {
+    button.classList.toggle("active", button.dataset.view === currentView);
+  });
+}
+
+function setView(name) {
+  if (name === "three") {
+    if (currentView === "three") threeIndex = (threeIndex + 1) % THREE_YAWS.length;
+    currentView = "three";
+  } else if (name === "side") {
+    if (currentView === "side") profileIndex = (profileIndex + 1) % PROFILE_YAWS.length;
+    currentView = "side";
+  } else {
+    currentView = name === "back" ? "back" : "front";
+  }
+  placeCamera();
 }
 
 function setHeight(px) {
@@ -246,30 +266,12 @@ function setHeight(px) {
   document.querySelectorAll(".heights button").forEach((button) => {
     button.classList.toggle("active", Number(button.dataset.height) === targetPx);
   });
-}
-
-function setView(name) {
-  currentView = name;
-  const height = controls.target.y;
-  const distance = radius * 3.4;
-  const views = {
-    front: new THREE.Vector3(0, height, distance),
-    three: new THREE.Vector3(distance * 0.55, height * 1.05, distance * 0.9),
-    side: new THREE.Vector3(distance, height, 0.001),
-    back: new THREE.Vector3(0, height, -distance),
-  };
-  camera.position.copy(views[name]);
-  camera.up.set(0, 1, 0);
-  lockCenter();
-  controls.update();
-  document.querySelectorAll(".bottom button").forEach((button) => {
-    button.classList.toggle("active", button.dataset.view === name);
-  });
+  placeCamera();
 }
 
 async function loadModel() {
   const loader = new OBJLoader();
-  const targetsPromise = loadChestTargets(new URL("./data/chest-targets.json?v=chest-axes", import.meta.url));
+  const targetsPromise = loadChestTargets(new URL("./data/chest-targets.json?v=views-lock", import.meta.url));
   let lastError = null;
   for (const url of MODEL_URLS) {
     try {
@@ -331,7 +333,6 @@ stage.addEventListener("pointercancel", () => {
 });
 
 function tick() {
-  controls.update();
   lockCenter();
   renderer.render(scene, camera);
   layoutFloorButtons();

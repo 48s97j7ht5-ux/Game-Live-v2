@@ -1,7 +1,8 @@
-MakeHuman / MPFB female base.obj from Game-Live-Web:
-https://github.com/48s97j7ht5-ux/Game-Live-Web/blob/main/engine/anny/mpfb2/3dobjs/base.obj
+Vendored copies for the web viewer (no CDN):
+- models/base.obj — MakeHuman/MPFB hm08 from Game-Live-Web
+- web/vendor/three.module.js and web/vendor/loaders/OBJLoader.js — Three.js r170
 
 Breast morphs in web/data/chest-targets.json are packed from CC0 MakeHuman hm08
-targets (cup/firmness + dist/point/volume) in Game-Live-Web:
+targets (cup/firmness + dist/point/volume/nipple) in Game-Live-Web:
 experiments/makehuman-v5/targets/breast/
 Rebuild: python3 factory/pack_chest_targets.py <base.obj> <targets-dir> web/data/chest-targets.json
