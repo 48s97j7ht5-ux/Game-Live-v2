@@ -92,7 +92,7 @@ def import_model(path: Path) -> None:
         bpy.ops.import_scene.gltf(filepath=str(path))
         return
     if suffix == ".obj":
-        bpy.ops.wm.obj_import(filepath=str(path), forward_axis="Y", up_axis="Z")
+        bpy.ops.wm.obj_import(filepath=str(path), forward_axis="NEGATIVE_Z", up_axis="Y")
         return
     raise ValueError(f"unsupported model: {path}")
 
