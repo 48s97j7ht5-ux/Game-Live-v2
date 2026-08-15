@@ -20,6 +20,9 @@ else
   echo "missing models/base.obj" >&2
   exit 1
 fi
+if [[ -d "$ROOT/models/mblab" ]]; then
+  cp -a "$ROOT/models/mblab" "$DEST/models/mblab"
+fi
 if [[ -f "$ROOT/factory/out/front.png" ]]; then
   cp "$ROOT/factory/out/front.png" "$DEST/factory/out/front.png"
 fi
@@ -34,6 +37,9 @@ required=(
   web/vendor/three.module.js
   web/vendor/loaders/OBJLoader.js
   models/base.obj
+  models/mblab/f_an01.obj
+  models/mblab/f_an02.obj
+  models/mblab/m_an01.obj
   index.html
 )
 for rel in "${required[@]}"; do

@@ -1,0 +1,8 @@
+{
+  "id": "clay",
+  "label": "глина",
+  "kind": "body",
+  "model": "./models/base.obj",
+  "morphs": "./data/body-targets.json",
+  "hint": "спереди, на передней ¾ и сбоку — грудь или живот"
+}

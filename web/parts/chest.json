@@ -2,6 +2,7 @@
   "id": "chest",
   "label": "грудь",
   "kind": "morph",
+  "bodies": ["clay"],
   "mh_group": "Breast",
   "yFrac": 0.73,
   "views": ["front", "front34", "frontHalf", "side"],

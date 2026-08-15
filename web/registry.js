@@ -18,19 +18,41 @@ export async function loadCatalog(manifestUrl) {
   return { manifest, parts };
 }
 
-export function tapZones(catalog) {
-  return catalog.parts.filter((part) => part.yFrac != null && (part.floors || []).length);
+function onBody(part, bodyId) {
+  const bodies = part.bodies || (part.kind === "body" ? [part.id] : ["clay"]);
+  return bodies.includes(bodyId);
 }
 
-export function overlays(catalog) {
-  return catalog.parts.filter((part) => part.kind === "overlay" && part.model);
+export function bodyParts(catalog) {
+  return catalog.parts.filter((part) => part.kind === "body");
 }
 
-export function morphRecipe(catalog) {
+export function bodyPart(catalog, bodyId) {
+  return bodyParts(catalog).find((part) => part.id === bodyId) || bodyParts(catalog)[0];
+}
+
+export function bodyModel(part, variantId) {
+  if (!part) return "./models/base.obj";
+  const variant = (part.variants || []).find((item) => item.id === variantId);
+  return variant?.model || part.model;
+}
+
+export function tapZones(catalog, bodyId = "clay") {
+  return catalog.parts.filter(
+    (part) => part.yFrac != null && (part.floors || []).length && onBody(part, bodyId),
+  );
+}
+
+export function overlays(catalog, bodyId = "clay") {
+  return catalog.parts.filter((part) => part.kind === "overlay" && part.model && onBody(part, bodyId));
+}
+
+export function morphRecipe(catalog, bodyId = "clay") {
   const axes = [];
   let macro = null;
   for (const part of catalog.parts) {
     if (part.kind && part.kind !== "morph") continue;
+    if (!onBody(part, bodyId)) continue;
     if (part.macro) macro = part.macro;
     for (const floor of part.floors || []) {
       if (floor.decr && floor.incr) axes.push({ id: floor.id, decr: floor.decr, incr: floor.incr });
@@ -39,14 +61,14 @@ export function morphRecipe(catalog) {
   return { macro, axes };
 }
 
-export function defaultState(catalog) {
-  const recipe = morphRecipe(catalog);
+export function defaultState(catalog, bodyId = "clay") {
+  const recipe = morphRecipe(catalog, bodyId);
   const state = {};
   if (recipe.macro?.sizeIndex) state.sizeIndex = recipe.macro.sizeIndex.default ?? 2;
   for (const axis of recipe.axes) state[axis.id] = 3;
   return state;
 }
 
-export function sizeLabels(catalog) {
-  return morphRecipe(catalog).macro?.sizeIndex?.labels || ["A", "B", "C", "D", "E"];
+export function sizeLabels(catalog, bodyId = "clay") {
+  return morphRecipe(catalog, bodyId).macro?.sizeIndex?.labels || ["A", "B", "C", "D", "E"];
 }

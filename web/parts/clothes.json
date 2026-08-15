@@ -2,6 +2,7 @@
   "id": "clothes",
   "label": "одежда",
   "kind": "overlay",
+  "bodies": ["clay"],
   "enabled": false,
   "model": "./models/clothes.obj",
   "yFrac": 0.62,

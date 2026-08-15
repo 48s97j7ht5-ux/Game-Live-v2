@@ -1,0 +1,29 @@
+{
+  "id": "anime",
+  "label": "аниме",
+  "kind": "body",
+  "license": "AGPL-3.0",
+  "source": "MB-Lab https://github.com/animate1978/MB-Lab",
+  "model": "./models/mblab/f_an01.obj",
+  "hint": "болванка MB-Lab, не hm08: морфы глины сюда не ставятся",
+  "variants": [
+    {
+      "id": "f_an01",
+      "label": "♀1",
+      "model": "./models/mblab/f_an01.obj",
+      "note": "F_AN01 shojo female"
+    },
+    {
+      "id": "f_an02",
+      "label": "♀2",
+      "model": "./models/mblab/f_an02.obj",
+      "note": "F_AN02 shojo female"
+    },
+    {
+      "id": "m_an01",
+      "label": "♂1",
+      "model": "./models/mblab/m_an01.obj",
+      "note": "M_AN01 shojo male"
+    }
+  ]
+}

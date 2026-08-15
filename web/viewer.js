@@ -1,7 +1,17 @@
 import * as THREE from "three";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
-import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c13";
-import { defaultState, loadCatalog, morphRecipe, overlays, sizeLabels, tapZones } from "./registry.js?v=c13";
+import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c14";
+import {
+  bodyModel,
+  bodyPart,
+  bodyParts,
+  defaultState,
+  loadCatalog,
+  morphRecipe,
+  overlays,
+  sizeLabels,
+  tapZones,
+} from "./registry.js?v=c14";
 
 const AXIS_STEPS = 7;
 
@@ -19,6 +29,9 @@ let bodyState = {};
 let zones = [];
 let editZone = null;
 let lastFloor = "";
+let currentBody = "clay";
+let currentVariant = "";
+let bodyLoad = 0;
 
 function zoneById(id) {
   return zones.find((zone) => zone.id === id);
@@ -35,8 +48,10 @@ function floorValue(floor) {
 
 function idleStatus() {
   if (!editZone) {
+    const body = bodyPart(catalog, currentBody);
+    if (body?.kind === "body" && currentBody !== "clay") return body.hint || body.label;
     const hints = catalog.manifest.hints || {};
-    return hints[currentView()] || hints.default || "";
+    return hints[currentView()] || hints.default || body?.hint || "";
   }
   const floor = currentFloors().find((item) => item.id === lastFloor) || currentFloors()[0];
   const zone = zoneById(editZone);
@@ -362,7 +377,7 @@ function setHeight(px) {
 
 async function loadOverlays(parent) {
   const loader = new OBJLoader();
-  for (const part of overlays(catalog)) {
+  for (const part of overlays(catalog, currentBody)) {
     try {
       const group = await loader.loadAsync(`${part.model}?v=${catalog.manifest.cache}`);
       group.name = part.id;
@@ -373,10 +388,60 @@ async function loadOverlays(parent) {
   }
 }
 
-async function loadModel() {
+function disposeDummy() {
+  if (!dummy) return;
+  scene.remove(dummy);
+  dummy.traverse((child) => {
+    if (child.geometry) child.geometry.dispose();
+  });
+  dummy = null;
+  morphBound = null;
+}
+
+function syncBodyUi() {
+  document.querySelectorAll("#bodies button").forEach((button) => {
+    button.classList.toggle("active", button.dataset.body === currentBody);
+  });
+  const body = bodyPart(catalog, currentBody);
+  const variants = body?.variants || [];
+  const row = document.querySelector("#variants");
+  if (!row) return;
+  row.innerHTML = "";
+  row.hidden = variants.length === 0;
+  for (const variant of variants) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.dataset.variant = variant.id;
+    button.textContent = variant.label;
+    button.classList.toggle("active", variant.id === currentVariant || (!currentVariant && variant.model === body.model));
+    button.addEventListener("click", () => switchBody(currentBody, variant.id));
+    row.appendChild(button);
+  }
+}
+
+async function switchBody(bodyId, variantId) {
+  const body = bodyPart(catalog, bodyId);
+  if (!body) return;
+  const token = (bodyLoad += 1);
+  currentBody = body.id;
+  const variants = body.variants || [];
+  currentVariant = variantId || variants[0]?.id || "";
+  recipe = morphRecipe(catalog, currentBody);
+  sizes = sizeLabels(catalog, currentBody);
+  bodyState = defaultState(catalog, currentBody);
+  zones = tapZones(catalog, currentBody);
+  setEditZone(null);
+  syncBodyUi();
+  statusEl.textContent = "гружу тело…";
   const loader = new OBJLoader();
-  const bodyUrl = `${catalog.manifest.body || "./models/base.obj"}?v=${catalog.manifest.cache}`;
-  const group = await loader.loadAsync(bodyUrl);
+  const model = bodyModel(body, currentVariant);
+  const group = await loader.loadAsync(`${model}?v=${catalog.manifest.cache}`);
+  if (token !== bodyLoad) {
+    group.traverse((child) => {
+      if (child.geometry) child.geometry.dispose();
+    });
+    return;
+  }
   group.traverse((child) => {
     if (child.isMesh) {
       child.material = skin;
@@ -384,16 +449,16 @@ async function loadModel() {
     }
   });
   hideHelpers(group);
+  disposeDummy();
   dummy = group;
   scene.add(dummy);
   frameObject(dummy);
   statusEl.textContent = idleStatus();
   await loadOverlays(dummy);
+  const morphFile = body.morphs || (currentBody === "clay" ? catalog.manifest.morphs : "");
+  if (!morphFile) return;
   try {
-    const morphUrl = new URL(
-      `${catalog.manifest.morphs || "./data/body-targets.json"}?v=${catalog.manifest.cache}`,
-      import.meta.url,
-    );
+    const morphUrl = new URL(`${morphFile}?v=${catalog.manifest.cache}`, import.meta.url);
     const packed = await loadTargets(morphUrl);
     morphBound = bindMorph(dummy, packed);
     applyMorph(morphBound, bodyState, recipe);
@@ -401,6 +466,21 @@ async function loadModel() {
     console.error(error);
     statusEl.textContent = "тело есть, правки формы не загрузились";
   }
+}
+
+function buildBodySwitcher() {
+  const row = document.querySelector("#bodies");
+  if (!row) return;
+  row.innerHTML = "";
+  for (const part of bodyParts(catalog)) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.dataset.body = part.id;
+    button.textContent = part.label;
+    button.addEventListener("click", () => switchBody(part.id));
+    row.appendChild(button);
+  }
+  syncBodyUi();
 }
 
 document.querySelector("#turnLeft").addEventListener("click", (event) => {
@@ -456,7 +536,7 @@ async function attachPixelFilter() {
   const box = document.querySelector("#pixelMode");
   if (!box) return;
   try {
-    const mod = await import("./pixel-mode.js?v=c13");
+    const mod = await import("./pixel-mode.js?v=c14");
     pixelFilter = mod.createPixelFilter(renderer);
     box.addEventListener("change", () => pixelFilter.setEnabled(box.checked));
   } catch (error) {
@@ -466,12 +546,10 @@ async function attachPixelFilter() {
 }
 
 async function boot() {
-  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c13", import.meta.url));
-  recipe = morphRecipe(catalog);
-  sizes = sizeLabels(catalog);
-  bodyState = defaultState(catalog);
-  zones = tapZones(catalog);
-  await loadModel();
+  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c14", import.meta.url));
+  currentBody = catalog.manifest.defaultBody || bodyParts(catalog)[0]?.id || "clay";
+  buildBodySwitcher();
+  await switchBody(currentBody);
 }
 
 buildSideBars();

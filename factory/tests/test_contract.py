@@ -82,7 +82,7 @@ def test_live_targets_match_packer_and_json() -> None:
     packed = json.loads((ROOT / "web/data/body-targets.json").read_text())
     needed = list(CONTRACT["packed_not_in_ui"])
     for part in iter_parts():
-        if part.get("kind") == "overlay":
+        if part.get("kind") in ("overlay", "body"):
             continue
         if part.get("macro", {}).get("corners"):
             needed.extend(part["macro"]["corners"])
@@ -98,14 +98,35 @@ def test_live_targets_match_packer_and_json() -> None:
 
 def test_parts_are_the_zone_source() -> None:
     viewer = (ROOT / "web/viewer.js").read_text()
-    assert "tapZones(catalog)" in viewer
+    assert "tapZones(catalog, currentBody)" in viewer
     live = [part for part in iter_parts() if part.get("enabled") is not False]
-    assert {part["id"] for part in live} >= {"chest", "stomach", "hips", "butt"}
+    assert {part["id"] for part in live} >= {"chest", "stomach", "hips", "butt", "clay", "anime"}
     for part in live:
-        if part.get("kind") == "overlay":
+        if part.get("kind") in ("overlay", "body"):
             continue
         assert part["floors"]
         assert part["views"]
+        assert "clay" in (part.get("bodies") or ["clay"])
+
+
+def test_anime_is_separate_body_module() -> None:
+    anime = json.loads((PARTS_DIR / "anime.json").read_text())
+    clay = json.loads((PARTS_DIR / "clay.json").read_text())
+    assert anime["kind"] == "body"
+    assert clay["kind"] == "body"
+    assert anime["model"].startswith("./models/mblab/")
+    assert clay["model"] == "./models/base.obj"
+    viewer = (ROOT / "web/viewer.js").read_text()
+    assert "switchBody" in viewer
+    assert "kind=body" in "\n".join(CONTRACT["rules"]) or any(
+        "kind=body" in rule for rule in CONTRACT["rules"]
+    )
+    for variant in anime["variants"]:
+        rel = variant["model"][2:] if variant["model"].startswith("./") else variant["model"]
+        assert (ROOT / rel).is_file(), rel
+        text = (ROOT / rel).read_text()
+        assert "AGPL" in text
+        assert "\ng body\n" in text or text.startswith("#") and "g body" in text
 
 
 if __name__ == "__main__":
@@ -115,4 +136,5 @@ if __name__ == "__main__":
     test_assemble_contains_imports()
     test_live_targets_match_packer_and_json()
     test_parts_are_the_zone_source()
+    test_anime_is_separate_body_module()
     print("ok contract")

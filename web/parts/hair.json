@@ -2,6 +2,7 @@
   "id": "hair",
   "label": "волосы",
   "kind": "overlay",
+  "bodies": ["clay"],
   "enabled": false,
   "model": "./models/hair.obj",
   "yFrac": 0.92,

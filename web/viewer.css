@@ -115,12 +115,23 @@ canvas {
   accent-color: #d8ff62;
 }
 
+.bodies,
+.variants,
 .heights {
   display: grid;
-  grid-template-columns: 1fr 1fr;
   gap: 8px;
   width: min(46vw, 168px);
   flex: 0 0 auto;
+}
+
+.bodies { grid-template-columns: 1fr 1fr; }
+.variants { grid-template-columns: repeat(3, 1fr); }
+.heights { grid-template-columns: 1fr 1fr; }
+
+.bodies button,
+.variants button {
+  min-height: 34px;
+  font-size: 12px;
 }
 
 .bottom {

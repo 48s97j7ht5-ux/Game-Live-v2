@@ -2,6 +2,7 @@
   "id": "hips",
   "label": "бёдра",
   "kind": "morph",
+  "bodies": ["clay"],
   "mh_group": "Hip",
   "yFrac": 0.52,
   "views": ["frontHalf", "backHalf"],

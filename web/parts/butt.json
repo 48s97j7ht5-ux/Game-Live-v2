@@ -2,6 +2,7 @@
   "id": "butt",
   "label": "попа",
   "kind": "morph",
+  "bodies": ["clay"],
   "mh_group": "Buttocks",
   "yFrac": 0.52,
   "views": ["back", "back34"],

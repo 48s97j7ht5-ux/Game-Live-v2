@@ -2,6 +2,7 @@
   "id": "stomach",
   "label": "живот",
   "kind": "morph",
+  "bodies": ["clay"],
   "mh_group": "Stomach",
   "yFrac": 0.55,
   "views": ["front", "front34", "side"],

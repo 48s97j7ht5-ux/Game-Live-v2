@@ -16,3 +16,4 @@ jobs:
         run: |
           python3 factory/tests/test_chest_targets.py
           python3 factory/tests/test_contract.py
+          python3 factory/tests/test_mblab_bodies.py
