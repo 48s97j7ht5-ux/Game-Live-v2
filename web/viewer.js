@@ -8,7 +8,7 @@ const ZONES = {
   chest: {
     label: "грудь",
     yFrac: 0.73,
-    side: "front",
+    views: ["перед", "бок"],
     floors: [
       { id: "size", label: "чашка", kind: "size" },
       { id: "dist", label: "шире", kind: "axis" },
@@ -22,7 +22,7 @@ const ZONES = {
   stomach: {
     label: "живот",
     yFrac: 0.55,
-    side: "front",
+    views: ["перед", "бок"],
     floors: [
       { id: "belly", label: "объём", kind: "axis" },
       { id: "tone", label: "тонус", kind: "axis" },
@@ -33,7 +33,7 @@ const ZONES = {
   hips: {
     label: "бёдра",
     yFrac: 0.52,
-    side: "side",
+    views: ["½"],
     floors: [
       { id: "hipHoriz", label: "ширина", kind: "axis" },
       { id: "hipDepth", label: "глубина", kind: "axis" },
@@ -43,7 +43,7 @@ const ZONES = {
   butt: {
     label: "попа",
     yFrac: 0.52,
-    side: "back",
+    views: ["зад", "¾"],
     floors: [{ id: "butt", label: "объём", kind: "axis" }],
   },
 };
@@ -70,9 +70,10 @@ function floorValue(floor) {
 
 function idleStatus() {
   if (!editZone) {
-    if (viewingRear()) return "сзади нажми на попу";
-    if (viewingSide()) return "сбоку нажми на бёдра";
-    return "нажми на грудь или живот";
+    const view = currentViewName();
+    if (view === "½") return "на ½ нажми на бёдра";
+    if (view === "зад" || view === "¾") return "сзади и на ¾ нажми на попу";
+    return "спереди и сбоку — грудь или живот";
   }
   const floor = currentFloors().find((item) => item.id === lastFloor) || currentFloors()[0];
   const zone = ZONES[editZone];
@@ -188,14 +189,10 @@ function hitZone(clientY) {
   const rect = canvas.getBoundingClientRect();
   const y = clientY - rect.top;
   const half = Math.max(52, canvas.clientHeight * 0.08);
-  const back = viewingRear();
-  const side = viewingSide();
   let best = null;
   let bestDist = half;
   for (const [name, zone] of Object.entries(ZONES)) {
-    if (zone.side === "back" && !back) continue;
-    if (zone.side === "side" && !side) continue;
-    if (zone.side === "front" && (back || side)) continue;
+    if (!zoneAllowed(name)) continue;
     const dist = Math.abs(y - worldToCanvasY(bodyHeight * zone.yFrac));
     if (dist <= bestDist) {
       best = name;
@@ -285,30 +282,12 @@ const TURN_STOPS = [
 ];
 const turnLabel = document.querySelector("#turnLabel");
 
-function viewingYaw() {
-  return TURN_STOPS[yawIndex].yaw;
-}
-
-function viewingRear() {
-  const yaw = viewingYaw();
-  return yaw > 110 && yaw < 250;
-}
-
-function viewingSide() {
-  const yaw = viewingYaw();
-  return yaw === 90 || yaw === 270;
-}
-
-function viewingFront() {
-  return !viewingRear() && !viewingSide();
+function currentViewName() {
+  return TURN_STOPS[yawIndex].name;
 }
 
 function zoneAllowed(name) {
-  const side = ZONES[name]?.side;
-  if (side === "back") return viewingRear();
-  if (side === "side") return viewingSide();
-  if (side === "front") return viewingFront();
-  return true;
+  return Boolean(ZONES[name]?.views?.includes(currentViewName()));
 }
 
 function partName(object) {
@@ -428,7 +407,7 @@ async function loadModel() {
       frameObject(dummy);
       statusEl.textContent = idleStatus();
       try {
-        const packed = await loadChestTargets(new URL("./data/body-targets.json?v=mh1", import.meta.url));
+        const packed = await loadChestTargets(new URL("./data/body-targets.json?v=views1", import.meta.url));
         chestBound = bindChestMorph(dummy, packed);
         applyChestMorph(chestBound, bodyState);
       } catch (error) {
