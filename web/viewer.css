@@ -90,6 +90,31 @@ canvas {
 .bar strong { font-size: 14px; }
 .bar span { color: #929cab; font-size: 12px; }
 
+.tools {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
+.pixel-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #929cab;
+  user-select: none;
+}
+
+.pixel-toggle input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: #d8ff62;
+}
+
 .heights {
   display: grid;
   grid-template-columns: 1fr 1fr;

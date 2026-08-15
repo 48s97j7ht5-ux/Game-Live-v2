@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
-import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c4";
-import { defaultState, loadCatalog, morphRecipe, overlays, sizeLabels, tapZones } from "./registry.js?v=c4";
+import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c5";
+import { defaultState, loadCatalog, morphRecipe, overlays, sizeLabels, tapZones } from "./registry.js?v=c5";
 
 const AXIS_STEPS = 7;
 
@@ -441,13 +441,32 @@ stage.addEventListener("pointercancel", () => {
 
 function tick() {
   lockCenter();
-  renderer.render(scene, camera);
+  pixelFilter.render(scene, camera);
   layoutFloorButtons();
   requestAnimationFrame(tick);
 }
 
+let pixelFilter = {
+  render(mainScene, mainCamera) {
+    renderer.render(mainScene, mainCamera);
+  },
+};
+
+async function attachPixelFilter() {
+  const box = document.querySelector("#pixelMode");
+  if (!box) return;
+  try {
+    const mod = await import("./pixel-mode.js?v=c5");
+    pixelFilter = mod.createPixelFilter(renderer);
+    box.addEventListener("change", () => pixelFilter.setEnabled(box.checked));
+  } catch (error) {
+    console.warn("pixel filter skipped", error);
+    document.querySelector("#pixelToggle")?.remove();
+  }
+}
+
 async function boot() {
-  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c4", import.meta.url));
+  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c5", import.meta.url));
   recipe = morphRecipe(catalog);
   sizes = sizeLabels(catalog);
   bodyState = defaultState(catalog);
@@ -458,6 +477,7 @@ async function boot() {
 buildSideBars();
 window.addEventListener("resize", resize);
 resize();
+attachPixelFilter();
 boot().catch((error) => {
   console.error(error);
   statusEl.textContent = "не удалось загрузить модули станка";
