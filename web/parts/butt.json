@@ -1,0 +1,11 @@
+{
+  "id": "butt",
+  "label": "попа",
+  "kind": "morph",
+  "mh_group": "Buttocks",
+  "yFrac": 0.52,
+  "views": ["back", "back34"],
+  "floors": [
+    { "id": "butt", "label": "объём", "kind": "axis", "decr": "buttDecr", "incr": "buttIncr" }
+  ]
+}

@@ -1,106 +1,22 @@
 {
-  "cache": "c3",
+  "cache": "c4",
+  "cache": "c4",
   "official": "makehumancommunity/makehuman makehuman/data/modifiers/modeling_sliders.json",
+  "parts": "web/parts/",
   "rules": [
     "UniversalModifier: value -1..+1, default 0, weight = |value|, no extra gain, no vertex mask",
     "MacroModifier (breast size/firmness): value 0..1",
-    "One official group per tap zone; do not mix Hip into Buttocks or Pelvis into Buttocks",
-    "Pages must ship the whole web/ folder; bump cache in this file and all ?v= URLs together"
+    "One official group per part; do not mix Hip into Buttocks or Pelvis into Buttocks",
+    "Add a part as web/parts/<id>.json and list it in web/parts/manifest.json",
+    "kind=morph morphs the body; kind=overlay loads an extra OBJ (hair, clothes)",
+    "Pages must ship the whole web/ folder; bump cache in manifest.json and all ?v= URLs together"
   ],
-  "zones": {
-    "chest": {
-      "mh_group": "Breast",
-      "views": ["front", "front34", "frontHalf", "side"],
-      "floors": ["size", "dist", "point", "trans", "vol", "nipple", "nipplePoint"],
-      "targets": [
-        "minCupMinFirm",
-        "minCupMaxFirm",
-        "maxCupMinFirm",
-        "maxCupMaxFirm",
-        "distDecr",
-        "distIncr",
-        "pointDecr",
-        "pointIncr",
-        "transDown",
-        "transUp",
-        "volDown",
-        "volUp",
-        "nippleSizeDecr",
-        "nippleSizeIncr",
-        "nipplePointDecr",
-        "nipplePointIncr"
-      ]
-    },
-    "stomach": {
-      "mh_group": "Stomach",
-      "views": ["front", "front34", "side"],
-      "floors": ["belly", "tone", "navelY", "navelZ"],
-      "targets": [
-        "stomachBellyDecr",
-        "stomachBellyIncr",
-        "stomachToneDecr",
-        "stomachToneIncr",
-        "navelDown",
-        "navelUp",
-        "navelIn",
-        "navelOut"
-      ]
-    },
-    "hips": {
-      "mh_group": "Hip",
-      "views": ["frontHalf", "backHalf"],
-      "floors": ["hipHoriz", "hipDepth", "hipVert"],
-      "targets": [
-        "hipHorizDecr",
-        "hipHorizIncr",
-        "hipDepthDecr",
-        "hipDepthIncr",
-        "hipVertDecr",
-        "hipVertIncr"
-      ]
-    },
-    "butt": {
-      "mh_group": "Buttocks",
-      "views": ["back", "back34"],
-      "floors": ["butt"],
-      "targets": ["buttDecr", "buttIncr"]
-    }
-  },
   "packed_not_in_ui": ["pelvisToneDecr", "pelvisToneIncr"],
   "next": [
-    {
-      "mh_group": "Hip",
-      "mod": "hip/hip-trans-in|out",
-      "note": "Move horizontally — fetch targets, add floors to hips zone"
-    },
-    {
-      "mh_group": "Hip",
-      "mod": "hip/hip-trans-down|up",
-      "note": "Move vertically"
-    },
-    {
-      "mh_group": "Hip",
-      "mod": "hip/hip-trans-backward|forward",
-      "note": "Move depth"
-    },
-    {
-      "mh_group": "Hip",
-      "mod": "hip/hip-waist-down|up",
-      "note": "Waist vertical position"
-    },
-    {
-      "mh_group": "Pelvis",
-      "mod": "pelvis/pelvis-tone-decr|incr",
-      "note": "Already packed; own zone, not buttocks"
-    },
-    {
-      "mh_group": "Pelvis",
-      "mod": "pelvis/bulge-decr|incr",
-      "note": "Official label Genital volume — only if we want that zone"
-    },
-    {
-      "mh_group": "Torso",
-      "note": "torso-scale / trans / vshape / muscles — later, own zone"
-    }
+    { "id": "hair", "kind": "overlay", "note": "models/hair.obj then set enabled true in web/parts/hair.json" },
+    { "id": "clothes", "kind": "overlay", "note": "models/clothes.obj then set enabled true in web/parts/clothes.json" },
+    { "mh_group": "Hip", "mod": "hip/hip-trans-in|out", "note": "add floors to web/parts/hips.json" },
+    { "mh_group": "Pelvis", "note": "own part JSON, not buttocks" },
+    { "mh_group": "Torso", "note": "own part JSON later" }
   ]
 }

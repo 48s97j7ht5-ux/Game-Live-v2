@@ -1,52 +1,9 @@
 import * as THREE from "three";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
-import { applyChestMorph, bindChestMorph, defaultChestState, loadChestTargets } from "./chest-morph.js?v=c3";
+import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c4";
+import { defaultState, loadCatalog, morphRecipe, overlays, sizeLabels, tapZones } from "./registry.js?v=c4";
 
-const SIZES = ["A", "B", "C", "D", "E"];
 const AXIS_STEPS = 7;
-const ZONES = {
-  chest: {
-    label: "грудь",
-    yFrac: 0.73,
-    views: ["front", "front34", "frontHalf", "side"],
-    floors: [
-      { id: "size", label: "чашка", kind: "size" },
-      { id: "dist", label: "шире", kind: "axis" },
-      { id: "point", label: "острее", kind: "axis" },
-      { id: "trans", label: "выше", kind: "axis" },
-      { id: "vol", label: "низ", kind: "axis" },
-      { id: "nipple", label: "сосок", kind: "axis" },
-      { id: "nipplePoint", label: "выступ", kind: "axis" },
-    ],
-  },
-  stomach: {
-    label: "живот",
-    yFrac: 0.55,
-    views: ["front", "front34", "side"],
-    floors: [
-      { id: "belly", label: "объём", kind: "axis" },
-      { id: "tone", label: "тонус", kind: "axis" },
-      { id: "navelY", label: "пупок↑", kind: "axis" },
-      { id: "navelZ", label: "пупок", kind: "axis" },
-    ],
-  },
-  hips: {
-    label: "бёдра",
-    yFrac: 0.52,
-    views: ["frontHalf", "backHalf"],
-    floors: [
-      { id: "hipHoriz", label: "ширина", kind: "axis" },
-      { id: "hipDepth", label: "глубина", kind: "axis" },
-      { id: "hipVert", label: "высота", kind: "axis" },
-    ],
-  },
-  butt: {
-    label: "попа",
-    yFrac: 0.52,
-    views: ["back", "back34"],
-    floors: [{ id: "butt", label: "объём", kind: "axis" }],
-  },
-};
 
 const sideLeft = document.querySelector("#sideLeft");
 const sideRight = document.querySelector("#sideRight");
@@ -54,31 +11,36 @@ const canvas = document.querySelector("#view");
 const statusEl = document.querySelector("#status");
 const stage = document.querySelector(".stage");
 const floorButtons = [];
-const bodyState = defaultChestState();
 
+let catalog = { manifest: { hints: {} }, parts: [] };
+let recipe = { axes: [] };
+let sizes = ["A", "B", "C", "D", "E"];
+let bodyState = {};
+let zones = [];
 let editZone = null;
-let lastFloor = "size";
+let lastFloor = "";
+
+function zoneById(id) {
+  return zones.find((zone) => zone.id === id);
+}
 
 function currentFloors() {
-  return editZone ? ZONES[editZone].floors : [];
+  return zoneById(editZone)?.floors || [];
 }
 
 function floorValue(floor) {
-  if (floor.kind === "size") return `${SIZES[bodyState.sizeIndex]}`;
+  if (floor.kind === "size") return `${sizes[bodyState.sizeIndex] || ""}`;
   return `${bodyState[floor.id] + 1}/${AXIS_STEPS}`;
 }
 
 function idleStatus() {
   if (!editZone) {
-    const view = currentView();
-    if (view === "frontHalf") return "на ½: грудь сверху, бёдра ниже";
-    if (view === "backHalf") return "на ½ сзади нажми на бёдра";
-    if (view === "back" || view === "back34") return "сзади и на задней ¾ нажми на попу";
-    return "спереди, на передней ¾ и сбоку — грудь или живот";
+    const hints = catalog.manifest.hints || {};
+    return hints[currentView()] || hints.default || "";
   }
   const floor = currentFloors().find((item) => item.id === lastFloor) || currentFloors()[0];
-  const zone = ZONES[editZone];
-  const cup = editZone === "chest" ? ` · ${SIZES[bodyState.sizeIndex]}` : "";
+  const zone = zoneById(editZone);
+  const cup = floor?.kind === "size" || editZone === "chest" ? ` · ${sizes[bodyState.sizeIndex]}` : "";
   return `${zone.label}${cup} · ${floor.label} ${floorValue(floor)}`;
 }
 
@@ -120,21 +82,21 @@ function buildSideBars() {
 function stepFloor(floor, delta) {
   lastFloor = floor.id;
   if (floor.kind === "size") {
-    bodyState.sizeIndex = Math.max(0, Math.min(SIZES.length - 1, bodyState.sizeIndex + delta));
+    bodyState.sizeIndex = Math.max(0, Math.min(sizes.length - 1, bodyState.sizeIndex + delta));
   } else {
     const now = Number.isFinite(bodyState[floor.id]) ? bodyState[floor.id] : 3;
     bodyState[floor.id] = Math.max(0, Math.min(AXIS_STEPS - 1, now + delta));
   }
   statusEl.textContent = idleStatus();
   updateFloorDisabled();
-  applyChestMorph(chestBound, bodyState);
+  applyMorph(morphBound, bodyState, recipe);
 }
 
 function updateFloorDisabled() {
   for (const item of floorButtons) {
     if (item.floor.kind === "size") {
       item.left.disabled = bodyState.sizeIndex === 0;
-      item.right.disabled = bodyState.sizeIndex === SIZES.length - 1;
+      item.right.disabled = bodyState.sizeIndex === sizes.length - 1;
     } else {
       item.left.disabled = bodyState[item.floor.id] === 0;
       item.right.disabled = bodyState[item.floor.id] === AXIS_STEPS - 1;
@@ -144,7 +106,7 @@ function updateFloorDisabled() {
 
 function setEditZone(name) {
   editZone = name;
-  lastFloor = currentFloors()[0]?.id || "size";
+  lastFloor = currentFloors()[0]?.id || "";
   buildSideBars();
   const open = Boolean(name);
   sideLeft.classList.toggle("open", open);
@@ -172,7 +134,7 @@ function layoutFloorButtons() {
   const gap = 3;
   const buttonSize = Math.min(40, Math.max(30, (height - 16 - gap * (count - 1)) / count));
   const stack = count * buttonSize + (count - 1) * gap;
-  const zoneY = worldToCanvasY(bodyHeight * ZONES[editZone].yFrac);
+  const zoneY = worldToCanvasY(bodyHeight * zoneById(editZone).yFrac);
   let start = zoneY - stack / 2;
   start = Math.max(8, Math.min(height - stack - 8, start));
   for (let i = 0; i < floorButtons.length; i += 1) {
@@ -193,17 +155,16 @@ function hitZone(clientY) {
   const half = Math.max(52, canvas.clientHeight * 0.08);
   let best = null;
   let bestDist = half;
-  for (const [name, zone] of Object.entries(ZONES)) {
-    if (!zoneAllowed(name)) continue;
+  for (const zone of zones) {
+    if (!zoneAllowed(zone.id)) continue;
     const dist = Math.abs(y - worldToCanvasY(bodyHeight * zone.yFrac));
     if (dist <= bestDist) {
-      best = name;
+      best = zone.id;
       bestDist = dist;
     }
   }
   return best;
 }
-const MODEL_URLS = ["./models/base.obj?v=local"];
 
 function makeClayMatcap() {
   const size = 256;
@@ -263,7 +224,7 @@ const skin = new THREE.MeshMatcapMaterial({
   matcap: makeClayMatcap(),
 });
 let dummy = null;
-let chestBound = null;
+let morphBound = null;
 let radius = 1.7;
 let bodyHeight = 1.6;
 let targetPx = 400;
@@ -297,7 +258,7 @@ function currentView() {
 }
 
 function zoneAllowed(name) {
-  return Boolean(ZONES[name]?.views?.includes(currentView()));
+  return Boolean(zoneById(name)?.views?.includes(currentView()));
 }
 
 function partName(object) {
@@ -399,38 +360,47 @@ function setHeight(px) {
   placeCamera();
 }
 
-async function loadModel() {
+async function loadOverlays(parent) {
   const loader = new OBJLoader();
-  let lastError = null;
-  for (const url of MODEL_URLS) {
+  for (const part of overlays(catalog)) {
     try {
-      const group = await loader.loadAsync(url);
-      group.traverse((child) => {
-        if (child.isMesh) {
-          child.material = skin;
-          child.geometry.computeVertexNormals();
-        }
-      });
-      hideHelpers(group);
-      dummy = group;
-      scene.add(dummy);
-      frameObject(dummy);
-      statusEl.textContent = idleStatus();
-      try {
-        const packed = await loadChestTargets(new URL("./data/body-targets.json?v=c3", import.meta.url));
-        chestBound = bindChestMorph(dummy, packed);
-        applyChestMorph(chestBound, bodyState);
-      } catch (error) {
-        console.error(error);
-        statusEl.textContent = "тело есть, правки формы не загрузились";
-      }
-      return;
+      const group = await loader.loadAsync(`${part.model}?v=${catalog.manifest.cache}`);
+      group.name = part.id;
+      parent.add(group);
     } catch (error) {
-      lastError = error;
+      console.warn("overlay skip", part.id, error);
     }
   }
-  statusEl.textContent = "не удалось загрузить тело";
-  throw lastError;
+}
+
+async function loadModel() {
+  const loader = new OBJLoader();
+  const bodyUrl = `${catalog.manifest.body || "./models/base.obj"}?v=${catalog.manifest.cache}`;
+  const group = await loader.loadAsync(bodyUrl);
+  group.traverse((child) => {
+    if (child.isMesh) {
+      child.material = skin;
+      child.geometry.computeVertexNormals();
+    }
+  });
+  hideHelpers(group);
+  dummy = group;
+  scene.add(dummy);
+  frameObject(dummy);
+  statusEl.textContent = idleStatus();
+  await loadOverlays(dummy);
+  try {
+    const morphUrl = new URL(
+      `${catalog.manifest.morphs || "./data/body-targets.json"}?v=${catalog.manifest.cache}`,
+      import.meta.url,
+    );
+    const packed = await loadTargets(morphUrl);
+    morphBound = bindMorph(dummy, packed);
+    applyMorph(morphBound, bodyState, recipe);
+  } catch (error) {
+    console.error(error);
+    statusEl.textContent = "тело есть, правки формы не загрузились";
+  }
 }
 
 document.querySelector("#turnLeft").addEventListener("click", (event) => {
@@ -476,8 +446,20 @@ function tick() {
   requestAnimationFrame(tick);
 }
 
+async function boot() {
+  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c4", import.meta.url));
+  recipe = morphRecipe(catalog);
+  sizes = sizeLabels(catalog);
+  bodyState = defaultState(catalog);
+  zones = tapZones(catalog);
+  await loadModel();
+}
+
 buildSideBars();
 window.addEventListener("resize", resize);
 resize();
-loadModel().catch((error) => console.error(error));
+boot().catch((error) => {
+  console.error(error);
+  statusEl.textContent = "не удалось загрузить модули станка";
+});
 tick();

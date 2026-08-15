@@ -1,0 +1,14 @@
+{
+  "id": "stomach",
+  "label": "живот",
+  "kind": "morph",
+  "mh_group": "Stomach",
+  "yFrac": 0.55,
+  "views": ["front", "front34", "side"],
+  "floors": [
+    { "id": "belly", "label": "объём", "kind": "axis", "decr": "stomachBellyDecr", "incr": "stomachBellyIncr" },
+    { "id": "tone", "label": "тонус", "kind": "axis", "decr": "stomachToneDecr", "incr": "stomachToneIncr" },
+    { "id": "navelY", "label": "пупок↑", "kind": "axis", "decr": "navelDown", "incr": "navelUp" },
+    { "id": "navelZ", "label": "пупок", "kind": "axis", "decr": "navelIn", "incr": "navelOut" }
+  ]
+}

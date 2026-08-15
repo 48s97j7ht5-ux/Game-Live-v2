@@ -1,0 +1,10 @@
+{
+  "id": "hair",
+  "label": "волосы",
+  "kind": "overlay",
+  "enabled": false,
+  "model": "./models/hair.obj",
+  "yFrac": 0.92,
+  "views": ["front", "front34", "side", "back", "back34"],
+  "floors": []
+}

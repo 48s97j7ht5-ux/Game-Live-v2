@@ -1,0 +1,10 @@
+{
+  "id": "clothes",
+  "label": "одежда",
+  "kind": "overlay",
+  "enabled": false,
+  "model": "./models/clothes.obj",
+  "yFrac": 0.62,
+  "views": ["front", "front34", "side", "back"],
+  "floors": []
+}

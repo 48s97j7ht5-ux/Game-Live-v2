@@ -1,0 +1,13 @@
+{
+  "id": "hips",
+  "label": "бёдра",
+  "kind": "morph",
+  "mh_group": "Hip",
+  "yFrac": 0.52,
+  "views": ["frontHalf", "backHalf"],
+  "floors": [
+    { "id": "hipHoriz", "label": "ширина", "kind": "axis", "decr": "hipHorizDecr", "incr": "hipHorizIncr" },
+    { "id": "hipDepth", "label": "глубина", "kind": "axis", "decr": "hipDepthDecr", "incr": "hipDepthIncr" },
+    { "id": "hipVert", "label": "высота", "kind": "axis", "decr": "hipVertDecr", "incr": "hipVertIncr" }
+  ]
+}

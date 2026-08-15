@@ -1,0 +1,13 @@
+{
+  "cache": "c4",
+  "body": "./models/base.obj",
+  "morphs": "./data/body-targets.json",
+  "parts": ["chest", "stomach", "hips", "butt", "hair", "clothes"],
+  "hints": {
+    "frontHalf": "на ½: грудь сверху, бёдра ниже",
+    "backHalf": "на ½ сзади нажми на бёдра",
+    "back": "сзади и на задней ¾ нажми на попу",
+    "back34": "сзади и на задней ¾ нажми на попу",
+    "default": "спереди, на передней ¾ и сбоку — грудь или живот"
+  }
+}

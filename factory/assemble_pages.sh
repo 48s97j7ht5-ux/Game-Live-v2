@@ -28,6 +28,8 @@ required=(
   web/viewer.js
   web/viewer.css
   web/chest-morph.js
+  web/registry.js
+  web/parts/manifest.json
   web/data/body-targets.json
   web/vendor/three.module.js
   web/vendor/loaders/OBJLoader.js

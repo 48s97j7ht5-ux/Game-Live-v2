@@ -1,0 +1,26 @@
+{
+  "id": "chest",
+  "label": "грудь",
+  "kind": "morph",
+  "mh_group": "Breast",
+  "yFrac": 0.73,
+  "views": ["front", "front34", "frontHalf", "side"],
+  "macro": {
+    "sizeIndex": {
+      "labels": ["A", "B", "C", "D", "E"],
+      "t": [0.42, 0.56, 0.7, 0.85, 1],
+      "default": 2
+    },
+    "firmness": 0.5,
+    "corners": ["minCupMinFirm", "minCupMaxFirm", "maxCupMinFirm", "maxCupMaxFirm"]
+  },
+  "floors": [
+    { "id": "size", "label": "чашка", "kind": "size" },
+    { "id": "dist", "label": "шире", "kind": "axis", "decr": "distDecr", "incr": "distIncr" },
+    { "id": "point", "label": "острее", "kind": "axis", "decr": "pointDecr", "incr": "pointIncr" },
+    { "id": "trans", "label": "выше", "kind": "axis", "decr": "transDown", "incr": "transUp" },
+    { "id": "vol", "label": "низ", "kind": "axis", "decr": "volUp", "incr": "volDown" },
+    { "id": "nipple", "label": "сосок", "kind": "axis", "decr": "nippleSizeDecr", "incr": "nippleSizeIncr" },
+    { "id": "nipplePoint", "label": "выступ", "kind": "axis", "decr": "nipplePointDecr", "incr": "nipplePointIncr" }
+  ]
+}

@@ -1,46 +1,7 @@
 /**
- * MakeHuman live morphs (hm08).
- *
- * UniversalModifier (apps/humanmodifier.py): value in [-1, 1], default 0.
- *   value < 0 → left/min target, weight = -value
- *   value > 0 → right/max target, weight = value
- *   No extra gain, no vertex mask.
- *
- * Torso UI groups (data/modifiers/modeling_sliders.json):
- *   Buttocks — buttocks-volume only
- *   Hip — scale depth/horiz/vert (trans/waist not packed yet)
- *   Stomach — tone, pregnant, navel bump, navel position
- *   Pelvis — pelvis-tone / bulge (not mixed into buttocks)
- *   Breast — BreastSize + BreastFirmness macros, then detail sliders
- *
- * MacroModifier: value in [0, 1]. Cup range starts above MH min-cup so A is not hollow.
+ * UniversalModifier mixer: value -1..+1, weight = |value|, no gain, no mask.
+ * Recipe (axes + optional breast macros) comes from web/parts/*.json.
  */
-export const SIZE_T = [0.42, 0.56, 0.7, 0.85, 1];
-export const FIRMNESS = 0.5;
-export const AXIS_STEPS = 7;
-export const AXIS_MID = 3;
-
-const CHEST_AXES = [
-  { id: "dist", decr: "distDecr", incr: "distIncr" },
-  { id: "point", decr: "pointDecr", incr: "pointIncr" },
-  { id: "trans", decr: "transDown", incr: "transUp" },
-  { id: "vol", decr: "volUp", incr: "volDown" },
-  { id: "nipple", decr: "nippleSizeDecr", incr: "nippleSizeIncr" },
-  { id: "nipplePoint", decr: "nipplePointDecr", incr: "nipplePointIncr" },
-];
-const STOMACH_AXES = [
-  { id: "belly", decr: "stomachBellyDecr", incr: "stomachBellyIncr" },
-  { id: "tone", decr: "stomachToneDecr", incr: "stomachToneIncr" },
-  { id: "navelY", decr: "navelDown", incr: "navelUp" },
-  { id: "navelZ", decr: "navelIn", incr: "navelOut" },
-];
-const HIP_AXES = [
-  { id: "hipHoriz", decr: "hipHorizDecr", incr: "hipHorizIncr" },
-  { id: "hipDepth", decr: "hipDepthDecr", incr: "hipDepthIncr" },
-  { id: "hipVert", decr: "hipVertDecr", incr: "hipVertIncr" },
-];
-const BUTT_AXES = [{ id: "butt", decr: "buttDecr", incr: "buttIncr" }];
-const AXES = [...CHEST_AXES, ...STOMACH_AXES, ...HIP_AXES, ...BUTT_AXES];
 
 function key3(x, y, z) {
   return `${x.toFixed(4)},${y.toFixed(4)},${z.toFixed(4)}`;
@@ -65,40 +26,25 @@ function addWeighted(out, source, weight) {
   }
 }
 
-export function axisAmount(step) {
-  return (step / (AXIS_STEPS - 1)) * 2 - 1;
+export function axisAmount(step, steps = 7) {
+  return (step / (steps - 1)) * 2 - 1;
 }
 
-export function defaultChestState() {
-  return {
-    sizeIndex: 2,
-    dist: AXIS_MID,
-    point: AXIS_MID,
-    trans: AXIS_MID,
-    vol: AXIS_MID,
-    nipple: AXIS_MID,
-    nipplePoint: AXIS_MID,
-    belly: AXIS_MID,
-    tone: AXIS_MID,
-    navelY: AXIS_MID,
-    navelZ: AXIS_MID,
-    hipHoriz: AXIS_MID,
-    hipDepth: AXIS_MID,
-    hipVert: AXIS_MID,
-    butt: AXIS_MID,
-  };
-}
-
-export function mixChestDeltas(targets, state, restCount) {
-  const sizeT = SIZE_T[state.sizeIndex];
-  const firm = FIRMNESS;
+export function mixDeltas(targets, state, restCount, recipe) {
   const mixed = new Float32Array(restCount);
-  addWeighted(mixed, targets.minCupMinFirm, (1 - sizeT) * (1 - firm));
-  addWeighted(mixed, targets.minCupMaxFirm, (1 - sizeT) * firm);
-  addWeighted(mixed, targets.maxCupMinFirm, sizeT * (1 - firm));
-  addWeighted(mixed, targets.maxCupMaxFirm, sizeT * firm);
-  for (const axis of AXES) {
-    const amount = axisAmount(state[axis.id]);
+  const macro = recipe?.macro;
+  if (macro?.corners && macro.sizeIndex) {
+    const table = macro.sizeIndex.t || [];
+    const sizeT = table[state.sizeIndex] ?? table[table.length - 1] ?? 1;
+    const firm = macro.firmness ?? 0.5;
+    const [a, b, c, d] = macro.corners;
+    addWeighted(mixed, targets[a], (1 - sizeT) * (1 - firm));
+    addWeighted(mixed, targets[b], (1 - sizeT) * firm);
+    addWeighted(mixed, targets[c], sizeT * (1 - firm));
+    addWeighted(mixed, targets[d], sizeT * firm);
+  }
+  for (const axis of recipe?.axes || []) {
+    const amount = axisAmount(state[axis.id] ?? 3);
     if (!amount) continue;
     const source = amount < 0 ? targets[axis.decr] : targets[axis.incr];
     addWeighted(mixed, source, Math.abs(amount));
@@ -106,13 +52,13 @@ export function mixChestDeltas(targets, state, restCount) {
   return mixed;
 }
 
-export async function loadChestTargets(url) {
+export async function loadTargets(url) {
   const response = await fetch(url);
-  if (!response.ok) throw new Error(`body targets ${response.status}`);
+  if (!response.ok) throw new Error(`targets ${response.status}`);
   return response.json();
 }
 
-export function bindChestMorph(group, packed) {
+export function bindMorph(group, packed) {
   const lookup = new Map();
   for (let i = 0; i < packed.index.length; i += 1) {
     const o = i * 3;
@@ -132,14 +78,13 @@ export function bindChestMorph(group, packed) {
       if (slot !== undefined) hits += 1;
     }
     if (hits) bindings.push({ mesh: child, rest, slots });
-    else console.warn("chest morph: no matching verts on", child.name);
   });
   return { packed, bindings };
 }
 
-export function applyChestMorph(bound, state) {
+export function applyMorph(bound, state, recipe) {
   if (!bound) return;
-  const deltas = mixChestDeltas(bound.packed.targets, state, bound.packed.index.length * 3);
+  const deltas = mixDeltas(bound.packed.targets, state, bound.packed.index.length * 3, recipe);
   for (const item of bound.bindings) {
     const position = item.mesh.geometry.getAttribute("position");
     const out = position.array;
