@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b0d11">
+  <title>Game Live</title>
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <main class="app">
+    <header class="top">
+      <div class="top-main">
+        <div class="date">
+          <strong id="weekday">Понедельник</strong>
+          <span id="dateLabel">1 сентября</span>
+        </div>
+        <div class="clock" id="clock">08:10</div>
+        <div class="cash">
+          <strong id="money">24 500 ₽</strong>
+          <span>деньги</span>
+        </div>
+      </div>
+      <div class="sub">
+        <span id="weather">☁ +18° · прохладно</span>
+        <div class="speed" id="speedControl">
+          <button type="button" data-speed="0">Ⅱ</button>
+          <button type="button" class="active" data-speed="1">▶</button>
+          <button type="button" data-speed="4">▶▶</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="content">
+      <section class="screen active" id="world">
+        <div class="scene" id="scene">
+          <div class="building"><div class="door"></div></div>
+          <div class="tree"></div>
+          <div class="place" id="place">ДВОР · ДОМ 17</div>
+        </div>
+        <div class="story">
+          <h1 id="worldTitle">Твой новый дом</h1>
+          <p id="worldText">Ты стоишь во дворе старой пятиэтажки. Вещи уже занесены в квартиру. Дом живёт своей обычной утренней жизнью.</p>
+          <div class="actions" id="worldActions"></div>
+        </div>
+      </section>
+
+      <section class="screen panel-screen" id="phone">
+        <div class="iphone">
+          <div class="iphone-screen">
+            <div class="island"></div>
+            <div class="ios-status">
+              <span id="phoneTime">08:10</span>
+              <span class="ios-icons">● ◔ ▰</span>
+            </div>
+            <div class="home-content">
+              <div class="widget">
+                <div class="bigtime" id="phoneBigTime">08:10</div>
+                <small id="phoneMeta">Понедельник, 1 сентября · +18°</small>
+              </div>
+              <div class="ios-apps" id="phoneApps"></div>
+              <div class="dock" id="phoneDock"></div>
+              <div class="homebar"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" id="me">
+        <div class="me-stage">
+          <div class="me-head">
+            <div>
+              <h1>Я</h1>
+              <small>Текущее состояние персонажа</small>
+            </div>
+            <div class="condition" id="condition">● Нормально</div>
+          </div>
+          <div class="person" aria-label="Временная болванка персонажа в полный рост">
+            <div class="person-hair"></div>
+            <div class="person-head"></div>
+            <div class="person-neck"></div>
+            <div class="person-torso"></div>
+            <div class="person-arm l"></div>
+            <div class="person-arm r"></div>
+            <div class="person-hand l"></div>
+            <div class="person-hand r"></div>
+            <div class="person-hips"></div>
+            <div class="person-leg l"></div>
+            <div class="person-leg r"></div>
+            <div class="person-foot l"></div>
+            <div class="person-foot r"></div>
+            <div class="clothing-slots" id="clothingSlots" aria-label="Одежда выбранного слоя"></div>
+          </div>
+          <div class="layer-control" id="layerControl">
+            <button id="layerUp" type="button" aria-label="Внешний слой">↑</button>
+            <button id="layerDown" type="button" aria-label="Внутренний слой">↓</button>
+            <button id="toggleSlots" type="button" class="eye-toggle active" aria-label="Скрыть ячейки" aria-pressed="true">◉</button>
+          </div>
+        </div>
+        <div class="me-bottom">
+          <div class="status-row" id="statusRow"></div>
+          <div class="me-tabs" id="meTabs">
+            <button type="button" class="active" data-tab="overview">Обзор</button>
+            <button type="button" data-tab="clothes">Одежда</button>
+            <button type="button" data-tab="body">Состояние</button>
+          </div>
+          <div class="detail" id="meDetail"></div>
+        </div>
+      </section>
+    </div>
+
+    <nav class="nav" id="nav">
+      <button type="button" class="active" data-screen="world">
+        <span class="ico">⌂</span>
+        <span class="label">Мир</span>
+      </button>
+      <button type="button" data-screen="phone">
+        <span class="ico">▣</span>
+        <span class="label">Телефон</span>
+      </button>
+      <button type="button" data-screen="me">
+        <span class="ico">●</span>
+        <span class="label">Я</span>
+      </button>
+    </nav>
+  </main>
+  <div class="toast" id="toast"></div>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
