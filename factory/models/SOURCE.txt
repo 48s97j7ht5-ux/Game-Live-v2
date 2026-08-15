@@ -4,5 +4,5 @@ Vendored copies for the web viewer (no CDN):
 
 Breast and stomach morphs in web/data/body-targets.json are packed from CC0
 MakeHuman hm08 targets in Game-Live-Web:
-experiments/makehuman-v5/targets/breast/ and .../stomach/
+experiments/makehuman-v5/targets/breast/, .../stomach/, .../buttocks/, .../pelvis/
 Rebuild: python3 factory/pack_chest_targets.py <base.obj> <targets-root> web/data/body-targets.json

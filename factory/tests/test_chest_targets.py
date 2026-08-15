@@ -30,6 +30,10 @@ needed = [
     "navelUp",
     "navelIn",
     "navelOut",
+    "buttDecr",
+    "buttIncr",
+    "pelvisToneDecr",
+    "pelvisToneIncr",
 ]
 for name in needed:
     values = packed["targets"][name]
@@ -56,6 +60,7 @@ AXES = {
     "nipple": ("nippleSizeDecr", "nippleSizeIncr"),
     "nipplePoint": ("nipplePointDecr", "nipplePointIncr"),
     "belly": ("stomachBellyDecr", "stomachBellyIncr"),
+    "butt": ("buttDecr", "buttIncr"),
 }
 
 
@@ -108,4 +113,5 @@ assert sum(large[2::3]) / n > sum(small[2::3]) / n + 0.01
 assert signed_x(mix(2, {"dist": 6})) > signed_x(mix(2, {"dist": 0}))
 assert mean_y(mix(2, {"trans": 6})) > mean_y(mix(2, {"trans": 0}))
 assert sum(mix(2, {"belly": 6})[2::3]) > sum(mix(2, {"belly": 0})[2::3])
+assert sum(mix(2, {"butt": 6})[2::3]) < sum(mix(2, {"butt": 0})[2::3])
 print("ok", n, "verts", "minZ", round(min_z, 4), "maxZ", round(max_z, 4))

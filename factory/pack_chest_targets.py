@@ -37,6 +37,10 @@ TARGET_FILES = {
     "navelUp": "stomach/stomach-navel-up.target",
     "navelIn": "stomach/stomach-navel-in.target",
     "navelOut": "stomach/stomach-navel-out.target",
+    "buttDecr": "buttocks/buttocks-volume-decr.target",
+    "buttIncr": "buttocks/buttocks-volume-incr.target",
+    "pelvisToneDecr": "pelvis/pelvis-tone-decr.target",
+    "pelvisToneIncr": "pelvis/pelvis-tone-incr.target",
 }
 
 

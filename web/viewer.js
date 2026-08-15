@@ -8,6 +8,7 @@ const ZONES = {
   chest: {
     label: "грудь",
     yFrac: 0.73,
+    side: "front",
     floors: [
       { id: "size", label: "чашка", kind: "size" },
       { id: "dist", label: "шире", kind: "axis" },
@@ -21,11 +22,21 @@ const ZONES = {
   stomach: {
     label: "живот",
     yFrac: 0.55,
+    side: "front",
     floors: [
       { id: "belly", label: "объём", kind: "axis" },
       { id: "tone", label: "тонус", kind: "axis" },
       { id: "navelY", label: "пупок↑", kind: "axis" },
       { id: "navelZ", label: "пупок", kind: "axis" },
+    ],
+  },
+  butt: {
+    label: "попа",
+    yFrac: 0.52,
+    side: "back",
+    floors: [
+      { id: "butt", label: "объём", kind: "axis" },
+      { id: "pelvis", label: "тонус", kind: "axis" },
     ],
   },
 };
@@ -51,7 +62,9 @@ function floorValue(floor) {
 }
 
 function idleStatus() {
-  if (!editZone) return "нажми на грудь или живот";
+  if (!editZone) {
+    return viewingBack() ? "сзади нажми на попу" : "нажми на грудь или живот";
+  }
   const floor = currentFloors().find((item) => item.id === lastFloor) || currentFloors()[0];
   const zone = ZONES[editZone];
   const cup = editZone === "chest" ? ` · ${SIZES[bodyState.sizeIndex]}` : "";
@@ -166,9 +179,12 @@ function hitZone(clientY) {
   const rect = canvas.getBoundingClientRect();
   const y = clientY - rect.top;
   const half = Math.max(52, canvas.clientHeight * 0.08);
+  const back = viewingBack();
   let best = null;
   let bestDist = half;
   for (const [name, zone] of Object.entries(ZONES)) {
+    if (zone.side === "back" && !back) continue;
+    if (zone.side === "front" && back) continue;
     const dist = Math.abs(y - worldToCanvasY(bodyHeight * zone.yFrac));
     if (dist <= bestDist) {
       best = name;
@@ -258,6 +274,17 @@ const TURN_STOPS = [
 ];
 const turnLabel = document.querySelector("#turnLabel");
 
+function viewingBack() {
+  return TURN_STOPS[yawIndex].yaw > 90 && TURN_STOPS[yawIndex].yaw < 270;
+}
+
+function zoneAllowed(name) {
+  const side = ZONES[name]?.side;
+  if (side === "back") return viewingBack();
+  if (side === "front") return !viewingBack();
+  return true;
+}
+
 function partName(object) {
   let node = object;
   while (node) {
@@ -344,6 +371,8 @@ function placeCamera() {
 function stepTurn(delta) {
   yawIndex = (yawIndex + delta + TURN_STOPS.length) % TURN_STOPS.length;
   placeCamera();
+  if (editZone && !zoneAllowed(editZone)) setEditZone(null);
+  else if (dummy) statusEl.textContent = idleStatus();
 }
 
 function setHeight(px) {
@@ -357,7 +386,7 @@ function setHeight(px) {
 
 async function loadModel() {
   const loader = new OBJLoader();
-  const targetsPromise = loadChestTargets(new URL("./data/body-targets.json?v=stomach", import.meta.url));
+  const targetsPromise = loadChestTargets(new URL("./data/body-targets.json?v=butt", import.meta.url));
   let lastError = null;
   for (const url of MODEL_URLS) {
     try {

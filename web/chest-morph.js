@@ -17,7 +17,11 @@ const STOMACH_AXES = [
   { id: "navelY", decr: "navelDown", incr: "navelUp" },
   { id: "navelZ", decr: "navelIn", incr: "navelOut" },
 ];
-const AXES = [...CHEST_AXES, ...STOMACH_AXES];
+const BUTT_AXES = [
+  { id: "butt", decr: "buttDecr", incr: "buttIncr" },
+  { id: "pelvis", decr: "pelvisToneDecr", incr: "pelvisToneIncr" },
+];
+const AXES = [...CHEST_AXES, ...STOMACH_AXES, ...BUTT_AXES];
 
 function key3(x, y, z) {
   return `${x.toFixed(4)},${y.toFixed(4)},${z.toFixed(4)}`;
@@ -47,6 +51,8 @@ export function defaultChestState() {
     tone: AXIS_MID,
     navelY: AXIS_MID,
     navelZ: AXIS_MID,
+    butt: AXIS_MID,
+    pelvis: AXIS_MID,
   };
 }
 
