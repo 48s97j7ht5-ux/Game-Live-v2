@@ -1,8 +1,8 @@
 import * as THREE from "three";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
-import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c10";
-import { defaultState, loadCatalog, morphRecipe, overlays, sizeLabels, tapZones } from "./registry.js?v=c10";
-import { hexRgb, LIGHT, SCENE_BG, SKIN } from "./palette.js?v=c10";
+import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c11";
+import { defaultState, loadCatalog, morphRecipe, overlays, sizeLabels, tapZones } from "./registry.js?v=c11";
+import { LIGHT, SCENE_BG, SKIN } from "./palette.js?v=c11";
 
 const AXIS_STEPS = 7;
 
@@ -167,71 +167,22 @@ function hitZone(clientY) {
   return best;
 }
 
-function makeSkinMatcap() {
-  const size = 256;
-  const board = document.createElement("canvas");
-  board.width = size;
-  board.height = size;
-  const ctx = board.getContext("2d");
-  const img = ctx.createImageData(size, size);
-  const data = img.data;
-  const cavity = hexRgb(SKIN.cavity);
-  const deep = hexRgb(SKIN.deep);
-  const shadow = hexRgb(SKIN.shadow);
-  const mid = hexRgb(SKIN.mid);
-  const light = hexRgb(SKIN.light);
-  const hi = hexRgb(SKIN.hi);
-  for (let y = 0; y < size; y += 1) {
-    for (let x = 0; x < size; x += 1) {
-      const nx = (x / (size - 1)) * 2 - 1;
-      const ny = 1 - (y / (size - 1)) * 2;
-      const r2 = nx * nx + ny * ny;
-      const i = (y * size + x) * 4;
-      if (r2 > 1) {
-        data[i] = cavity[0];
-        data[i + 1] = cavity[1];
-        data[i + 2] = cavity[2];
-        data[i + 3] = 255;
-        continue;
-      }
-      const nz = Math.sqrt(1 - r2);
-      const wrap = Math.max(0, nx * -0.28 + ny * 0.36 + nz * 0.84);
-      const spec = Math.pow(Math.max(0, nx * -0.1 + ny * 0.34 + nz * 0.92), 40) * 0.18;
-      const rim = Math.pow(1 - nz, 1.35) * 0.28;
-      const t = Math.min(1, Math.max(0, wrap * 0.82 + 0.06 + spec - rim));
-      let from;
-      let to;
-      let u;
-      if (t < 0.16) {
-        from = cavity;
-        to = deep;
-        u = t / 0.16;
-      } else if (t < 0.38) {
-        from = deep;
-        to = shadow;
-        u = (t - 0.16) / 0.22;
-      } else if (t < 0.62) {
-        from = shadow;
-        to = mid;
-        u = (t - 0.38) / 0.24;
-      } else if (t < 0.84) {
-        from = mid;
-        to = light;
-        u = (t - 0.62) / 0.22;
-      } else {
-        from = light;
-        to = hi;
-        u = (t - 0.84) / 0.16;
-      }
-      data[i] = Math.round(from[0] + (to[0] - from[0]) * u);
-      data[i + 1] = Math.round(from[1] + (to[1] - from[1]) * u);
-      data[i + 2] = Math.round(from[2] + (to[2] - from[2]) * u);
-      data[i + 3] = 255;
-    }
+function makeToonGradient() {
+  const steps = [40, 72, 118, 175, 255];
+  const data = new Uint8Array(steps.length * 4);
+  for (let i = 0; i < steps.length; i += 1) {
+    const value = steps[i];
+    data[i * 4] = value;
+    data[i * 4 + 1] = value;
+    data[i * 4 + 2] = value;
+    data[i * 4 + 3] = 255;
   }
-  ctx.putImageData(img, 0, 0);
-  const texture = new THREE.CanvasTexture(board);
-  texture.colorSpace = THREE.SRGBColorSpace;
+  const texture = new THREE.DataTexture(data, steps.length, 1);
+  texture.magFilter = THREE.NearestFilter;
+  texture.minFilter = THREE.NearestFilter;
+  texture.wrapS = THREE.ClampToEdgeWrapping;
+  texture.wrapT = THREE.ClampToEdgeWrapping;
+  texture.needsUpdate = true;
   return texture;
 }
 
@@ -242,17 +193,17 @@ const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.01, 2000);
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-scene.add(new THREE.HemisphereLight(LIGHT.hemiSky, LIGHT.hemiGround, 0.72));
-const key = new THREE.DirectionalLight(LIGHT.key, 1.35);
+scene.add(new THREE.HemisphereLight(LIGHT.hemiSky, LIGHT.hemiGround, 0.28));
+const key = new THREE.DirectionalLight(LIGHT.key, 1.7);
 key.position.set(-1.2, 2.2, 1.8);
 scene.add(key);
-const fill = new THREE.DirectionalLight(LIGHT.fill, 0.14);
+const fill = new THREE.DirectionalLight(LIGHT.fill, 0.08);
 fill.position.set(1.4, 0.6, 0.8);
 scene.add(fill);
 
-const skin = new THREE.MeshMatcapMaterial({
-  color: 0xfff6ee,
-  matcap: makeSkinMatcap(),
+const skin = new THREE.MeshToonMaterial({
+  color: SKIN.light,
+  gradientMap: makeToonGradient(),
 });
 let dummy = null;
 let morphBound = null;
@@ -487,7 +438,7 @@ async function attachPixelFilter() {
   const box = document.querySelector("#pixelMode");
   if (!box) return;
   try {
-    const mod = await import("./pixel-mode.js?v=c10");
+    const mod = await import("./pixel-mode.js?v=c11");
     pixelFilter = mod.createPixelFilter(renderer);
     box.addEventListener("change", () => pixelFilter.setEnabled(box.checked));
   } catch (error) {
@@ -497,7 +448,7 @@ async function attachPixelFilter() {
 }
 
 async function boot() {
-  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c10", import.meta.url));
+  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c11", import.meta.url));
   recipe = morphRecipe(catalog);
   sizes = sizeLabels(catalog);
   bodyState = defaultState(catalog);
