@@ -2,8 +2,53 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
 
-const canvas = document.querySelector("#view");
-const statusEl = document.querySelector("#status");
+const ZONES = [
+  { id: "chest", fromFeet: 0.73, label: "грудь" },
+  { id: "waist", fromFeet: 0.62, label: "талия" },
+  { id: "hips", fromFeet: 0.53, label: "бёдра" },
+];
+
+const sideLeft = document.querySelector("#sideLeft");
+const sideRight = document.querySelector("#sideRight");
+const zoneButtons = [];
+
+function buildSideBars() {
+  for (const zone of ZONES) {
+    const left = document.createElement("button");
+    left.type = "button";
+    left.dataset.zone = zone.id;
+    left.dataset.dir = "left";
+    left.setAttribute("aria-label", `${zone.label} влево`);
+    left.textContent = "←";
+    sideLeft.appendChild(left);
+    zoneButtons.push({ button: left, zone });
+
+    const right = document.createElement("button");
+    right.type = "button";
+    right.dataset.zone = zone.id;
+    right.dataset.dir = "right";
+    right.setAttribute("aria-label", `${zone.label} вправо`);
+    right.textContent = "→";
+    sideRight.appendChild(right);
+    zoneButtons.push({ button: right, zone });
+  }
+}
+
+function worldToCanvasY(worldY) {
+  const point = new THREE.Vector3(0, worldY, 0);
+  point.project(camera);
+  return (-point.y * 0.5 + 0.5) * canvas.clientHeight;
+}
+
+function layoutZoneButtons() {
+  const height = canvas.clientHeight;
+  for (const item of zoneButtons) {
+    const y = worldToCanvasY(bodyHeight * item.zone.fromFeet);
+    const clamped = Math.min(height - 24, Math.max(24, y));
+    item.button.style.top = `${clamped}px`;
+    item.button.style.transform = "translateY(-50%)";
+  }
+}
 const MODEL_URLS = [
   "./models/base.obj",
   "https://cdn.jsdelivr.net/gh/48s97j7ht5-ux/Game-Live-Web@main/engine/anny/mpfb2/3dobjs/base.obj",
@@ -65,6 +110,7 @@ function applyScale() {
   camera.top = worldH / 2;
   camera.bottom = -worldH / 2;
   camera.updateProjectionMatrix();
+  layoutZoneButtons();
 }
 
 function resize() {
@@ -157,13 +203,15 @@ document.querySelectorAll(".heights button").forEach((button) => {
   button.addEventListener("click", () => setHeight(Number(button.dataset.height)));
 });
 
-window.addEventListener("resize", resize);
-resize();
-loadModel().catch((error) => console.error(error));
-
 function tick() {
   controls.update();
   renderer.render(scene, camera);
+  layoutZoneButtons();
   requestAnimationFrame(tick);
 }
+
+buildSideBars();
+window.addEventListener("resize", resize);
+resize();
+loadModel().catch((error) => console.error(error));
 tick();
