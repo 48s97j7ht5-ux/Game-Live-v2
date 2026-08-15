@@ -134,8 +134,46 @@ function inChestBand(clientY) {
 }
 const MODEL_URLS = ["./models/base.obj?v=local"];
 
+function makeClayMatcap() {
+  const size = 256;
+  const board = document.createElement("canvas");
+  board.width = size;
+  board.height = size;
+  const ctx = board.getContext("2d");
+  const img = ctx.createImageData(size, size);
+  const data = img.data;
+  for (let y = 0; y < size; y += 1) {
+    for (let x = 0; x < size; x += 1) {
+      const nx = (x / (size - 1)) * 2 - 1;
+      const ny = 1 - (y / (size - 1)) * 2;
+      const r2 = nx * nx + ny * ny;
+      const i = (y * size + x) * 4;
+      if (r2 > 1) {
+        data[i] = 32;
+        data[i + 1] = 30;
+        data[i + 2] = 28;
+        data[i + 3] = 255;
+        continue;
+      }
+      const nz = Math.sqrt(1 - r2);
+      const wrap = Math.max(0, nx * -0.32 + ny * 0.48 + nz * 0.78);
+      const spec = Math.pow(Math.max(0, nx * -0.18 + ny * 0.42 + nz * 0.88), 28) * 0.4;
+      const rim = Math.pow(1 - nz, 1.6) * 0.22;
+      const t = Math.min(1, wrap * 0.82 + 0.16 + spec - rim);
+      data[i] = Math.round(88 + t * 152);
+      data[i + 1] = Math.round(68 + t * 128);
+      data[i + 2] = Math.round(54 + t * 108);
+      data[i + 3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+  const texture = new THREE.CanvasTexture(board);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x2a2c31);
+scene.background = new THREE.Color(0x1c1e24);
 
 const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.01, 2000);
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -149,7 +187,10 @@ const fill = new THREE.DirectionalLight(0x99aacc, 0.45);
 fill.position.set(1.4, 0.6, 0.8);
 scene.add(fill);
 
-const skin = new THREE.MeshToonMaterial({ color: 0xdbb396 });
+const skin = new THREE.MeshMatcapMaterial({
+  color: 0xffd7b8,
+  matcap: makeClayMatcap(),
+});
 let dummy = null;
 let chestBound = null;
 let radius = 1.7;
