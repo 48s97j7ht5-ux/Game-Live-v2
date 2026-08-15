@@ -1,8 +1,7 @@
 import * as THREE from "three";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
-import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c12";
-import { defaultState, loadCatalog, morphRecipe, overlays, sizeLabels, tapZones } from "./registry.js?v=c12";
-import { LIGHT, SCENE_BG, SKIN } from "./palette.js?v=c12";
+import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c13";
+import { defaultState, loadCatalog, morphRecipe, overlays, sizeLabels, tapZones } from "./registry.js?v=c13";
 
 const AXIS_STEPS = 7;
 
@@ -167,43 +166,62 @@ function hitZone(clientY) {
   return best;
 }
 
-function makeToonGradient() {
-  const steps = [14, 48, 110, 255];
-  const data = new Uint8Array(steps.length * 4);
-  for (let i = 0; i < steps.length; i += 1) {
-    const value = steps[i];
-    data[i * 4] = value;
-    data[i * 4 + 1] = value;
-    data[i * 4 + 2] = value;
-    data[i * 4 + 3] = 255;
+function makeClayMatcap() {
+  const size = 256;
+  const board = document.createElement("canvas");
+  board.width = size;
+  board.height = size;
+  const ctx = board.getContext("2d");
+  const img = ctx.createImageData(size, size);
+  const data = img.data;
+  for (let y = 0; y < size; y += 1) {
+    for (let x = 0; x < size; x += 1) {
+      const nx = (x / (size - 1)) * 2 - 1;
+      const ny = 1 - (y / (size - 1)) * 2;
+      const r2 = nx * nx + ny * ny;
+      const i = (y * size + x) * 4;
+      if (r2 > 1) {
+        data[i] = 32;
+        data[i + 1] = 30;
+        data[i + 2] = 28;
+        data[i + 3] = 255;
+        continue;
+      }
+      const nz = Math.sqrt(1 - r2);
+      const wrap = Math.max(0, nx * -0.32 + ny * 0.48 + nz * 0.78);
+      const spec = Math.pow(Math.max(0, nx * -0.18 + ny * 0.42 + nz * 0.88), 28) * 0.4;
+      const rim = Math.pow(1 - nz, 1.6) * 0.22;
+      const t = Math.min(1, wrap * 0.82 + 0.16 + spec - rim);
+      data[i] = Math.round(88 + t * 152);
+      data[i + 1] = Math.round(68 + t * 128);
+      data[i + 2] = Math.round(54 + t * 108);
+      data[i + 3] = 255;
+    }
   }
-  const texture = new THREE.DataTexture(data, steps.length, 1);
-  texture.magFilter = THREE.NearestFilter;
-  texture.minFilter = THREE.NearestFilter;
-  texture.wrapS = THREE.ClampToEdgeWrapping;
-  texture.wrapT = THREE.ClampToEdgeWrapping;
-  texture.needsUpdate = true;
+  ctx.putImageData(img, 0, 0);
+  const texture = new THREE.CanvasTexture(board);
+  texture.colorSpace = THREE.SRGBColorSpace;
   return texture;
 }
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(SCENE_BG);
+scene.background = new THREE.Color(0x1c1e24);
 
 const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.01, 2000);
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-scene.add(new THREE.HemisphereLight(LIGHT.hemiSky, LIGHT.hemiGround, 0.08));
-const key = new THREE.DirectionalLight(LIGHT.key, 2.2);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x334455, 1.1));
+const key = new THREE.DirectionalLight(0xffffff, 1.4);
 key.position.set(-1.2, 2.2, 1.8);
 scene.add(key);
-const fill = new THREE.DirectionalLight(LIGHT.fill, 0.04);
+const fill = new THREE.DirectionalLight(0x99aacc, 0.45);
 fill.position.set(1.4, 0.6, 0.8);
 scene.add(fill);
 
-const skin = new THREE.MeshToonMaterial({
-  color: SKIN.mid,
-  gradientMap: makeToonGradient(),
+const skin = new THREE.MeshMatcapMaterial({
+  color: 0xffd7b8,
+  matcap: makeClayMatcap(),
 });
 let dummy = null;
 let morphBound = null;
@@ -438,7 +456,7 @@ async function attachPixelFilter() {
   const box = document.querySelector("#pixelMode");
   if (!box) return;
   try {
-    const mod = await import("./pixel-mode.js?v=c12");
+    const mod = await import("./pixel-mode.js?v=c13");
     pixelFilter = mod.createPixelFilter(renderer);
     box.addEventListener("change", () => pixelFilter.setEnabled(box.checked));
   } catch (error) {
@@ -448,7 +466,7 @@ async function attachPixelFilter() {
 }
 
 async function boot() {
-  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c12", import.meta.url));
+  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c13", import.meta.url));
   recipe = morphRecipe(catalog);
   sizes = sizeLabels(catalog);
   bodyState = defaultState(catalog);

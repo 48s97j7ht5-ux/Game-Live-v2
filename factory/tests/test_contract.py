@@ -27,7 +27,7 @@ def test_cache_token_everywhere() -> None:
     assert f"viewer.css?v={CACHE}" in index
     assert f"viewer.js?v={CACHE}" in index
     assert f"chest-morph.js?v={CACHE}" in viewer
-    assert f"palette.js?v={CACHE}" in viewer
+    assert f"registry.js?v={CACHE}" in viewer
     assert f"parts/manifest.json?v={CACHE}" in viewer
 
 
