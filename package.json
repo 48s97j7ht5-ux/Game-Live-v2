@@ -1,9 +1,0 @@
-{
-  "name": "game-live-v2",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "test": "node tests/world.test.mjs",
-    "start": "python3 -m http.server 4173"
-  }
-}
