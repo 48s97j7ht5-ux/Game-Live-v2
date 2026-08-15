@@ -13,7 +13,7 @@ PALETTE_COLORS = 48
 FILL_RATIO = 0.9
 
 
-def content_bbox(image: Image.Image, threshold: int = 24) -> tuple[int, int, int, int]:
+def content_bbox(image: Image.Image, threshold: int = 12) -> tuple[int, int, int, int]:
     bg = image.getpixel((0, 0))
     width, height = image.size
     pixels = image.load()

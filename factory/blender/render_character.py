@@ -113,8 +113,8 @@ def setup_world() -> None:
     scene.world = world
     world.use_nodes = True
     bg = world.node_tree.nodes["Background"]
-    bg.inputs["Color"].default_value = (0.07, 0.075, 0.085, 1)
-    bg.inputs["Strength"].default_value = 0.35
+    bg.inputs["Color"].default_value = (0.22, 0.23, 0.26, 1)
+    bg.inputs["Strength"].default_value = 1.0
 
     sun = bpy.data.lights.new("key", "SUN")
     sun.energy = 4.5
