@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
-import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c14";
+import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c15";
 import {
   bodyModel,
   bodyPart,
@@ -11,9 +11,13 @@ import {
   overlays,
   sizeLabels,
   tapZones,
-} from "./registry.js?v=c14";
+} from "./registry.js?v=c15";
 
 const AXIS_STEPS = 7;
+const FOCUS = {
+  body: { yFrac: 0.5, span: 1 },
+  hair: { yFrac: 0.8, span: 0.46 },
+};
 
 const sideLeft = document.querySelector("#sideLeft");
 const sideRight = document.querySelector("#sideRight");
@@ -32,6 +36,7 @@ let lastFloor = "";
 let currentBody = "clay";
 let currentVariant = "";
 let bodyLoad = 0;
+let focusMode = "body";
 
 function zoneById(id) {
   return zones.find((zone) => zone.id === id);
@@ -48,6 +53,7 @@ function floorValue(floor) {
 
 function idleStatus() {
   if (!editZone) {
+    if (focusMode === "hair") return "причёска · кадр по грудь";
     const body = bodyPart(catalog, currentBody);
     if (body?.kind === "body" && currentBody !== "clay") return body.hint || body.label;
     const hints = catalog.manifest.hints || {};
@@ -297,7 +303,8 @@ function hideHelpers(group) {
 function applyScale() {
   const width = Math.max(canvas.clientWidth, 1);
   const height = Math.max(canvas.clientHeight, 1);
-  const worldH = bodyHeight * (height / targetPx);
+  const span = FOCUS[focusMode]?.span ?? 1;
+  const worldH = bodyHeight * span * (height / targetPx);
   const worldW = worldH * (width / height);
   camera.left = -worldW / 2;
   camera.right = worldW / 2;
@@ -344,7 +351,7 @@ function lockCenter() {
 }
 
 function lookAtYaw(yawDeg, lift = 1) {
-  const y = bodyHeight * 0.5;
+  const y = bodyHeight * (FOCUS[focusMode]?.yFrac ?? 0.5);
   const distance = radius * 3.4;
   const yaw = (yawDeg * Math.PI) / 180;
   camera.position.set(Math.sin(yaw) * distance, y * lift, Math.cos(yaw) * distance);
@@ -364,6 +371,17 @@ function stepTurn(delta) {
   placeCamera();
   if (editZone && !zoneAllowed(editZone)) setEditZone(null);
   else if (dummy) statusEl.textContent = idleStatus();
+}
+
+function setFocus(mode) {
+  focusMode = mode === "hair" ? "hair" : "body";
+  if (focusMode === "hair") setEditZone(null);
+  document.querySelectorAll("#focus button").forEach((button) => {
+    button.classList.toggle("active", button.dataset.focus === focusMode);
+  });
+  applyScale();
+  placeCamera();
+  if (dummy) statusEl.textContent = idleStatus();
 }
 
 function setHeight(px) {
@@ -491,6 +509,9 @@ document.querySelector("#turnRight").addEventListener("click", (event) => {
   event.stopPropagation();
   stepTurn(-1);
 });
+document.querySelectorAll("#focus button").forEach((button) => {
+  button.addEventListener("click", () => setFocus(button.dataset.focus));
+});
 document.querySelectorAll(".heights button").forEach((button) => {
   button.addEventListener("click", () => setHeight(Number(button.dataset.height)));
 });
@@ -508,6 +529,7 @@ stage.addEventListener("pointerup", (event) => {
   if (event.target.closest("button")) return;
   if (Math.hypot(dx, dy) > 12) return;
   if (!dummy) return;
+  if (focusMode === "hair") return;
   const zone = hitZone(event.clientY);
   if (zone) {
     toggleZone(zone);
@@ -536,7 +558,7 @@ async function attachPixelFilter() {
   const box = document.querySelector("#pixelMode");
   if (!box) return;
   try {
-    const mod = await import("./pixel-mode.js?v=c14");
+    const mod = await import("./pixel-mode.js?v=c15");
     pixelFilter = mod.createPixelFilter(renderer);
     box.addEventListener("change", () => pixelFilter.setEnabled(box.checked));
   } catch (error) {
@@ -546,7 +568,7 @@ async function attachPixelFilter() {
 }
 
 async function boot() {
-  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c14", import.meta.url));
+  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c15", import.meta.url));
   currentBody = catalog.manifest.defaultBody || bodyParts(catalog)[0]?.id || "clay";
   buildBodySwitcher();
   await switchBody(currentBody);

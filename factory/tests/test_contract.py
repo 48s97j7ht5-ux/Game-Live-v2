@@ -117,7 +117,8 @@ def test_anime_is_separate_body_module() -> None:
     assert anime["model"].startswith("./models/mblab/")
     assert clay["model"] == "./models/base.obj"
     viewer = (ROOT / "web/viewer.js").read_text()
-    assert "switchBody" in viewer
+    assert "setFocus" in viewer
+    assert 'data-focus="hair"' in (ROOT / "index.html").read_text()
     assert "kind=body" in "\n".join(CONTRACT["rules"]) or any(
         "kind=body" in rule for rule in CONTRACT["rules"]
     )

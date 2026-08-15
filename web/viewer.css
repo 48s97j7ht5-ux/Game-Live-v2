@@ -117,19 +117,22 @@ canvas {
 
 .bodies,
 .variants,
-.heights {
+.heights,
+.focus {
   display: grid;
   gap: 8px;
   width: min(46vw, 168px);
   flex: 0 0 auto;
 }
 
-.bodies { grid-template-columns: 1fr 1fr; }
-.variants { grid-template-columns: repeat(3, 1fr); }
+.focus,
+.bodies,
 .heights { grid-template-columns: 1fr 1fr; }
+.variants { grid-template-columns: repeat(3, 1fr); }
 
 .bodies button,
-.variants button {
+.variants button,
+.focus button {
   min-height: 34px;
   font-size: 12px;
 }
