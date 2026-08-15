@@ -155,11 +155,22 @@ let chestBound = null;
 let radius = 1.7;
 let bodyHeight = 1.6;
 let targetPx = 400;
-let currentView = "front";
-let threeIndex = 0;
-let profileIndex = 0;
-const THREE_YAWS = [32, 148, 212, 328];
-const PROFILE_YAWS = [90, 270];
+let yawIndex = 0;
+const TURN_STOPS = [
+  { yaw: 0, name: "перед" },
+  { yaw: 22.5, name: "¾" },
+  { yaw: 45, name: "½" },
+  { yaw: 90, name: "бок" },
+  { yaw: 135, name: "½" },
+  { yaw: 157.5, name: "¾" },
+  { yaw: 180, name: "зад" },
+  { yaw: 202.5, name: "¾" },
+  { yaw: 225, name: "½" },
+  { yaw: 270, name: "бок" },
+  { yaw: 315, name: "½" },
+  { yaw: 337.5, name: "¾" },
+];
+const turnLabel = document.querySelector("#turnLabel");
 
 function partName(object) {
   let node = object;
@@ -217,7 +228,8 @@ function frameObject(object) {
   key.position.set(-radius, radius * 1.4, radius);
   fill.position.set(radius * 0.9, radius * 0.4, radius * 0.5);
   setHeight(targetPx);
-  setView("front");
+  yawIndex = 0;
+  placeCamera();
 }
 
 function lockCenter() {
@@ -237,26 +249,14 @@ function lookAtYaw(yawDeg, lift = 1) {
 }
 
 function placeCamera() {
-  if (currentView === "three") lookAtYaw(THREE_YAWS[threeIndex], 1.04);
-  else if (currentView === "side") lookAtYaw(PROFILE_YAWS[profileIndex]);
-  else if (currentView === "back") lookAtYaw(180);
-  else lookAtYaw(0);
+  const stop = TURN_STOPS[yawIndex];
+  lookAtYaw(stop.yaw);
   lockCenter();
-  document.querySelectorAll(".bottom button").forEach((button) => {
-    button.classList.toggle("active", button.dataset.view === currentView);
-  });
+  if (turnLabel) turnLabel.textContent = stop.name;
 }
 
-function setView(name) {
-  if (name === "three") {
-    if (currentView === "three") threeIndex = (threeIndex + 1) % THREE_YAWS.length;
-    currentView = "three";
-  } else if (name === "side") {
-    if (currentView === "side") profileIndex = (profileIndex + 1) % PROFILE_YAWS.length;
-    currentView = "side";
-  } else {
-    currentView = name === "back" ? "back" : "front";
-  }
+function stepTurn(delta) {
+  yawIndex = (yawIndex + delta + TURN_STOPS.length) % TURN_STOPS.length;
   placeCamera();
 }
 
@@ -271,7 +271,7 @@ function setHeight(px) {
 
 async function loadModel() {
   const loader = new OBJLoader();
-  const targetsPromise = loadChestTargets(new URL("./data/chest-targets.json?v=views-lock", import.meta.url));
+  const targetsPromise = loadChestTargets(new URL("./data/chest-targets.json?v=turn-arrows", import.meta.url));
   let lastError = null;
   for (const url of MODEL_URLS) {
     try {
@@ -302,8 +302,13 @@ async function loadModel() {
   throw lastError;
 }
 
-document.querySelectorAll(".bottom button").forEach((button) => {
-  button.addEventListener("click", () => setView(button.dataset.view));
+document.querySelector("#turnLeft").addEventListener("click", (event) => {
+  event.stopPropagation();
+  stepTurn(-1);
+});
+document.querySelector("#turnRight").addEventListener("click", (event) => {
+  event.stopPropagation();
+  stepTurn(1);
 });
 document.querySelectorAll(".heights button").forEach((button) => {
   button.addEventListener("click", () => setHeight(Number(button.dataset.height)));
