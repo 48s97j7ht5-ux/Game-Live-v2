@@ -28,6 +28,7 @@ jobs:
           set -euo pipefail
           mkdir -p dist/web dist/models dist/factory/out
           cp index.html dist/
+          cp .nojekyll dist/
           cp web/viewer.css web/viewer.js dist/web/
           curl -L --fail -o dist/models/base.obj \
             "https://raw.githubusercontent.com/48s97j7ht5-ux/Game-Live-Web/main/engine/anny/mpfb2/3dobjs/base.obj"

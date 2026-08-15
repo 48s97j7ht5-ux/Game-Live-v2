@@ -12,7 +12,7 @@ const MODEL_URLS = [
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x2a2c31);
 
-const camera = new THREE.PerspectiveCamera(28, 1, 0.05, 40);
+const camera = new THREE.PerspectiveCamera(32, 1, 0.01, 2000);
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
@@ -48,13 +48,20 @@ function frameObject(object) {
   object.position.sub(center);
   object.position.y += size.y * 0.5;
   radius = Math.max(size.y, size.x, size.z);
-  controls.target.set(0, size.y * 0.5, 0);
+  camera.near = Math.max(radius / 200, 0.01);
+  camera.far = Math.max(radius * 40, 200);
+  camera.updateProjectionMatrix();
+  controls.minDistance = radius * 1.2;
+  controls.maxDistance = radius * 8;
+  controls.target.set(0, size.y * 0.52, 0);
+  key.position.set(-radius, radius * 1.4, radius);
+  fill.position.set(radius * 0.9, radius * 0.4, radius * 0.5);
   setView("front");
 }
 
 function setView(name) {
   const height = controls.target.y;
-  const distance = radius * 2.35;
+  const distance = radius * 3.4;
   const views = {
     front: new THREE.Vector3(0, height, distance),
     three: new THREE.Vector3(distance * 0.55, height * 1.05, distance * 0.9),
