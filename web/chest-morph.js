@@ -3,7 +3,7 @@ export const FIRMNESS = 0.5;
 export const AXIS_STEPS = 7;
 export const AXIS_MID = 3;
 
-const AXES = [
+const CHEST_AXES = [
   { id: "dist", decr: "distDecr", incr: "distIncr" },
   { id: "point", decr: "pointDecr", incr: "pointIncr" },
   { id: "trans", decr: "transDown", incr: "transUp" },
@@ -11,6 +11,13 @@ const AXES = [
   { id: "nipple", decr: "nippleSizeDecr", incr: "nippleSizeIncr" },
   { id: "nipplePoint", decr: "nipplePointDecr", incr: "nipplePointIncr" },
 ];
+const STOMACH_AXES = [
+  { id: "belly", decr: "stomachBellyDecr", incr: "stomachBellyIncr" },
+  { id: "tone", decr: "stomachToneDecr", incr: "stomachToneIncr" },
+  { id: "navelY", decr: "navelDown", incr: "navelUp" },
+  { id: "navelZ", decr: "navelIn", incr: "navelOut" },
+];
+const AXES = [...CHEST_AXES, ...STOMACH_AXES];
 
 function key3(x, y, z) {
   return `${x.toFixed(4)},${y.toFixed(4)},${z.toFixed(4)}`;
@@ -36,6 +43,10 @@ export function defaultChestState() {
     vol: AXIS_MID,
     nipple: AXIS_MID,
     nipplePoint: AXIS_MID,
+    belly: AXIS_MID,
+    tone: AXIS_MID,
+    navelY: AXIS_MID,
+    navelZ: AXIS_MID,
   };
 }
 
@@ -57,7 +68,7 @@ export function mixChestDeltas(targets, state) {
 
 export async function loadChestTargets(url) {
   const response = await fetch(url);
-  if (!response.ok) throw new Error(`chest targets ${response.status}`);
+  if (!response.ok) throw new Error(`body targets ${response.status}`);
   return response.json();
 }
 

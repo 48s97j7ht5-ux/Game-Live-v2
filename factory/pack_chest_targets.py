@@ -1,4 +1,4 @@
-"""Pack MakeHuman hm08 breast targets into a compact JSON for the web viewer.
+"""Pack MakeHuman hm08 body targets into compact JSON for the web viewer.
 
 Source files are CC0 MakeHuman targets (basemesh hm08). Only body vertices
 (index < 13380) are kept so helper meshes are ignored.
@@ -13,22 +13,30 @@ from pathlib import Path
 BODY_VERTS = 13380
 
 TARGET_FILES = {
-    "minCupMinFirm": "female-young-averagemuscle-averageweight-mincup-minfirmness.target",
-    "minCupMaxFirm": "female-young-averagemuscle-averageweight-mincup-maxfirmness.target",
-    "maxCupMinFirm": "female-young-averagemuscle-averageweight-maxcup-minfirmness.target",
-    "maxCupMaxFirm": "female-young-averagemuscle-averageweight-maxcup-maxfirmness.target",
-    "distDecr": "breast-dist-decr.target",
-    "distIncr": "breast-dist-incr.target",
-    "pointDecr": "breast-point-decr.target",
-    "pointIncr": "breast-point-incr.target",
-    "transDown": "breast-trans-down.target",
-    "transUp": "breast-trans-up.target",
-    "volDown": "breast-volume-vert-down.target",
-    "volUp": "breast-volume-vert-up.target",
-    "nippleSizeDecr": "nipple-size-decr.target",
-    "nippleSizeIncr": "nipple-size-incr.target",
-    "nipplePointDecr": "nipple-point-decr.target",
-    "nipplePointIncr": "nipple-point-incr.target",
+    "minCupMinFirm": "breast/female-young-averagemuscle-averageweight-mincup-minfirmness.target",
+    "minCupMaxFirm": "breast/female-young-averagemuscle-averageweight-mincup-maxfirmness.target",
+    "maxCupMinFirm": "breast/female-young-averagemuscle-averageweight-maxcup-minfirmness.target",
+    "maxCupMaxFirm": "breast/female-young-averagemuscle-averageweight-maxcup-maxfirmness.target",
+    "distDecr": "breast/breast-dist-decr.target",
+    "distIncr": "breast/breast-dist-incr.target",
+    "pointDecr": "breast/breast-point-decr.target",
+    "pointIncr": "breast/breast-point-incr.target",
+    "transDown": "breast/breast-trans-down.target",
+    "transUp": "breast/breast-trans-up.target",
+    "volDown": "breast/breast-volume-vert-down.target",
+    "volUp": "breast/breast-volume-vert-up.target",
+    "nippleSizeDecr": "breast/nipple-size-decr.target",
+    "nippleSizeIncr": "breast/nipple-size-incr.target",
+    "nipplePointDecr": "breast/nipple-point-decr.target",
+    "nipplePointIncr": "breast/nipple-point-incr.target",
+    "stomachToneDecr": "stomach/stomach-tone-decr.target",
+    "stomachToneIncr": "stomach/stomach-tone-incr.target",
+    "stomachBellyDecr": "stomach/stomach-pregnant-decr.target",
+    "stomachBellyIncr": "stomach/stomach-pregnant-incr.target",
+    "navelDown": "stomach/stomach-navel-down.target",
+    "navelUp": "stomach/stomach-navel-up.target",
+    "navelIn": "stomach/stomach-navel-in.target",
+    "navelOut": "stomach/stomach-navel-out.target",
 }
 
 
@@ -62,7 +70,7 @@ def pack(obj_path: Path, targets_dir: Path) -> dict:
     indices = sorted({index for target in loaded.values() for index in target})
     packed = {
         "mesh": "hm08",
-        "license": "CC0 MakeHuman breast targets",
+        "license": "CC0 MakeHuman body targets",
         "index": indices,
         "rest": [],
         "targets": {},
@@ -81,8 +89,8 @@ def pack(obj_path: Path, targets_dir: Path) -> dict:
 
 def main() -> None:
     obj_path = Path(sys.argv[1] if len(sys.argv) > 1 else "/tmp/mh/base.obj")
-    targets_dir = Path(sys.argv[2] if len(sys.argv) > 2 else "/tmp/mh/breast")
-    out_path = Path(sys.argv[3] if len(sys.argv) > 3 else "web/data/chest-targets.json")
+    targets_dir = Path(sys.argv[2] if len(sys.argv) > 2 else "/tmp/mh")
+    out_path = Path(sys.argv[3] if len(sys.argv) > 3 else "web/data/body-targets.json")
     packed = pack(obj_path, targets_dir)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(packed, separators=(",", ":")))

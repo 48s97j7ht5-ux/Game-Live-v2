@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-packed = json.loads((ROOT / "web/data/chest-targets.json").read_text())
+packed = json.loads((ROOT / "web/data/body-targets.json").read_text())
 n = len(packed["index"])
 assert n > 300, n
 rest = packed["rest"]
@@ -22,6 +22,14 @@ needed = [
     "nippleSizeIncr",
     "nipplePointDecr",
     "nipplePointIncr",
+    "stomachBellyDecr",
+    "stomachBellyIncr",
+    "stomachToneDecr",
+    "stomachToneIncr",
+    "navelDown",
+    "navelUp",
+    "navelIn",
+    "navelOut",
 ]
 for name in needed:
     values = packed["targets"][name]
@@ -47,6 +55,7 @@ AXES = {
     "vol": ("volUp", "volDown"),
     "nipple": ("nippleSizeDecr", "nippleSizeIncr"),
     "nipplePoint": ("nipplePointDecr", "nipplePointIncr"),
+    "belly": ("stomachBellyDecr", "stomachBellyIncr"),
 }
 
 
@@ -98,4 +107,5 @@ large = mix(4)
 assert sum(large[2::3]) / n > sum(small[2::3]) / n + 0.01
 assert signed_x(mix(2, {"dist": 6})) > signed_x(mix(2, {"dist": 0}))
 assert mean_y(mix(2, {"trans": 6})) > mean_y(mix(2, {"trans": 0}))
+assert sum(mix(2, {"belly": 6})[2::3]) > sum(mix(2, {"belly": 0})[2::3])
 print("ok", n, "verts", "minZ", round(min_z, 4), "maxZ", round(max_z, 4))

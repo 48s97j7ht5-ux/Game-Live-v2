@@ -4,15 +4,31 @@ import { applyChestMorph, bindChestMorph, defaultChestState, loadChestTargets } 
 
 const SIZES = ["A", "B", "C", "D", "E"];
 const AXIS_STEPS = 7;
-const FLOORS = [
-  { id: "size", label: "чашка", kind: "size" },
-  { id: "dist", label: "шире", kind: "axis" },
-  { id: "point", label: "острее", kind: "axis" },
-  { id: "trans", label: "выше", kind: "axis" },
-  { id: "vol", label: "низ", kind: "axis" },
-  { id: "nipple", label: "сосок", kind: "axis" },
-  { id: "nipplePoint", label: "выступ", kind: "axis" },
-];
+const ZONES = {
+  chest: {
+    label: "грудь",
+    yFrac: 0.73,
+    floors: [
+      { id: "size", label: "чашка", kind: "size" },
+      { id: "dist", label: "шире", kind: "axis" },
+      { id: "point", label: "острее", kind: "axis" },
+      { id: "trans", label: "выше", kind: "axis" },
+      { id: "vol", label: "низ", kind: "axis" },
+      { id: "nipple", label: "сосок", kind: "axis" },
+      { id: "nipplePoint", label: "выступ", kind: "axis" },
+    ],
+  },
+  stomach: {
+    label: "живот",
+    yFrac: 0.55,
+    floors: [
+      { id: "belly", label: "объём", kind: "axis" },
+      { id: "tone", label: "тонус", kind: "axis" },
+      { id: "navelY", label: "пупок↑", kind: "axis" },
+      { id: "navelZ", label: "пупок", kind: "axis" },
+    ],
+  },
+};
 
 const sideLeft = document.querySelector("#sideLeft");
 const sideRight = document.querySelector("#sideRight");
@@ -20,24 +36,37 @@ const canvas = document.querySelector("#view");
 const statusEl = document.querySelector("#status");
 const stage = document.querySelector(".stage");
 const floorButtons = [];
-const chestState = defaultChestState();
+const bodyState = defaultChestState();
 
-let chestMode = false;
+let editZone = null;
 let lastFloor = "size";
 
+function currentFloors() {
+  return editZone ? ZONES[editZone].floors : [];
+}
+
 function floorValue(floor) {
-  if (floor.kind === "size") return `${SIZES[chestState.sizeIndex]}`;
-  return `${chestState[floor.id] + 1}/${AXIS_STEPS}`;
+  if (floor.kind === "size") return `${SIZES[bodyState.sizeIndex]}`;
+  return `${bodyState[floor.id] + 1}/${AXIS_STEPS}`;
 }
 
 function idleStatus() {
-  if (!chestMode) return "нажми на грудь";
-  const floor = FLOORS.find((item) => item.id === lastFloor) || FLOORS[0];
-  return `грудь · ${SIZES[chestState.sizeIndex]} · ${floor.label} ${floorValue(floor)}`;
+  if (!editZone) return "нажми на грудь или живот";
+  const floor = currentFloors().find((item) => item.id === lastFloor) || currentFloors()[0];
+  const zone = ZONES[editZone];
+  const cup = editZone === "chest" ? ` · ${SIZES[bodyState.sizeIndex]}` : "";
+  return `${zone.label}${cup} · ${floor.label} ${floorValue(floor)}`;
+}
+
+function clearSideBars() {
+  sideLeft.innerHTML = "";
+  sideRight.innerHTML = "";
+  floorButtons.length = 0;
 }
 
 function buildSideBars() {
-  for (const floor of FLOORS) {
+  clearSideBars();
+  for (const floor of currentFloors()) {
     const left = document.createElement("button");
     left.type = "button";
     left.dataset.floor = floor.id;
@@ -67,34 +96,41 @@ function buildSideBars() {
 function stepFloor(floor, delta) {
   lastFloor = floor.id;
   if (floor.kind === "size") {
-    chestState.sizeIndex = Math.max(0, Math.min(SIZES.length - 1, chestState.sizeIndex + delta));
+    bodyState.sizeIndex = Math.max(0, Math.min(SIZES.length - 1, bodyState.sizeIndex + delta));
   } else {
-    chestState[floor.id] = Math.max(0, Math.min(AXIS_STEPS - 1, chestState[floor.id] + delta));
+    bodyState[floor.id] = Math.max(0, Math.min(AXIS_STEPS - 1, bodyState[floor.id] + delta));
   }
   statusEl.textContent = idleStatus();
   updateFloorDisabled();
-  applyChestMorph(chestBound, chestState);
+  applyChestMorph(chestBound, bodyState);
 }
 
 function updateFloorDisabled() {
   for (const item of floorButtons) {
     if (item.floor.kind === "size") {
-      item.left.disabled = chestState.sizeIndex === 0;
-      item.right.disabled = chestState.sizeIndex === SIZES.length - 1;
+      item.left.disabled = bodyState.sizeIndex === 0;
+      item.right.disabled = bodyState.sizeIndex === SIZES.length - 1;
     } else {
-      item.left.disabled = chestState[item.floor.id] === 0;
-      item.right.disabled = chestState[item.floor.id] === AXIS_STEPS - 1;
+      item.left.disabled = bodyState[item.floor.id] === 0;
+      item.right.disabled = bodyState[item.floor.id] === AXIS_STEPS - 1;
     }
   }
 }
 
-function setChestMode(on) {
-  chestMode = on;
-  sideLeft.classList.toggle("open", on);
-  sideRight.classList.toggle("open", on);
+function setEditZone(name) {
+  editZone = name;
+  lastFloor = currentFloors()[0]?.id || "size";
+  buildSideBars();
+  const open = Boolean(name);
+  sideLeft.classList.toggle("open", open);
+  sideRight.classList.toggle("open", open);
   statusEl.textContent = dummy ? idleStatus() : statusEl.textContent;
   updateFloorDisabled();
   layoutFloorButtons();
+}
+
+function toggleZone(name) {
+  setEditZone(editZone === name ? null : name);
 }
 
 function worldToCanvasY(worldY) {
@@ -104,14 +140,15 @@ function worldToCanvasY(worldY) {
 }
 
 function layoutFloorButtons() {
-  if (!chestMode) return;
+  if (!editZone) return;
   const height = Math.max(canvas.clientHeight, 1);
   const count = floorButtons.length;
+  if (!count) return;
   const gap = 3;
   const buttonSize = Math.min(40, Math.max(30, (height - 16 - gap * (count - 1)) / count));
   const stack = count * buttonSize + (count - 1) * gap;
-  const chestY = worldToCanvasY(bodyHeight * 0.73);
-  let start = chestY - stack / 2;
+  const zoneY = worldToCanvasY(bodyHeight * ZONES[editZone].yFrac);
+  let start = zoneY - stack / 2;
   start = Math.max(8, Math.min(height - stack - 8, start));
   for (let i = 0; i < floorButtons.length; i += 1) {
     const y = start + i * (buttonSize + gap) + buttonSize / 2;
@@ -125,12 +162,20 @@ function layoutFloorButtons() {
   }
 }
 
-function inChestBand(clientY) {
+function hitZone(clientY) {
   const rect = canvas.getBoundingClientRect();
   const y = clientY - rect.top;
-  const chestY = worldToCanvasY(bodyHeight * 0.73);
-  const half = Math.max(56, canvas.clientHeight * 0.09);
-  return Math.abs(y - chestY) <= half;
+  const half = Math.max(52, canvas.clientHeight * 0.08);
+  let best = null;
+  let bestDist = half;
+  for (const [name, zone] of Object.entries(ZONES)) {
+    const dist = Math.abs(y - worldToCanvasY(bodyHeight * zone.yFrac));
+    if (dist <= bestDist) {
+      best = name;
+      bestDist = dist;
+    }
+  }
+  return best;
 }
 const MODEL_URLS = ["./models/base.obj?v=local"];
 
@@ -312,7 +357,7 @@ function setHeight(px) {
 
 async function loadModel() {
   const loader = new OBJLoader();
-  const targetsPromise = loadChestTargets(new URL("./data/chest-targets.json?v=turn-arrows", import.meta.url));
+  const targetsPromise = loadChestTargets(new URL("./data/body-targets.json?v=stomach", import.meta.url));
   let lastError = null;
   for (const url of MODEL_URLS) {
     try {
@@ -329,7 +374,7 @@ async function loadModel() {
       frameObject(dummy);
       try {
         chestBound = bindChestMorph(dummy, await targetsPromise);
-        applyChestMorph(chestBound, chestState);
+        applyChestMorph(chestBound, bodyState);
       } catch (error) {
         console.error(error);
       }
@@ -368,11 +413,12 @@ stage.addEventListener("pointerup", (event) => {
   if (event.target.closest("button")) return;
   if (Math.hypot(dx, dy) > 12) return;
   if (!dummy) return;
-  if (inChestBand(event.clientY)) {
-    setChestMode(!chestMode);
+  const zone = hitZone(event.clientY);
+  if (zone) {
+    toggleZone(zone);
     return;
   }
-  if (chestMode) setChestMode(false);
+  if (editZone) setEditZone(null);
 });
 stage.addEventListener("pointercancel", () => {
   pointerStart = null;
@@ -386,7 +432,6 @@ function tick() {
 }
 
 buildSideBars();
-updateFloorDisabled();
 window.addEventListener("resize", resize);
 resize();
 loadModel().catch((error) => console.error(error));
