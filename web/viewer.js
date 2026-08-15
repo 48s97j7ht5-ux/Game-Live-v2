@@ -2,38 +2,85 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
 
-const ZONES = [
-  { id: "chest", fromFeet: 0.73, label: "грудь" },
-  { id: "waist", fromFeet: 0.62, label: "талия" },
-  { id: "hips", fromFeet: 0.53, label: "бёдра" },
+const SIZES = ["A", "B", "C", "D", "E"];
+const SHAPES = ["круглая", "капля", "коническая", "широкая"];
+const FLOORS = [
+  { id: "size", label: "размер" },
+  { id: "shape", label: "форма" },
 ];
 
 const sideLeft = document.querySelector("#sideLeft");
 const sideRight = document.querySelector("#sideRight");
 const canvas = document.querySelector("#view");
 const statusEl = document.querySelector("#status");
-const zoneButtons = [];
+const stage = document.querySelector(".stage");
+const floorButtons = [];
+
+let chestMode = false;
+let sizeIndex = 2;
+let shapeIndex = 1;
+
+function idleStatus() {
+  return chestMode ? `грудь · ${SIZES[sizeIndex]} · ${SHAPES[shapeIndex]}` : "нажми на грудь";
+}
 
 function buildSideBars() {
-  for (const zone of ZONES) {
+  for (const floor of FLOORS) {
     const left = document.createElement("button");
     left.type = "button";
-    left.dataset.zone = zone.id;
+    left.dataset.floor = floor.id;
     left.dataset.dir = "left";
-    left.setAttribute("aria-label", `${zone.label} влево`);
+    left.setAttribute("aria-label", `${floor.label} меньше`);
     left.textContent = "←";
+    left.addEventListener("click", (event) => {
+      event.stopPropagation();
+      stepFloor(floor.id, -1);
+    });
     sideLeft.appendChild(left);
-    zoneButtons.push({ button: left, zone });
 
     const right = document.createElement("button");
     right.type = "button";
-    right.dataset.zone = zone.id;
+    right.dataset.floor = floor.id;
     right.dataset.dir = "right";
-    right.setAttribute("aria-label", `${zone.label} вправо`);
+    right.setAttribute("aria-label", `${floor.label} больше`);
     right.textContent = "→";
+    right.addEventListener("click", (event) => {
+      event.stopPropagation();
+      stepFloor(floor.id, 1);
+    });
     sideRight.appendChild(right);
-    zoneButtons.push({ button: right, zone });
+
+    floorButtons.push({ floor: floor.id, left, right });
   }
+}
+
+function stepFloor(floor, delta) {
+  if (floor === "size") {
+    sizeIndex = Math.max(0, Math.min(SIZES.length - 1, sizeIndex + delta));
+  } else {
+    shapeIndex = Math.max(0, Math.min(SHAPES.length - 1, shapeIndex + delta));
+  }
+  statusEl.textContent = idleStatus();
+  updateFloorDisabled();
+}
+
+function updateFloorDisabled() {
+  for (const item of floorButtons) {
+    const atStart = item.floor === "size" ? sizeIndex === 0 : shapeIndex === 0;
+    const atEnd =
+      item.floor === "size" ? sizeIndex === SIZES.length - 1 : shapeIndex === SHAPES.length - 1;
+    item.left.disabled = atStart;
+    item.right.disabled = atEnd;
+  }
+}
+
+function setChestMode(on) {
+  chestMode = on;
+  sideLeft.classList.toggle("open", on);
+  sideRight.classList.toggle("open", on);
+  statusEl.textContent = dummy ? idleStatus() : statusEl.textContent;
+  updateFloorDisabled();
+  layoutFloorButtons();
 }
 
 function worldToCanvasY(worldY) {
@@ -42,39 +89,30 @@ function worldToCanvasY(worldY) {
   return (-point.y * 0.5 + 0.5) * canvas.clientHeight;
 }
 
-function layoutZoneButtons() {
+function layoutFloorButtons() {
+  if (!chestMode) return;
   const height = Math.max(canvas.clientHeight, 1);
   const buttonSize = 42;
   const gap = 12;
-  const minDist = buttonSize + gap;
-  const margin = buttonSize / 2 + 8;
+  const chestY = worldToCanvasY(bodyHeight * 0.73);
+  const topY = Math.max(buttonSize / 2 + 8, chestY - (buttonSize + gap) / 2);
+  const bottomY = Math.min(height - buttonSize / 2 - 8, topY + buttonSize + gap);
+  const ys = { size: topY, shape: bottomY };
+  for (const item of floorButtons) {
+    const y = ys[item.floor];
+    item.left.style.top = `${y}px`;
+    item.right.style.top = `${y}px`;
+    item.left.style.transform = "translateY(-50%)";
+    item.right.style.transform = "translateY(-50%)";
+  }
+}
 
-  const rows = ZONES.map((zone) => ({
-    zone,
-    y: worldToCanvasY(bodyHeight * zone.fromFeet),
-  })).sort((a, b) => a.y - b.y);
-
-  for (let i = 1; i < rows.length; i += 1) {
-    rows[i].y = Math.max(rows[i].y, rows[i - 1].y + minDist);
-  }
-  if (rows[rows.length - 1].y > height - margin) {
-    rows[rows.length - 1].y = height - margin;
-    for (let i = rows.length - 2; i >= 0; i -= 1) {
-      rows[i].y = Math.min(rows[i].y, rows[i + 1].y - minDist);
-    }
-  }
-  if (rows[0].y < margin) {
-    rows[0].y = margin;
-    for (let i = 1; i < rows.length; i += 1) {
-      rows[i].y = Math.max(rows[i].y, rows[i - 1].y + minDist);
-    }
-  }
-
-  const byZone = Object.fromEntries(rows.map((row) => [row.zone.id, row.y]));
-  for (const item of zoneButtons) {
-    item.button.style.top = `${byZone[item.zone.id]}px`;
-    item.button.style.transform = "translateY(-50%)";
-  }
+function inChestBand(clientY) {
+  const rect = canvas.getBoundingClientRect();
+  const y = clientY - rect.top;
+  const chestY = worldToCanvasY(bodyHeight * 0.73);
+  const half = Math.max(56, canvas.clientHeight * 0.09);
+  return Math.abs(y - chestY) <= half;
 }
 const MODEL_URLS = [
   "./models/base.obj",
@@ -139,7 +177,7 @@ function applyScale() {
   camera.top = worldH / 2;
   camera.bottom = -worldH / 2;
   camera.updateProjectionMatrix();
-  layoutZoneButtons();
+  layoutFloorButtons();
 }
 
 function resize() {
@@ -225,7 +263,7 @@ async function loadModel() {
       dummy = group;
       scene.add(dummy);
       frameObject(dummy);
-      statusEl.textContent = "крути пальцем";
+      statusEl.textContent = idleStatus();
       return;
     } catch (error) {
       lastError = error;
@@ -242,15 +280,39 @@ document.querySelectorAll(".heights button").forEach((button) => {
   button.addEventListener("click", () => setHeight(Number(button.dataset.height)));
 });
 
+let pointerStart = null;
+stage.addEventListener("pointerdown", (event) => {
+  if (event.target.closest("button")) return;
+  pointerStart = { x: event.clientX, y: event.clientY };
+});
+stage.addEventListener("pointerup", (event) => {
+  if (!pointerStart) return;
+  const dx = event.clientX - pointerStart.x;
+  const dy = event.clientY - pointerStart.y;
+  pointerStart = null;
+  if (event.target.closest("button")) return;
+  if (Math.hypot(dx, dy) > 12) return;
+  if (!dummy) return;
+  if (inChestBand(event.clientY)) {
+    setChestMode(!chestMode);
+    return;
+  }
+  if (chestMode) setChestMode(false);
+});
+stage.addEventListener("pointercancel", () => {
+  pointerStart = null;
+});
+
 function tick() {
   controls.update();
   lockCenter();
   renderer.render(scene, camera);
-  layoutZoneButtons();
+  layoutFloorButtons();
   requestAnimationFrame(tick);
 }
 
 buildSideBars();
+updateFloorDisabled();
 window.addEventListener("resize", resize);
 resize();
 loadModel().catch((error) => console.error(error));

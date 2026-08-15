@@ -36,6 +36,13 @@ canvas {
   width: 46px;
   pointer-events: none;
   z-index: 2;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.side.open {
+  opacity: 1;
+  visibility: visible;
 }
 
 .side.left { left: 8px; }
@@ -100,4 +107,8 @@ button.active {
   background: #d8ff62;
   border-color: #d8ff62;
   color: #10130b;
+}
+
+button:disabled {
+  opacity: 0.35;
 }
