@@ -1,5 +1,5 @@
 {
-  "cache": "c5",
+  "cache": "c6",
   "body": "./models/base.obj",
   "morphs": "./data/body-targets.json",
   "parts": ["chest", "stomach", "hips", "butt", "hair", "clothes"],

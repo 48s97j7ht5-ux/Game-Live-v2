@@ -1,5 +1,5 @@
 /**
- * Optional pixel look: render the current view to a 200px-tall grid, then
+ * Optional pixel look: render the current view to a 300px-tall grid, then
  * nearest-neighbour upscale. Does not change morphs or zones.
  *
  * Remove later: delete this file, the #pixelMode label, and attachPixelFilter()
@@ -7,7 +7,7 @@
  */
 import * as THREE from "three";
 
-const PIXEL_HEIGHT = 200;
+const PIXEL_HEIGHT = 300;
 
 export function createPixelFilter(renderer) {
   const rt = new THREE.WebGLRenderTarget(1, 1, {

@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
-import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c5";
-import { defaultState, loadCatalog, morphRecipe, overlays, sizeLabels, tapZones } from "./registry.js?v=c5";
+import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c6";
+import { defaultState, loadCatalog, morphRecipe, overlays, sizeLabels, tapZones } from "./registry.js?v=c6";
 
 const AXIS_STEPS = 7;
 
@@ -456,7 +456,7 @@ async function attachPixelFilter() {
   const box = document.querySelector("#pixelMode");
   if (!box) return;
   try {
-    const mod = await import("./pixel-mode.js?v=c5");
+    const mod = await import("./pixel-mode.js?v=c6");
     pixelFilter = mod.createPixelFilter(renderer);
     box.addEventListener("change", () => pixelFilter.setEnabled(box.checked));
   } catch (error) {
@@ -466,7 +466,7 @@ async function attachPixelFilter() {
 }
 
 async function boot() {
-  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c5", import.meta.url));
+  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c6", import.meta.url));
   recipe = morphRecipe(catalog);
   sizes = sizeLabels(catalog);
   bodyState = defaultState(catalog);
