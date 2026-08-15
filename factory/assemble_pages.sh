@@ -29,6 +29,7 @@ required=(
   web/viewer.css
   web/chest-morph.js
   web/registry.js
+  web/palette.js
   web/parts/manifest.json
   web/data/body-targets.json
   web/vendor/three.module.js

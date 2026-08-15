@@ -1,7 +1,8 @@
 import * as THREE from "three";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
-import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c6";
-import { defaultState, loadCatalog, morphRecipe, overlays, sizeLabels, tapZones } from "./registry.js?v=c6";
+import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c7";
+import { defaultState, loadCatalog, morphRecipe, overlays, sizeLabels, tapZones } from "./registry.js?v=c7";
+import { hexRgb, LIGHT, SCENE_BG, SKIN } from "./palette.js?v=c7";
 
 const AXIS_STEPS = 7;
 
@@ -166,7 +167,7 @@ function hitZone(clientY) {
   return best;
 }
 
-function makeClayMatcap() {
+function makeSkinMatcap() {
   const size = 256;
   const board = document.createElement("canvas");
   board.width = size;
@@ -174,6 +175,11 @@ function makeClayMatcap() {
   const ctx = board.getContext("2d");
   const img = ctx.createImageData(size, size);
   const data = img.data;
+  const cavity = hexRgb(SKIN.cavity);
+  const deep = hexRgb(SKIN.deep);
+  const mid = hexRgb(SKIN.mid);
+  const light = hexRgb(SKIN.light);
+  const hi = hexRgb(SKIN.hi);
   for (let y = 0; y < size; y += 1) {
     for (let x = 0; x < size; x += 1) {
       const nx = (x / (size - 1)) * 2 - 1;
@@ -181,20 +187,23 @@ function makeClayMatcap() {
       const r2 = nx * nx + ny * ny;
       const i = (y * size + x) * 4;
       if (r2 > 1) {
-        data[i] = 32;
-        data[i + 1] = 30;
-        data[i + 2] = 28;
+        data[i] = cavity[0];
+        data[i + 1] = cavity[1];
+        data[i + 2] = cavity[2];
         data[i + 3] = 255;
         continue;
       }
       const nz = Math.sqrt(1 - r2);
-      const wrap = Math.max(0, nx * -0.32 + ny * 0.48 + nz * 0.78);
-      const spec = Math.pow(Math.max(0, nx * -0.18 + ny * 0.42 + nz * 0.88), 28) * 0.4;
-      const rim = Math.pow(1 - nz, 1.6) * 0.22;
-      const t = Math.min(1, wrap * 0.82 + 0.16 + spec - rim);
-      data[i] = Math.round(88 + t * 152);
-      data[i + 1] = Math.round(68 + t * 128);
-      data[i + 2] = Math.round(54 + t * 108);
+      const wrap = Math.max(0, nx * -0.28 + ny * 0.42 + nz * 0.82);
+      const spec = Math.pow(Math.max(0, nx * -0.12 + ny * 0.38 + nz * 0.9), 32) * 0.28;
+      const rim = Math.pow(1 - nz, 1.7) * 0.18;
+      const t = Math.min(1, Math.max(0, wrap * 0.88 + 0.08 + spec - rim));
+      const from = t < 0.45 ? cavity : t < 0.7 ? deep : mid;
+      const to = t < 0.45 ? deep : t < 0.7 ? mid : t < 0.88 ? light : hi;
+      const u = t < 0.45 ? t / 0.45 : t < 0.7 ? (t - 0.45) / 0.25 : t < 0.88 ? (t - 0.7) / 0.18 : (t - 0.88) / 0.12;
+      data[i] = Math.round(from[0] + (to[0] - from[0]) * u);
+      data[i + 1] = Math.round(from[1] + (to[1] - from[1]) * u);
+      data[i + 2] = Math.round(from[2] + (to[2] - from[2]) * u);
       data[i + 3] = 255;
     }
   }
@@ -205,23 +214,23 @@ function makeClayMatcap() {
 }
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x1c1e24);
+scene.background = new THREE.Color(SCENE_BG);
 
 const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.01, 2000);
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-scene.add(new THREE.HemisphereLight(0xffffff, 0x334455, 1.1));
-const key = new THREE.DirectionalLight(0xffffff, 1.4);
+scene.add(new THREE.HemisphereLight(LIGHT.hemiSky, LIGHT.hemiGround, 1.0));
+const key = new THREE.DirectionalLight(LIGHT.key, 1.1);
 key.position.set(-1.2, 2.2, 1.8);
 scene.add(key);
-const fill = new THREE.DirectionalLight(0x99aacc, 0.45);
+const fill = new THREE.DirectionalLight(LIGHT.fill, 0.32);
 fill.position.set(1.4, 0.6, 0.8);
 scene.add(fill);
 
 const skin = new THREE.MeshMatcapMaterial({
-  color: 0xffd7b8,
-  matcap: makeClayMatcap(),
+  color: 0xfff6ee,
+  matcap: makeSkinMatcap(),
 });
 let dummy = null;
 let morphBound = null;
@@ -456,7 +465,7 @@ async function attachPixelFilter() {
   const box = document.querySelector("#pixelMode");
   if (!box) return;
   try {
-    const mod = await import("./pixel-mode.js?v=c6");
+    const mod = await import("./pixel-mode.js?v=c7");
     pixelFilter = mod.createPixelFilter(renderer);
     box.addEventListener("change", () => pixelFilter.setEnabled(box.checked));
   } catch (error) {
@@ -466,7 +475,7 @@ async function attachPixelFilter() {
 }
 
 async function boot() {
-  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c6", import.meta.url));
+  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c7", import.meta.url));
   recipe = morphRecipe(catalog);
   sizes = sizeLabels(catalog);
   bodyState = defaultState(catalog);
