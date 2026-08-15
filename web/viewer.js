@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
-import { applyChestMorph, bindChestMorph, defaultChestState, loadChestTargets } from "./chest-morph.js?v=fix2";
+import { applyChestMorph, bindChestMorph, defaultChestState, loadChestTargets } from "./chest-morph.js?v=c3";
 
 const SIZES = ["A", "B", "C", "D", "E"];
 const AXIS_STEPS = 7;
@@ -417,7 +417,7 @@ async function loadModel() {
       frameObject(dummy);
       statusEl.textContent = idleStatus();
       try {
-        const packed = await loadChestTargets(new URL("./data/body-targets.json?v=fix2", import.meta.url));
+        const packed = await loadChestTargets(new URL("./data/body-targets.json?v=c3", import.meta.url));
         chestBound = bindChestMorph(dummy, packed);
         applyChestMorph(chestBound, bodyState);
       } catch (error) {

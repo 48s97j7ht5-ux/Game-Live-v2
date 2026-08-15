@@ -1,0 +1,18 @@
+name: checks
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Morph and Pages contract
+        run: |
+          python factory/tests/test_chest_targets.py
+          python factory/tests/test_contract.py
