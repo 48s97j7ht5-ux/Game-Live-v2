@@ -22,7 +22,7 @@ assert max_z > min_z + 0.002, (min_z, max_z)
 assert mean_z("pointIncr") != mean_z("pointDecr")
 assert mean_z("distIncr") != mean_z("distDecr")
 
-SIZE_T = [0, 0.25, 0.5, 0.75, 1]
+SIZE_T = [0.42, 0.56, 0.70, 0.85, 1]
 SHAPE_FIRM = [0.75, 0.28, 0.82, 0.55]
 SHAPE_DETAIL = [
     {"pointDecr": 0.7, "volUp": 0.22},
@@ -42,7 +42,7 @@ def mix(size_index: int, shape_index: int) -> list[float]:
         "maxCupMinFirm": size_t * (1 - firm),
         "maxCupMaxFirm": size_t * firm,
     }
-    shape_scale = 0.38 + 0.62 * size_t
+    shape_scale = 0.22 + 0.78 * size_t
     for name, amount in SHAPE_DETAIL[shape_index].items():
         weights[name] = amount * shape_scale
     for name, weight in weights.items():
@@ -69,4 +69,22 @@ small = mix(0, 1)
 large = mix(4, 1)
 assert mean_component(large, 2) > mean_component(small, 2) + 0.01
 assert signed_x(mix(4, 3)) > signed_x(mix(4, 0))
+
+zs = [rest[i * 3 + 2] for i in range(n)]
+front = sorted(zs)[int(n * 0.7)]
+
+
+def front_dz(values: list[float]) -> float:
+    total = 0.0
+    count = 0
+    for i in range(n):
+        if rest[i * 3 + 2] < front:
+            continue
+        total += values[i * 3 + 2]
+        count += 1
+    return total / count
+
+
+for shape_index in range(4):
+    assert front_dz(mix(0, shape_index)) > 0.02, shape_index
 print("ok", n, "verts", "minZ", round(min_z, 4), "maxZ", round(max_z, 4))

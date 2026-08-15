@@ -1,4 +1,4 @@
-const SIZE_T = [0, 0.25, 0.5, 0.75, 1];
+const SIZE_T = [0.42, 0.56, 0.70, 0.85, 1];
 const SHAPE_FIRM = [0.75, 0.28, 0.82, 0.55];
 const SHAPE_DETAIL = [
   { pointDecr: 0.7, volUp: 0.22 },
@@ -26,7 +26,7 @@ export function mixChestDeltas(targets, sizeIndex, shapeIndex) {
   addWeighted(mixed, targets.minCupMaxFirm, (1 - sizeT) * firm);
   addWeighted(mixed, targets.maxCupMinFirm, sizeT * (1 - firm));
   addWeighted(mixed, targets.maxCupMaxFirm, sizeT * firm);
-  const shapeScale = 0.38 + 0.62 * sizeT;
+  const shapeScale = 0.22 + 0.78 * sizeT;
   const detail = SHAPE_DETAIL[shapeIndex];
   for (const [name, amount] of Object.entries(detail)) {
     addWeighted(mixed, targets[name], amount * shapeScale);
