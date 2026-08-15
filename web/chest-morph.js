@@ -1,5 +1,5 @@
 const SIZE_T = [0.42, 0.56, 0.70, 0.85, 1];
-const SHAPE_FIRM = [0.75, 0.28, 0.82, 0.55];
+const FIRMNESS = 0.5;
 const SHAPE_DETAIL = [
   { pointDecr: 0.7, volUp: 0.22 },
   { volDown: 0.85, transDown: 0.42, pointDecr: 0.18 },
@@ -20,7 +20,7 @@ function addWeighted(out, source, weight) {
 
 export function mixChestDeltas(targets, sizeIndex, shapeIndex) {
   const sizeT = SIZE_T[sizeIndex];
-  const firm = SHAPE_FIRM[shapeIndex];
+  const firm = FIRMNESS;
   const mixed = new Float32Array(targets.minCupMinFirm.length);
   addWeighted(mixed, targets.minCupMinFirm, (1 - sizeT) * (1 - firm));
   addWeighted(mixed, targets.minCupMaxFirm, (1 - sizeT) * firm);

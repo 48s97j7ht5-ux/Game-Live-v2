@@ -252,7 +252,7 @@ function setView(name) {
 
 async function loadModel() {
   const loader = new OBJLoader();
-  const targetsPromise = loadChestTargets(new URL("./data/chest-targets.json?v=chest-a", import.meta.url));
+  const targetsPromise = loadChestTargets(new URL("./data/chest-targets.json?v=chest-firm", import.meta.url));
   let lastError = null;
   for (const url of MODEL_URLS) {
     try {

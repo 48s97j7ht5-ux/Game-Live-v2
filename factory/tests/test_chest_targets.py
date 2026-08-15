@@ -23,7 +23,7 @@ assert mean_z("pointIncr") != mean_z("pointDecr")
 assert mean_z("distIncr") != mean_z("distDecr")
 
 SIZE_T = [0.42, 0.56, 0.70, 0.85, 1]
-SHAPE_FIRM = [0.75, 0.28, 0.82, 0.55]
+FIRMNESS = 0.5
 SHAPE_DETAIL = [
     {"pointDecr": 0.7, "volUp": 0.22},
     {"volDown": 0.85, "transDown": 0.42, "pointDecr": 0.18},
@@ -34,7 +34,7 @@ SHAPE_DETAIL = [
 
 def mix(size_index: int, shape_index: int) -> list[float]:
     size_t = SIZE_T[size_index]
-    firm = SHAPE_FIRM[shape_index]
+    firm = FIRMNESS
     mixed = [0.0] * (n * 3)
     weights = {
         "minCupMinFirm": (1 - size_t) * (1 - firm),
