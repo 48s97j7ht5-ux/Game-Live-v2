@@ -1,5 +1,5 @@
 /**
- * Optional pixel look: 300px grid, nearest upscale.
+ * Optional pixel look: nearest upscale to the current height button (300 or 400).
  * No palette crush — that turned fair skin into dark blobs.
  *
  * Remove later: delete this file, #pixelToggle, and attachPixelFilter() in viewer.js.
@@ -28,14 +28,14 @@ export function createPixelFilter(renderer) {
     setEnabled(on) {
       enabled = Boolean(on);
     },
-    render(mainScene, camera) {
+    render(mainScene, camera, pixelHeight = PIXEL_HEIGHT) {
       if (!enabled) {
         renderer.setRenderTarget(null);
         renderer.render(mainScene, camera);
         return;
       }
       const canvas = renderer.domElement;
-      const height = PIXEL_HEIGHT;
+      const height = Math.max(80, Math.round(pixelHeight || PIXEL_HEIGHT));
       const width = Math.max(1, Math.round((height * canvas.clientWidth) / Math.max(canvas.clientHeight, 1)));
       if (rt.width !== width || rt.height !== height) rt.setSize(width, height);
       renderer.setRenderTarget(rt);

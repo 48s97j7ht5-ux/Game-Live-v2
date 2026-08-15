@@ -1,8 +1,8 @@
 import * as THREE from "three";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
-import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c8";
-import { defaultState, loadCatalog, morphRecipe, overlays, sizeLabels, tapZones } from "./registry.js?v=c8";
-import { hexRgb, LIGHT, SCENE_BG, SKIN } from "./palette.js?v=c8";
+import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c9";
+import { defaultState, loadCatalog, morphRecipe, overlays, sizeLabels, tapZones } from "./registry.js?v=c9";
+import { hexRgb, LIGHT, SCENE_BG, SKIN } from "./palette.js?v=c9";
 
 const AXIS_STEPS = 7;
 
@@ -450,7 +450,7 @@ stage.addEventListener("pointercancel", () => {
 
 function tick() {
   lockCenter();
-  pixelFilter.render(scene, camera);
+  pixelFilter.render(scene, camera, targetPx);
   layoutFloorButtons();
   requestAnimationFrame(tick);
 }
@@ -465,7 +465,7 @@ async function attachPixelFilter() {
   const box = document.querySelector("#pixelMode");
   if (!box) return;
   try {
-    const mod = await import("./pixel-mode.js?v=c8");
+    const mod = await import("./pixel-mode.js?v=c9");
     pixelFilter = mod.createPixelFilter(renderer);
     box.addEventListener("change", () => pixelFilter.setEnabled(box.checked));
   } catch (error) {
@@ -475,7 +475,7 @@ async function attachPixelFilter() {
 }
 
 async function boot() {
-  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c8", import.meta.url));
+  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c9", import.meta.url));
   recipe = morphRecipe(catalog);
   sizes = sizeLabels(catalog);
   bodyState = defaultState(catalog);
