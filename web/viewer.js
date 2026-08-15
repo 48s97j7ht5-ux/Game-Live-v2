@@ -304,11 +304,11 @@ async function loadModel() {
 
 document.querySelector("#turnLeft").addEventListener("click", (event) => {
   event.stopPropagation();
-  stepTurn(-1);
+  stepTurn(1);
 });
 document.querySelector("#turnRight").addEventListener("click", (event) => {
   event.stopPropagation();
-  stepTurn(1);
+  stepTurn(-1);
 });
 document.querySelectorAll(".heights button").forEach((button) => {
   button.addEventListener("click", () => setHeight(Number(button.dataset.height)));
