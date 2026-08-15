@@ -26,13 +26,29 @@ canvas {
 .bar {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 10px;
   padding: calc(10px + env(safe-area-inset-top)) 12px 10px;
   background: #0f1217;
 }
 
+.title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
 .bar strong { font-size: 14px; }
 .bar span { color: #929cab; font-size: 12px; }
+
+.heights {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  width: min(46vw, 168px);
+  flex: 0 0 auto;
+}
 
 .bottom {
   padding: 10px 12px calc(12px + env(safe-area-inset-bottom));

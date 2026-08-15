@@ -12,13 +12,14 @@ const MODEL_URLS = [
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x2a2c31);
 
-const camera = new THREE.PerspectiveCamera(32, 1, 0.01, 2000);
+const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.01, 2000);
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
 controls.dampingFactor = 0.08;
+controls.enableZoom = false;
 controls.target.set(0, 0.9, 0);
 
 scene.add(new THREE.HemisphereLight(0xffffff, 0x334455, 1.1));
@@ -32,6 +33,9 @@ scene.add(fill);
 const skin = new THREE.MeshToonMaterial({ color: 0xdbb396 });
 let dummy = null;
 let radius = 1.7;
+let bodyHeight = 1.6;
+let targetPx = 400;
+let currentView = "front";
 
 function partName(object) {
   let node = object;
@@ -51,12 +55,21 @@ function hideHelpers(group) {
   });
 }
 
-function resize() {
-  const width = canvas.clientWidth;
-  const height = canvas.clientHeight;
-  camera.aspect = width / Math.max(height, 1);
+function applyScale() {
+  const width = Math.max(canvas.clientWidth, 1);
+  const height = Math.max(canvas.clientHeight, 1);
+  const worldH = bodyHeight * (height / targetPx);
+  const worldW = worldH * (width / height);
+  camera.left = -worldW / 2;
+  camera.right = worldW / 2;
+  camera.top = worldH / 2;
+  camera.bottom = -worldH / 2;
   camera.updateProjectionMatrix();
-  renderer.setSize(width, height, false);
+}
+
+function resize() {
+  renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
+  applyScale();
 }
 
 function frameObject(object) {
@@ -72,19 +85,29 @@ function frameObject(object) {
   const center = box.getCenter(new THREE.Vector3());
   object.position.sub(center);
   object.position.y += size.y * 0.5;
+  bodyHeight = Math.max(size.y, 0.01);
   radius = Math.max(size.y, size.x, size.z);
   camera.near = Math.max(radius / 200, 0.01);
   camera.far = Math.max(radius * 40, 200);
-  camera.updateProjectionMatrix();
-  controls.minDistance = radius * 1.2;
-  controls.maxDistance = radius * 8;
-  controls.target.set(0, size.y * 0.52, 0);
+  controls.minDistance = radius * 0.8;
+  controls.maxDistance = radius * 12;
+  controls.target.set(0, size.y * 0.5, 0);
   key.position.set(-radius, radius * 1.4, radius);
   fill.position.set(radius * 0.9, radius * 0.4, radius * 0.5);
+  setHeight(targetPx);
   setView("front");
 }
 
+function setHeight(px) {
+  targetPx = px;
+  applyScale();
+  document.querySelectorAll(".heights button").forEach((button) => {
+    button.classList.toggle("active", Number(button.dataset.height) === targetPx);
+  });
+}
+
 function setView(name) {
+  currentView = name;
   const height = controls.target.y;
   const distance = radius * 3.4;
   const views = {
@@ -94,8 +117,9 @@ function setView(name) {
     back: new THREE.Vector3(0, height, -distance),
   };
   camera.position.copy(views[name]);
+  camera.up.set(0, 1, 0);
   controls.update();
-  document.querySelectorAll("nav button").forEach((button) => {
+  document.querySelectorAll(".bottom button").forEach((button) => {
     button.classList.toggle("active", button.dataset.view === name);
   });
 }
@@ -126,8 +150,11 @@ async function loadModel() {
   throw lastError;
 }
 
-document.querySelectorAll("nav button").forEach((button) => {
+document.querySelectorAll(".bottom button").forEach((button) => {
   button.addEventListener("click", () => setView(button.dataset.view));
+});
+document.querySelectorAll(".heights button").forEach((button) => {
+  button.addEventListener("click", () => setHeight(Number(button.dataset.height)));
 });
 
 window.addEventListener("resize", resize);
