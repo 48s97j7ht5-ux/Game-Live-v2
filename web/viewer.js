@@ -1,8 +1,8 @@
 import * as THREE from "three";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
-import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c7";
-import { defaultState, loadCatalog, morphRecipe, overlays, sizeLabels, tapZones } from "./registry.js?v=c7";
-import { hexRgb, LIGHT, SCENE_BG, SKIN } from "./palette.js?v=c7";
+import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c8";
+import { defaultState, loadCatalog, morphRecipe, overlays, sizeLabels, tapZones } from "./registry.js?v=c8";
+import { hexRgb, LIGHT, SCENE_BG, SKIN } from "./palette.js?v=c8";
 
 const AXIS_STEPS = 7;
 
@@ -175,8 +175,8 @@ function makeSkinMatcap() {
   const ctx = board.getContext("2d");
   const img = ctx.createImageData(size, size);
   const data = img.data;
-  const cavity = hexRgb(SKIN.cavity);
   const deep = hexRgb(SKIN.deep);
+  const shadow = hexRgb(SKIN.shadow);
   const mid = hexRgb(SKIN.mid);
   const light = hexRgb(SKIN.light);
   const hi = hexRgb(SKIN.hi);
@@ -187,20 +187,20 @@ function makeSkinMatcap() {
       const r2 = nx * nx + ny * ny;
       const i = (y * size + x) * 4;
       if (r2 > 1) {
-        data[i] = cavity[0];
-        data[i + 1] = cavity[1];
-        data[i + 2] = cavity[2];
+        data[i] = deep[0];
+        data[i + 1] = deep[1];
+        data[i + 2] = deep[2];
         data[i + 3] = 255;
         continue;
       }
       const nz = Math.sqrt(1 - r2);
-      const wrap = Math.max(0, nx * -0.28 + ny * 0.42 + nz * 0.82);
-      const spec = Math.pow(Math.max(0, nx * -0.12 + ny * 0.38 + nz * 0.9), 32) * 0.28;
-      const rim = Math.pow(1 - nz, 1.7) * 0.18;
-      const t = Math.min(1, Math.max(0, wrap * 0.88 + 0.08 + spec - rim));
-      const from = t < 0.45 ? cavity : t < 0.7 ? deep : mid;
-      const to = t < 0.45 ? deep : t < 0.7 ? mid : t < 0.88 ? light : hi;
-      const u = t < 0.45 ? t / 0.45 : t < 0.7 ? (t - 0.45) / 0.25 : t < 0.88 ? (t - 0.7) / 0.18 : (t - 0.88) / 0.12;
+      const wrap = Math.max(0, nx * -0.22 + ny * 0.4 + nz * 0.86);
+      const spec = Math.pow(Math.max(0, nx * -0.1 + ny * 0.36 + nz * 0.92), 36) * 0.22;
+      const rim = Math.pow(1 - nz, 1.8) * 0.12;
+      const t = Math.min(1, Math.max(0, wrap * 0.9 + 0.18 + spec - rim));
+      const from = t < 0.22 ? shadow : t < 0.5 ? mid : t < 0.78 ? light : hi;
+      const to = t < 0.22 ? mid : t < 0.5 ? light : hi;
+      const u = t < 0.22 ? t / 0.22 : t < 0.5 ? (t - 0.22) / 0.28 : t < 0.78 ? (t - 0.5) / 0.28 : (t - 0.78) / 0.22;
       data[i] = Math.round(from[0] + (to[0] - from[0]) * u);
       data[i + 1] = Math.round(from[1] + (to[1] - from[1]) * u);
       data[i + 2] = Math.round(from[2] + (to[2] - from[2]) * u);
@@ -465,7 +465,7 @@ async function attachPixelFilter() {
   const box = document.querySelector("#pixelMode");
   if (!box) return;
   try {
-    const mod = await import("./pixel-mode.js?v=c7");
+    const mod = await import("./pixel-mode.js?v=c8");
     pixelFilter = mod.createPixelFilter(renderer);
     box.addEventListener("change", () => pixelFilter.setEnabled(box.checked));
   } catch (error) {
@@ -475,7 +475,7 @@ async function attachPixelFilter() {
 }
 
 async function boot() {
-  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c7", import.meta.url));
+  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c8", import.meta.url));
   recipe = morphRecipe(catalog);
   sizes = sizeLabels(catalog);
   bodyState = defaultState(catalog);
