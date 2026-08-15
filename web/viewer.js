@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
+import { applyChestMorph, bindChestMorph, loadChestTargets } from "./chest-morph.js";
 
 const SIZES = ["A", "B", "C", "D", "E"];
 const SHAPES = ["круглая", "капля", "коническая", "широкая"];
@@ -62,6 +63,7 @@ function stepFloor(floor, delta) {
   }
   statusEl.textContent = idleStatus();
   updateFloorDisabled();
+  applyChestMorph(chestBound, sizeIndex, shapeIndex);
 }
 
 function updateFloorDisabled() {
@@ -144,6 +146,7 @@ scene.add(fill);
 
 const skin = new THREE.MeshToonMaterial({ color: 0xdbb396 });
 let dummy = null;
+let chestBound = null;
 let radius = 1.7;
 let bodyHeight = 1.6;
 let targetPx = 400;
@@ -249,6 +252,7 @@ function setView(name) {
 
 async function loadModel() {
   const loader = new OBJLoader();
+  const targetsPromise = loadChestTargets(new URL("./data/chest-targets.json?v=chest-morph", import.meta.url));
   let lastError = null;
   for (const url of MODEL_URLS) {
     try {
@@ -263,6 +267,12 @@ async function loadModel() {
       dummy = group;
       scene.add(dummy);
       frameObject(dummy);
+      try {
+        chestBound = bindChestMorph(dummy, await targetsPromise);
+        applyChestMorph(chestBound, sizeIndex, shapeIndex);
+      } catch (error) {
+        console.error(error);
+      }
       statusEl.textContent = idleStatus();
       return;
     } catch (error) {
