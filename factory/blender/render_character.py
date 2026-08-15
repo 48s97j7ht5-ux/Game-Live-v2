@@ -82,7 +82,9 @@ def build_mannequin() -> None:
     boots = toon_material("boots", (0.03, 0.03, 0.03), size=0.45)
 
     sphere("head", 0.11, Vector((0, 0, 1.52)), skin, scale=(0.95, 0.9, 1.15))
-    sphere("hair", 0.13, Vector((0, 0.01, 1.56)), hair, scale=(1.05, 1.15, 1.0))
+    sphere("hair", 0.13, Vector((0, -0.04, 1.57)), hair, scale=(1.1, 1.2, 1.05))
+    sphere("eye_l", 0.018, Vector((-0.035, 0.09, 1.54)), toon_material("eye", (0.08, 0.08, 0.09), size=0.5))
+    sphere("eye_r", 0.018, Vector((0.035, 0.09, 1.54)), toon_material("eye", (0.08, 0.08, 0.09), size=0.5))
     cylinder("neck", 0.04, 0.08, Vector((0, 0, 1.38)), skin)
     cylinder("torso", 0.13, 0.38, Vector((0, 0, 1.14)), shirt)
     cylinder("hips", 0.12, 0.14, Vector((0, 0, 0.90)), pants)
@@ -161,7 +163,7 @@ def setup_camera() -> None:
     cam.type = "ORTHO"
     cam.ortho_scale = ortho_scale
     obj = bpy.data.objects.new("cam", cam)
-    offset = Vector((1.0, -1.0, 0.12)).normalized() * 3.0
+    offset = Vector((1.0, 1.0, 0.18)).normalized() * 3.0
     obj.location = center + offset
     direction = center - obj.location
     obj.rotation_euler = direction.to_track_quat("-Z", "Y").to_euler()
