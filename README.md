@@ -1,5 +1,13 @@
 # Game Live v2
 
+Веб-станок болванки: https://48s97j7ht5-ux.github.io/Game-Live-v2/
+
+На телефоне можно крутить объёмное тело пальцем. Кнопки: анфас, ¾, профиль, спина.
+
+Пиксельный кадр по-прежнему считается в **Actions → Render character** и лежит в `factory/out/front.png`.
+
+Если страница 404 — в GitHub: Settings → Pages → Source: GitHub Actions.
+
 Станок персонажа в GitHub Actions: с телефона можно посчитать кадр и получить PNG.
 
 ## Как запустить с телефона
