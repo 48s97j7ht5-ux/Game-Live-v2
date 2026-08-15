@@ -36,8 +36,6 @@ const ZONES = {
     side: "back",
     floors: [
       { id: "butt", label: "объём", kind: "axis" },
-      { id: "hipW", label: "шире", kind: "axis" },
-      { id: "hipD", label: "выступ", kind: "axis" },
       { id: "pelvis", label: "тонус", kind: "axis" },
     ],
   },
@@ -404,7 +402,7 @@ async function loadModel() {
       frameObject(dummy);
       statusEl.textContent = idleStatus();
       try {
-        const packed = await loadChestTargets(new URL("./data/body-targets.json?v=sparse", import.meta.url));
+        const packed = await loadChestTargets(new URL("./data/body-targets.json?v=butt3", import.meta.url));
         chestBound = bindChestMorph(dummy, packed);
         applyChestMorph(chestBound, bodyState);
       } catch (error) {

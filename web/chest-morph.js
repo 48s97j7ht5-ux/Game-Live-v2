@@ -18,10 +18,8 @@ const STOMACH_AXES = [
   { id: "navelZ", decr: "navelIn", incr: "navelOut" },
 ];
 const BUTT_AXES = [
-  { id: "butt", decr: "buttDecr", incr: "buttIncr", gain: 6 },
-  { id: "hipW", decr: "hipHorizDecr", incr: "hipHorizIncr", gain: 3 },
-  { id: "hipD", decr: "hipDepthDecr", incr: "hipDepthIncr", gain: 3 },
-  { id: "pelvis", decr: "pelvisToneDecr", incr: "pelvisToneIncr", gain: 3 },
+  { id: "butt", decr: "buttDecr", incr: "buttIncr", gain: 2.4, mask: "back" },
+  { id: "pelvis", decr: "pelvisToneDecr", incr: "pelvisToneIncr", gain: 1.6, mask: "back" },
 ];
 const AXES = [...CHEST_AXES, ...STOMACH_AXES, ...BUTT_AXES];
 
@@ -29,13 +27,14 @@ function key3(x, y, z) {
   return `${x.toFixed(4)},${y.toFixed(4)},${z.toFixed(4)}`;
 }
 
-function addWeighted(out, source, weight) {
+function addWeighted(out, source, weight, rest, mask) {
   if (!weight || !source) return;
   if (source.s && source.d) {
     const slots = source.s;
     const deltas = source.d;
     for (let i = 0; i < slots.length; i += 1) {
       const o = slots[i] * 3;
+      if (mask === "back" && rest && rest[o + 2] > 0.12) continue;
       const p = i * 3;
       out[o] += deltas[p] * weight;
       out[o + 1] += deltas[p + 1] * weight;
@@ -43,8 +42,11 @@ function addWeighted(out, source, weight) {
     }
     return;
   }
-  for (let i = 0; i < out.length; i += 1) {
+  for (let i = 0; i < out.length; i += 3) {
+    if (mask === "back" && rest && rest[i + 2] > 0.12) continue;
     out[i] += source[i] * weight;
+    out[i + 1] += source[i + 1] * weight;
+    out[i + 2] += source[i + 2] * weight;
   }
 }
 
@@ -66,13 +68,11 @@ export function defaultChestState() {
     navelY: AXIS_MID,
     navelZ: AXIS_MID,
     butt: AXIS_MID,
-    hipW: AXIS_MID,
-    hipD: AXIS_MID,
     pelvis: AXIS_MID,
   };
 }
 
-export function mixChestDeltas(targets, state, restCount) {
+export function mixChestDeltas(targets, state, restCount, rest) {
   const sizeT = SIZE_T[state.sizeIndex];
   const firm = FIRMNESS;
   const mixed = new Float32Array(restCount);
@@ -82,8 +82,9 @@ export function mixChestDeltas(targets, state, restCount) {
   addWeighted(mixed, targets.maxCupMaxFirm, sizeT * firm);
   for (const axis of AXES) {
     const amount = axisAmount(state[axis.id]);
-    if (amount < 0) addWeighted(mixed, targets[axis.decr], -amount * (axis.gain || 1));
-    else if (amount > 0) addWeighted(mixed, targets[axis.incr], amount * (axis.gain || 1));
+    if (!amount) continue;
+    const source = amount < 0 ? targets[axis.decr] : targets[axis.incr];
+    addWeighted(mixed, source, Math.abs(amount) * (axis.gain || 1), rest, axis.mask);
   }
   return mixed;
 }
@@ -121,7 +122,12 @@ export function bindChestMorph(group, packed) {
 
 export function applyChestMorph(bound, state) {
   if (!bound) return;
-  const deltas = mixChestDeltas(bound.packed.targets, state, bound.packed.index.length * 3);
+  const deltas = mixChestDeltas(
+    bound.packed.targets,
+    state,
+    bound.packed.index.length * 3,
+    bound.packed.rest,
+  );
   for (const item of bound.bindings) {
     const position = item.mesh.geometry.getAttribute("position");
     const out = position.array;
