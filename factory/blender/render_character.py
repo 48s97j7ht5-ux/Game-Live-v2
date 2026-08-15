@@ -48,6 +48,20 @@ def toon_material(name: str, color: tuple[float, float, float], size: float = 0.
     return mat
 
 
+def emission_material(name: str, color: tuple[float, float, float], strength: float = 2.5) -> bpy.types.Material:
+    mat = bpy.data.materials.new(name)
+    mat.use_nodes = True
+    nodes = mat.node_tree.nodes
+    links = mat.node_tree.links
+    nodes.clear()
+    output = nodes.new("ShaderNodeOutputMaterial")
+    emit = nodes.new("ShaderNodeEmission")
+    emit.inputs["Color"].default_value = (*color, 1.0)
+    emit.inputs["Strength"].default_value = strength
+    links.new(emit.outputs["Emission"], output.inputs["Surface"])
+    return mat
+
+
 def cylinder(name: str, radius: float, depth: float, location: Vector, material: bpy.types.Material, rotation=(0.0, 0.0, 0.0)) -> bpy.types.Object:
     bpy.ops.mesh.primitive_cylinder_add(
         radius=radius,
@@ -75,16 +89,20 @@ def sphere(name: str, radius: float, location: Vector, material: bpy.types.Mater
 
 
 def build_mannequin() -> None:
-    skin = toon_material("skin", (0.72, 0.55, 0.47), size=0.42)
+    skin = toon_material("skin", (0.82, 0.64, 0.52), size=0.42)
     hair = toon_material("hair", (0.04, 0.04, 0.05), size=0.5)
-    shirt = toon_material("shirt", (0.07, 0.07, 0.08), size=0.38)
-    pants = toon_material("pants", (0.09, 0.09, 0.11), size=0.38)
+    shirt = toon_material("shirt", (0.75, 0.92, 0.22), size=0.38)
+    pants = toon_material("pants", (0.12, 0.13, 0.16), size=0.38)
     boots = toon_material("boots", (0.03, 0.03, 0.03), size=0.45)
+    sclera = emission_material("sclera", (0.95, 0.95, 0.92), strength=3.0)
+    pupil = emission_material("pupil", (0.02, 0.02, 0.02), strength=1.0)
 
-    sphere("head", 0.11, Vector((0, 0.02, 1.52)), skin, scale=(0.95, 0.95, 1.12))
-    sphere("hair", 0.125, Vector((0, -0.08, 1.58)), hair, scale=(1.08, 0.9, 1.0))
-    sphere("eye_l", 0.024, Vector((-0.04, 0.11, 1.545)), toon_material("eye", (0.05, 0.05, 0.05), size=0.55))
-    sphere("eye_r", 0.024, Vector((0.04, 0.11, 1.545)), toon_material("eye", (0.05, 0.05, 0.05), size=0.55))
+    sphere("head", 0.12, Vector((0, 0.03, 1.52)), skin, scale=(1.0, 1.0, 1.08))
+    sphere("hair", 0.12, Vector((0, -0.09, 1.60)), hair, scale=(1.12, 0.85, 0.95))
+    sphere("eye_l", 0.032, Vector((-0.045, 0.12, 1.54)), sclera)
+    sphere("eye_r", 0.032, Vector((0.045, 0.12, 1.54)), sclera)
+    sphere("pupil_l", 0.014, Vector((-0.045, 0.145, 1.54)), pupil)
+    sphere("pupil_r", 0.014, Vector((0.045, 0.145, 1.54)), pupil)
     cylinder("neck", 0.04, 0.08, Vector((0, 0, 1.38)), skin)
     cylinder("torso", 0.13, 0.38, Vector((0, 0, 1.14)), shirt)
     cylinder("hips", 0.12, 0.14, Vector((0, 0, 0.90)), pants)

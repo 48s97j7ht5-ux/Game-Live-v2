@@ -38,23 +38,23 @@ jobs:
             --out factory/out/render.png
 
       - name: Pixelize
-        run: python3 factory/pixelize.py --src factory/out/render.png --dst factory/out/character.png
+        run: python3 factory/pixelize.py --src factory/out/render.png --dst factory/out/front.png
 
       - uses: actions/upload-artifact@v4
         with:
           name: character
           path: |
-            factory/out/character.png
+            factory/out/front.png
             factory/out/render.png
 
       - name: Commit preview
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add factory/out/character.png
+          git add factory/out/front.png
           if git diff --cached --quiet; then
             echo "No preview changes"
             exit 0
           fi
-          git commit -m "Update factory character preview."
+          git commit -m "Update factory front preview."
           git push
