@@ -130,15 +130,43 @@ def setup_world() -> None:
     scene.collection.objects.link(fill_obj)
 
 
+def scene_bounds() -> tuple[Vector, Vector]:
+    bpy.context.view_layer.update()
+    depsgraph = bpy.context.evaluated_depsgraph_get()
+    mins = Vector((math.inf, math.inf, math.inf))
+    maxs = Vector((-math.inf, -math.inf, -math.inf))
+    for obj in bpy.context.scene.objects:
+        if obj.type != "MESH":
+            continue
+        evaluated = obj.evaluated_get(depsgraph)
+        for corner in evaluated.bound_box:
+            world = evaluated.matrix_world @ Vector(corner)
+            mins.x, mins.y, mins.z = min(mins.x, world.x), min(mins.y, world.y), min(mins.z, world.z)
+            maxs.x, maxs.y, maxs.z = max(maxs.x, world.x), max(maxs.y, world.y), max(maxs.z, world.z)
+    return mins, maxs
+
+
 def setup_camera() -> None:
+    mins, maxs = scene_bounds()
+    center = (mins + maxs) * 0.5
+    size = maxs - mins
+    scene = bpy.context.scene
+    aspect = scene.render.resolution_x / scene.render.resolution_y
+    padding = 1.16
+    needed_height = size.z * padding
+    needed_width = max(size.x, size.y) * 1.35 * padding
+    ortho_scale = max(needed_height, needed_width / aspect)
+
     cam = bpy.data.cameras.new("cam")
     cam.type = "ORTHO"
-    cam.ortho_scale = 1.85
+    cam.ortho_scale = ortho_scale
     obj = bpy.data.objects.new("cam", cam)
-    obj.location = (1.7, -1.7, 1.15)
-    obj.rotation_euler = (math.radians(78), 0, math.radians(45))
-    bpy.context.scene.collection.objects.link(obj)
-    bpy.context.scene.camera = obj
+    offset = Vector((1.0, -1.0, 0.12)).normalized() * 3.0
+    obj.location = center + offset
+    direction = center - obj.location
+    obj.rotation_euler = direction.to_track_quat("-Z", "Y").to_euler()
+    scene.collection.objects.link(obj)
+    scene.camera = obj
 
 
 def render_to(path: Path) -> None:
