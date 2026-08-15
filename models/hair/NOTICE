@@ -1,23 +1,17 @@
 Hair for the clay hm08 dummy
 ============================
 
-Official MakeHuman rule (docs):
+MakeClothes (official):
 
-  Hair is clothes. Same MHCLO pipeline as outfits, stored in data/hair,
-  fitted to the basemesh helper named helper-hair.
+  Hair is a *proxy* (clothes), not the helper. Each hair vertex follows
+  three vertices on the helper or the body. The helper mesh is a fitting
+  cage (helper-hair, helper-tights, …) and is not drawn.
 
+  https://static.makehumancommunity.org/assets/creatingassets/makeclothes/introduction.html
   https://static.makehumancommunity.org/makehuman/docs/hairstyles_and_clothes.html
-  https://static.makehumancommunity.org/assets/creatingassets/faq/how_can_i_create_hair.html
 
-Core MakeHuman does not ship hairstyles (only "None"). Styles come from
-community packs such as hair01 (CC0) on files.makehumancommunity.org.
+These OBJ files offset the hm08 *body* scalp/nape (CC0), a few centimetres
+out. They are not the helper-hair cage (that looked like slabs over the face).
 
-These OBJ files are shells built from the helper-hair cage already inside
-models/base.obj (MakeHuman hm08, CC0).
-
-The official MPFB Hair Editor also exposes length, density, thickness, frizz,
-roll, clump, noise, curl, and two-tone color. Those drive Blender hair curves.
-Bangs are a separate clothes piece in community packs (straight_bangs,
-bob_with_bangs). The workbench keeps scalp hair and bangs as two meshes:
-bangs_brow.obj (to the brows) and bangs_face.obj (covers the eyes).
-
+Bangs are a separate MHCLO in community packs. Here: bangs_brow / bangs_face
+are a thin hairline strip, optional.

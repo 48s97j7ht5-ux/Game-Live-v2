@@ -1,5 +1,5 @@
 {
-  "cache": "c18",
+  "cache": "c19",
   "defaultBody": "clay",
   "body": "./models/base.obj",
   "morphs": "./data/body-targets.json",
