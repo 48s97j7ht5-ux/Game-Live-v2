@@ -43,11 +43,36 @@ function worldToCanvasY(worldY) {
 }
 
 function layoutZoneButtons() {
-  const height = canvas.clientHeight;
+  const height = Math.max(canvas.clientHeight, 1);
+  const buttonSize = 42;
+  const gap = 12;
+  const minDist = buttonSize + gap;
+  const margin = buttonSize / 2 + 8;
+
+  const rows = ZONES.map((zone) => ({
+    zone,
+    y: worldToCanvasY(bodyHeight * zone.fromFeet),
+  })).sort((a, b) => a.y - b.y);
+
+  for (let i = 1; i < rows.length; i += 1) {
+    rows[i].y = Math.max(rows[i].y, rows[i - 1].y + minDist);
+  }
+  if (rows[rows.length - 1].y > height - margin) {
+    rows[rows.length - 1].y = height - margin;
+    for (let i = rows.length - 2; i >= 0; i -= 1) {
+      rows[i].y = Math.min(rows[i].y, rows[i + 1].y - minDist);
+    }
+  }
+  if (rows[0].y < margin) {
+    rows[0].y = margin;
+    for (let i = 1; i < rows.length; i += 1) {
+      rows[i].y = Math.max(rows[i].y, rows[i - 1].y + minDist);
+    }
+  }
+
+  const byZone = Object.fromEntries(rows.map((row) => [row.zone.id, row.y]));
   for (const item of zoneButtons) {
-    const y = worldToCanvasY(bodyHeight * item.zone.fromFeet);
-    const clamped = Math.min(height - 24, Math.max(24, y));
-    item.button.style.top = `${clamped}px`;
+    item.button.style.top = `${byZone[item.zone.id]}px`;
     item.button.style.transform = "translateY(-50%)";
   }
 }
