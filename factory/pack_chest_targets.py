@@ -22,8 +22,13 @@ TARGET_FILES = {
     "pointDecr": "breast-point-decr.target",
     "pointIncr": "breast-point-incr.target",
     "transDown": "breast-trans-down.target",
+    "transUp": "breast-trans-up.target",
     "volDown": "breast-volume-vert-down.target",
     "volUp": "breast-volume-vert-up.target",
+    "nippleSizeDecr": "nipple-size-decr.target",
+    "nippleSizeIncr": "nipple-size-incr.target",
+    "nipplePointDecr": "nipple-point-decr.target",
+    "nipplePointIncr": "nipple-point-incr.target",
 }
 
 

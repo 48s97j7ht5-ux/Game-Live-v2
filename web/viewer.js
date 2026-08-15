@@ -1,13 +1,18 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
-import { applyChestMorph, bindChestMorph, loadChestTargets } from "./chest-morph.js";
+import { applyChestMorph, bindChestMorph, defaultChestState, loadChestTargets } from "./chest-morph.js";
 
 const SIZES = ["A", "B", "C", "D", "E"];
-const SHAPES = ["круглая", "капля", "коническая", "широкая"];
+const AXIS_STEPS = 7;
 const FLOORS = [
-  { id: "size", label: "размер" },
-  { id: "shape", label: "форма" },
+  { id: "size", label: "чашка", kind: "size" },
+  { id: "dist", label: "шире", kind: "axis" },
+  { id: "point", label: "острее", kind: "axis" },
+  { id: "trans", label: "выше", kind: "axis" },
+  { id: "vol", label: "низ", kind: "axis" },
+  { id: "nipple", label: "сосок", kind: "axis" },
+  { id: "nipplePoint", label: "выступ", kind: "axis" },
 ];
 
 const sideLeft = document.querySelector("#sideLeft");
@@ -16,13 +21,20 @@ const canvas = document.querySelector("#view");
 const statusEl = document.querySelector("#status");
 const stage = document.querySelector(".stage");
 const floorButtons = [];
+const chestState = defaultChestState();
 
 let chestMode = false;
-let sizeIndex = 2;
-let shapeIndex = 1;
+let lastFloor = "size";
+
+function floorValue(floor) {
+  if (floor.kind === "size") return `${SIZES[chestState.sizeIndex]}`;
+  return `${chestState[floor.id] + 1}/${AXIS_STEPS}`;
+}
 
 function idleStatus() {
-  return chestMode ? `грудь · ${SIZES[sizeIndex]} · ${SHAPES[shapeIndex]}` : "нажми на грудь";
+  if (!chestMode) return "нажми на грудь";
+  const floor = FLOORS.find((item) => item.id === lastFloor) || FLOORS[0];
+  return `грудь · ${SIZES[chestState.sizeIndex]} · ${floor.label} ${floorValue(floor)}`;
 }
 
 function buildSideBars() {
@@ -30,49 +42,50 @@ function buildSideBars() {
     const left = document.createElement("button");
     left.type = "button";
     left.dataset.floor = floor.id;
-    left.dataset.dir = "left";
+    left.innerHTML = `<span>${floor.label}</span><span class="arr">←</span>`;
     left.setAttribute("aria-label", `${floor.label} меньше`);
-    left.textContent = "←";
     left.addEventListener("click", (event) => {
       event.stopPropagation();
-      stepFloor(floor.id, -1);
+      stepFloor(floor, -1);
     });
     sideLeft.appendChild(left);
 
     const right = document.createElement("button");
     right.type = "button";
     right.dataset.floor = floor.id;
-    right.dataset.dir = "right";
+    right.innerHTML = `<span>${floor.label}</span><span class="arr">→</span>`;
     right.setAttribute("aria-label", `${floor.label} больше`);
-    right.textContent = "→";
     right.addEventListener("click", (event) => {
       event.stopPropagation();
-      stepFloor(floor.id, 1);
+      stepFloor(floor, 1);
     });
     sideRight.appendChild(right);
 
-    floorButtons.push({ floor: floor.id, left, right });
+    floorButtons.push({ floor, left, right });
   }
 }
 
 function stepFloor(floor, delta) {
-  if (floor === "size") {
-    sizeIndex = Math.max(0, Math.min(SIZES.length - 1, sizeIndex + delta));
+  lastFloor = floor.id;
+  if (floor.kind === "size") {
+    chestState.sizeIndex = Math.max(0, Math.min(SIZES.length - 1, chestState.sizeIndex + delta));
   } else {
-    shapeIndex = Math.max(0, Math.min(SHAPES.length - 1, shapeIndex + delta));
+    chestState[floor.id] = Math.max(0, Math.min(AXIS_STEPS - 1, chestState[floor.id] + delta));
   }
   statusEl.textContent = idleStatus();
   updateFloorDisabled();
-  applyChestMorph(chestBound, sizeIndex, shapeIndex);
+  applyChestMorph(chestBound, chestState);
 }
 
 function updateFloorDisabled() {
   for (const item of floorButtons) {
-    const atStart = item.floor === "size" ? sizeIndex === 0 : shapeIndex === 0;
-    const atEnd =
-      item.floor === "size" ? sizeIndex === SIZES.length - 1 : shapeIndex === SHAPES.length - 1;
-    item.left.disabled = atStart;
-    item.right.disabled = atEnd;
+    if (item.floor.kind === "size") {
+      item.left.disabled = chestState.sizeIndex === 0;
+      item.right.disabled = chestState.sizeIndex === SIZES.length - 1;
+    } else {
+      item.left.disabled = chestState[item.floor.id] === 0;
+      item.right.disabled = chestState[item.floor.id] === AXIS_STEPS - 1;
+    }
   }
 }
 
@@ -94,16 +107,20 @@ function worldToCanvasY(worldY) {
 function layoutFloorButtons() {
   if (!chestMode) return;
   const height = Math.max(canvas.clientHeight, 1);
-  const buttonSize = 42;
-  const gap = 12;
+  const count = floorButtons.length;
+  const gap = 3;
+  const buttonSize = Math.min(40, Math.max(30, (height - 16 - gap * (count - 1)) / count));
+  const stack = count * buttonSize + (count - 1) * gap;
   const chestY = worldToCanvasY(bodyHeight * 0.73);
-  const topY = Math.max(buttonSize / 2 + 8, chestY - (buttonSize + gap) / 2);
-  const bottomY = Math.min(height - buttonSize / 2 - 8, topY + buttonSize + gap);
-  const ys = { size: topY, shape: bottomY };
-  for (const item of floorButtons) {
-    const y = ys[item.floor];
+  let start = chestY - stack / 2;
+  start = Math.max(8, Math.min(height - stack - 8, start));
+  for (let i = 0; i < floorButtons.length; i += 1) {
+    const y = start + i * (buttonSize + gap) + buttonSize / 2;
+    const item = floorButtons[i];
     item.left.style.top = `${y}px`;
     item.right.style.top = `${y}px`;
+    item.left.style.height = `${buttonSize}px`;
+    item.right.style.height = `${buttonSize}px`;
     item.left.style.transform = "translateY(-50%)";
     item.right.style.transform = "translateY(-50%)";
   }
@@ -252,7 +269,7 @@ function setView(name) {
 
 async function loadModel() {
   const loader = new OBJLoader();
-  const targetsPromise = loadChestTargets(new URL("./data/chest-targets.json?v=chest-firm", import.meta.url));
+  const targetsPromise = loadChestTargets(new URL("./data/chest-targets.json?v=chest-axes", import.meta.url));
   let lastError = null;
   for (const url of MODEL_URLS) {
     try {
@@ -269,7 +286,7 @@ async function loadModel() {
       frameObject(dummy);
       try {
         chestBound = bindChestMorph(dummy, await targetsPromise);
-        applyChestMorph(chestBound, sizeIndex, shapeIndex);
+        applyChestMorph(chestBound, chestState);
       } catch (error) {
         console.error(error);
       }

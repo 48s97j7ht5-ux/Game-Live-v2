@@ -1,10 +1,15 @@
-const SIZE_T = [0.42, 0.56, 0.70, 0.85, 1];
-const FIRMNESS = 0.5;
-const SHAPE_DETAIL = [
-  { pointDecr: 0.7, volUp: 0.22 },
-  { volDown: 0.85, transDown: 0.42, pointDecr: 0.18 },
-  { pointIncr: 0.9, distDecr: 0.22, volUp: 0.12 },
-  { distIncr: 0.85, pointDecr: 0.32 },
+export const SIZE_T = [0.42, 0.56, 0.7, 0.85, 1];
+export const FIRMNESS = 0.5;
+export const AXIS_STEPS = 7;
+export const AXIS_MID = 3;
+
+const AXES = [
+  { id: "dist", decr: "distDecr", incr: "distIncr" },
+  { id: "point", decr: "pointDecr", incr: "pointIncr" },
+  { id: "trans", decr: "transDown", incr: "transUp" },
+  { id: "vol", decr: "volUp", incr: "volDown" },
+  { id: "nipple", decr: "nippleSizeDecr", incr: "nippleSizeIncr" },
+  { id: "nipplePoint", decr: "nipplePointDecr", incr: "nipplePointIncr" },
 ];
 
 function key3(x, y, z) {
@@ -12,24 +17,40 @@ function key3(x, y, z) {
 }
 
 function addWeighted(out, source, weight) {
-  if (!weight) return;
+  if (!weight || !source) return;
   for (let i = 0; i < out.length; i += 1) {
     out[i] += source[i] * weight;
   }
 }
 
-export function mixChestDeltas(targets, sizeIndex, shapeIndex) {
-  const sizeT = SIZE_T[sizeIndex];
+export function axisAmount(step) {
+  return (step / (AXIS_STEPS - 1)) * 2 - 1;
+}
+
+export function defaultChestState() {
+  return {
+    sizeIndex: 2,
+    dist: AXIS_MID,
+    point: AXIS_MID,
+    trans: AXIS_MID,
+    vol: AXIS_MID,
+    nipple: AXIS_MID,
+    nipplePoint: AXIS_MID,
+  };
+}
+
+export function mixChestDeltas(targets, state) {
+  const sizeT = SIZE_T[state.sizeIndex];
   const firm = FIRMNESS;
   const mixed = new Float32Array(targets.minCupMinFirm.length);
   addWeighted(mixed, targets.minCupMinFirm, (1 - sizeT) * (1 - firm));
   addWeighted(mixed, targets.minCupMaxFirm, (1 - sizeT) * firm);
   addWeighted(mixed, targets.maxCupMinFirm, sizeT * (1 - firm));
   addWeighted(mixed, targets.maxCupMaxFirm, sizeT * firm);
-  const shapeScale = 0.22 + 0.78 * sizeT;
-  const detail = SHAPE_DETAIL[shapeIndex];
-  for (const [name, amount] of Object.entries(detail)) {
-    addWeighted(mixed, targets[name], amount * shapeScale);
+  for (const axis of AXES) {
+    const amount = axisAmount(state[axis.id]);
+    if (amount < 0) addWeighted(mixed, targets[axis.decr], -amount);
+    else if (amount > 0) addWeighted(mixed, targets[axis.incr], amount);
   }
   return mixed;
 }
@@ -65,9 +86,9 @@ export function bindChestMorph(group, packed) {
   return { packed, bindings };
 }
 
-export function applyChestMorph(bound, sizeIndex, shapeIndex) {
+export function applyChestMorph(bound, state) {
   if (!bound) return;
-  const deltas = mixChestDeltas(bound.packed.targets, sizeIndex, shapeIndex);
+  const deltas = mixChestDeltas(bound.packed.targets, state);
   for (const item of bound.bindings) {
     const position = item.mesh.geometry.getAttribute("position");
     const out = position.array;
