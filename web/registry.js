@@ -37,14 +37,22 @@ export function bodyModel(part, variantId) {
   return variant?.model || part.model;
 }
 
-export function tapZones(catalog, bodyId = "clay") {
-  return catalog.parts.filter(
-    (part) => part.yFrac != null && (part.floors || []).length && onBody(part, bodyId),
-  );
+export function tapZones(catalog, bodyId = "clay", focusMode = "body") {
+  return catalog.parts.filter((part) => {
+    if (part.yFrac == null || !(part.floors || []).length) return false;
+    if (!onBody(part, bodyId)) return false;
+    return (part.focus || "body") === focusMode;
+  });
 }
 
 export function overlays(catalog, bodyId = "clay") {
-  return catalog.parts.filter((part) => part.kind === "overlay" && part.model && onBody(part, bodyId));
+  return catalog.parts.filter(
+    (part) => part.kind === "overlay" && part.model && !part.choices && onBody(part, bodyId),
+  );
+}
+
+export function hairPart(catalog, bodyId = "clay") {
+  return catalog.parts.find((part) => part.id === "hair" && part.kind === "overlay" && onBody(part, bodyId));
 }
 
 export function morphRecipe(catalog, bodyId = "clay") {
@@ -66,6 +74,12 @@ export function defaultState(catalog, bodyId = "clay") {
   const state = {};
   if (recipe.macro?.sizeIndex) state.sizeIndex = recipe.macro.sizeIndex.default ?? 2;
   for (const axis of recipe.axes) state[axis.id] = 3;
+  for (const part of catalog.parts) {
+    if (!onBody(part, bodyId)) continue;
+    for (const floor of part.floors || []) {
+      if (floor.kind === "choice") state[floor.id] = floor.default ?? 0;
+    }
+  }
   return state;
 }
 

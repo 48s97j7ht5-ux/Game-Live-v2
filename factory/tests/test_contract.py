@@ -98,7 +98,7 @@ def test_live_targets_match_packer_and_json() -> None:
 
 def test_parts_are_the_zone_source() -> None:
     viewer = (ROOT / "web/viewer.js").read_text()
-    assert "tapZones(catalog, currentBody)" in viewer
+    assert "tapZones(catalog, currentBody, focusMode)" in viewer
     live = [part for part in iter_parts() if part.get("enabled") is not False]
     assert {part["id"] for part in live} >= {"chest", "stomach", "hips", "butt", "clay", "anime"}
     for part in live:
@@ -130,6 +130,24 @@ def test_anime_is_separate_body_module() -> None:
         assert "\ng body\n" in text or text.startswith("#") and "g body" in text
 
 
+def test_hair_is_mhclo_style_overlay() -> None:
+    hair = json.loads((PARTS_DIR / "hair.json").read_text())
+    assert hair["kind"] == "overlay"
+    assert hair["enabled"] is True
+    assert hair["focus"] == "hair"
+    viewer = (ROOT / "web/viewer.js").read_text()
+    assert "applyHair" in viewer
+    for choice in hair["choices"]:
+        if not choice.get("model"):
+            continue
+        rel = choice["model"][2:] if choice["model"].startswith("./") else choice["model"]
+        path = ROOT / rel
+        assert path.is_file(), rel
+        text = path.read_text()
+        assert "\ng hair\n" in text
+        assert "helper-hair" in text or "helper-hair" in (ROOT / "models/hair/NOTICE").read_text()
+
+
 if __name__ == "__main__":
     test_cache_token_everywhere()
     test_no_unofficial_morph_hacks()
@@ -138,4 +156,5 @@ if __name__ == "__main__":
     test_live_targets_match_packer_and_json()
     test_parts_are_the_zone_source()
     test_anime_is_separate_body_module()
+    test_hair_is_mhclo_style_overlay()
     print("ok contract")

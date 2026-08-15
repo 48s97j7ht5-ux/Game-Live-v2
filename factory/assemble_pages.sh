@@ -23,6 +23,9 @@ fi
 if [[ -d "$ROOT/models/mblab" ]]; then
   cp -a "$ROOT/models/mblab" "$DEST/models/mblab"
 fi
+if [[ -d "$ROOT/models/hair" ]]; then
+  cp -a "$ROOT/models/hair" "$DEST/models/hair"
+fi
 if [[ -f "$ROOT/factory/out/front.png" ]]; then
   cp "$ROOT/factory/out/front.png" "$DEST/factory/out/front.png"
 fi
@@ -40,6 +43,9 @@ required=(
   models/mblab/f_an01.obj
   models/mblab/f_an02.obj
   models/mblab/m_an01.obj
+  models/hair/short.obj
+  models/hair/bob.obj
+  models/hair/long.obj
   index.html
 )
 for rel in "${required[@]}"; do

@@ -1,11 +1,19 @@
 {
   "id": "hair",
-  "label": "волосы",
+  "label": "причёска",
   "kind": "overlay",
   "bodies": ["clay"],
-  "enabled": false,
-  "model": "./models/hair.obj",
+  "enabled": true,
+  "focus": "hair",
   "yFrac": 0.92,
-  "views": ["front", "front34", "side", "back", "back34"],
-  "floors": []
+  "views": ["front", "front34", "frontHalf", "side", "backHalf", "back34", "back"],
+  "floors": [
+    { "id": "style", "label": "стиль", "kind": "choice", "default": 0 }
+  ],
+  "choices": [
+    { "id": "short", "label": "короткая", "model": "./models/hair/short.obj" },
+    { "id": "bob", "label": "каре", "model": "./models/hair/bob.obj" },
+    { "id": "long", "label": "длинная", "model": "./models/hair/long.obj" },
+    { "id": "none", "label": "нет", "model": "" }
+  ]
 }

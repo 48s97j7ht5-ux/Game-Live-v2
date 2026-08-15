@@ -1,0 +1,17 @@
+Hair for the clay hm08 dummy
+============================
+
+Official MakeHuman rule (docs):
+
+  Hair is clothes. Same MHCLO pipeline as outfits, stored in data/hair,
+  fitted to the basemesh helper named helper-hair.
+
+  https://static.makehumancommunity.org/makehuman/docs/hairstyles_and_clothes.html
+  https://static.makehumancommunity.org/assets/creatingassets/faq/how_can_i_create_hair.html
+
+Core MakeHuman does not ship hairstyles (only "None"). Styles come from
+community packs such as hair01 (CC0) on files.makehumancommunity.org.
+
+These OBJ files are shells built from the helper-hair cage already inside
+models/base.obj (MakeHuman hm08, CC0). They are placeholders you can replace
+with a fitted community MHCLO/OBJ listed in web/parts/hair.json.
