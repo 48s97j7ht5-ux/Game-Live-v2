@@ -10,6 +10,8 @@ const ZONES = [
 
 const sideLeft = document.querySelector("#sideLeft");
 const sideRight = document.querySelector("#sideRight");
+const canvas = document.querySelector("#view");
+const statusEl = document.querySelector("#status");
 const zoneButtons = [];
 
 function buildSideBars() {
