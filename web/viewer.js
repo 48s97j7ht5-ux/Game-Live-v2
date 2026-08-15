@@ -33,6 +33,24 @@ const skin = new THREE.MeshToonMaterial({ color: 0xdbb396 });
 let dummy = null;
 let radius = 1.7;
 
+function partName(object) {
+  let node = object;
+  while (node) {
+    const name = (node.name || "").toLowerCase().trim();
+    if (name) return name;
+    node = node.parent;
+  }
+  return "";
+}
+
+function hideHelpers(group) {
+  group.traverse((child) => {
+    if (!child.isMesh) return;
+    const name = partName(child);
+    child.visible = name === "body" || name.startsWith("body");
+  });
+}
+
 function resize() {
   const width = canvas.clientWidth;
   const height = canvas.clientHeight;
@@ -42,7 +60,14 @@ function resize() {
 }
 
 function frameObject(object) {
-  const box = new THREE.Box3().setFromObject(object);
+  const box = new THREE.Box3();
+  object.updateWorldMatrix(true, true);
+  object.traverse((child) => {
+    if (child.isMesh && child.visible) {
+      box.expandByObject(child);
+    }
+  });
+  if (box.isEmpty()) box.setFromObject(object);
   const size = box.getSize(new THREE.Vector3());
   const center = box.getCenter(new THREE.Vector3());
   object.position.sub(center);
@@ -87,6 +112,7 @@ async function loadModel() {
           child.geometry.computeVertexNormals();
         }
       });
+      hideHelpers(group);
       dummy = group;
       scene.add(dummy);
       frameObject(dummy);

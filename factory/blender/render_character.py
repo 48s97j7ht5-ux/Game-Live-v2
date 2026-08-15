@@ -108,6 +108,15 @@ def apply_body_material() -> None:
             poly.use_smooth = True
 
 
+def hide_helpers() -> None:
+    for obj in bpy.context.scene.objects:
+        name = obj.name.lower().split(".")[0]
+        if name.startswith("helper-") or name.startswith("joint-"):
+            obj.hide_render = True
+            obj.hide_viewport = True
+            obj.hide_set(True)
+
+
 def import_character(path: Path, yaw_degrees: float) -> None:
     before = set(bpy.context.scene.objects)
     import_model(path)
@@ -126,6 +135,7 @@ def import_character(path: Path, yaw_degrees: float) -> None:
             obj.matrix_world = world
         if obj.type == "ARMATURE":
             obj.hide_render = True
+    hide_helpers()
     apply_body_material()
     anchor.rotation_euler.z = math.radians(yaw_degrees)
     bpy.context.view_layer.update()
