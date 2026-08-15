@@ -2,6 +2,11 @@ name: Render character
 
 on:
   workflow_dispatch:
+    inputs:
+      yaw:
+        description: "Поворот персонажа по вертикали (0 / 90 / 180 / 270)"
+        required: false
+        default: "180"
   push:
     paths:
       - factory/blender/**
@@ -17,6 +22,7 @@ jobs:
     timeout-minutes: 25
     env:
       BLENDER_VERSION: 4.2.8
+      YAW: ${{ github.event.inputs.yaw || '180' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -32,10 +38,20 @@ jobs:
           tar -xJf blender.tar.xz -C "$HOME/blender" --strip-components=1
           echo "$HOME/blender" >> "$GITHUB_PATH"
 
-      - name: Render mannequin
+      - name: Download Michelle character
+        run: |
+          set -euo pipefail
+          mkdir -p factory/models
+          curl -L --fail -o factory/models/michelle.glb \
+            "https://github.com/mrdoob/three.js/raw/r170/examples/models/gltf/Michelle.glb"
+          ls -la factory/models/michelle.glb
+
+      - name: Render character
         run: |
           blender --background --python factory/blender/render_character.py -- \
-            --out factory/out/render.png
+            --out factory/out/render.png \
+            --model factory/models/michelle.glb \
+            --yaw "$YAW"
 
       - name: Pixelize
         run: python3 factory/pixelize.py --src factory/out/render.png --dst factory/out/front.png

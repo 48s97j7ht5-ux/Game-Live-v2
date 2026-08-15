@@ -1,4 +1,4 @@
-"""Render a procedural mannequin in Blender (Cycles Toon, 3/4 camera)."""
+"""Render a character in Blender (front 3/4, Cycles) for the pixel factory."""
 
 from __future__ import annotations
 
@@ -30,97 +30,17 @@ def clear_scene() -> None:
         bpy.data.lights.remove(light)
     for cam in list(bpy.data.cameras):
         bpy.data.cameras.remove(cam)
-
-
-def toon_material(name: str, color: tuple[float, float, float], size: float = 0.35) -> bpy.types.Material:
-    mat = bpy.data.materials.new(name)
-    mat.use_nodes = True
-    nodes = mat.node_tree.nodes
-    links = mat.node_tree.links
-    nodes.clear()
-    output = nodes.new("ShaderNodeOutputMaterial")
-    toon = nodes.new("ShaderNodeBsdfToon")
-    toon.component = "DIFFUSE"
-    toon.inputs["Color"].default_value = (*color, 1.0)
-    toon.inputs["Size"].default_value = size
-    toon.inputs["Smooth"].default_value = 0.08
-    links.new(toon.outputs["BSDF"], output.inputs["Surface"])
-    return mat
-
-
-def emission_material(name: str, color: tuple[float, float, float], strength: float = 2.5) -> bpy.types.Material:
-    mat = bpy.data.materials.new(name)
-    mat.use_nodes = True
-    nodes = mat.node_tree.nodes
-    links = mat.node_tree.links
-    nodes.clear()
-    output = nodes.new("ShaderNodeOutputMaterial")
-    emit = nodes.new("ShaderNodeEmission")
-    emit.inputs["Color"].default_value = (*color, 1.0)
-    emit.inputs["Strength"].default_value = strength
-    links.new(emit.outputs["Emission"], output.inputs["Surface"])
-    return mat
-
-
-def cylinder(name: str, radius: float, depth: float, location: Vector, material: bpy.types.Material, rotation=(0.0, 0.0, 0.0)) -> bpy.types.Object:
-    bpy.ops.mesh.primitive_cylinder_add(
-        radius=radius,
-        depth=depth,
-        location=location,
-        rotation=rotation,
-        vertices=24,
-    )
-    obj = bpy.context.active_object
-    obj.name = name
-    obj.data.materials.append(material)
-    bpy.ops.object.shade_smooth()
-    return obj
-
-
-def sphere(name: str, radius: float, location: Vector, material: bpy.types.Material, scale=None) -> bpy.types.Object:
-    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, location=location, segments=24, ring_count=16)
-    obj = bpy.context.active_object
-    obj.name = name
-    if scale:
-        obj.scale = scale
-    obj.data.materials.append(material)
-    bpy.ops.object.shade_smooth()
-    return obj
-
-
-def build_mannequin() -> None:
-    skin = toon_material("skin", (0.82, 0.64, 0.52), size=0.42)
-    hair = toon_material("hair", (0.04, 0.04, 0.05), size=0.5)
-    shirt = toon_material("shirt", (0.75, 0.92, 0.22), size=0.38)
-    pants = toon_material("pants", (0.12, 0.13, 0.16), size=0.38)
-    boots = toon_material("boots", (0.03, 0.03, 0.03), size=0.45)
-    sclera = emission_material("sclera", (0.95, 0.95, 0.92), strength=3.0)
-    pupil = emission_material("pupil", (0.02, 0.02, 0.02), strength=1.0)
-
-    sphere("head", 0.12, Vector((0, 0.03, 1.52)), skin, scale=(1.0, 1.0, 1.08))
-    sphere("hair", 0.12, Vector((0, -0.09, 1.60)), hair, scale=(1.12, 0.85, 0.95))
-    sphere("eye_l", 0.032, Vector((-0.045, 0.12, 1.54)), sclera)
-    sphere("eye_r", 0.032, Vector((0.045, 0.12, 1.54)), sclera)
-    sphere("pupil_l", 0.014, Vector((-0.045, 0.145, 1.54)), pupil)
-    sphere("pupil_r", 0.014, Vector((0.045, 0.145, 1.54)), pupil)
-    cylinder("neck", 0.04, 0.08, Vector((0, 0, 1.38)), skin)
-    cylinder("torso", 0.13, 0.38, Vector((0, 0, 1.14)), shirt)
-    cylinder("hips", 0.12, 0.14, Vector((0, 0, 0.90)), pants)
-    cylinder("leg_l", 0.055, 0.42, Vector((-0.07, 0, 0.62)), pants)
-    cylinder("leg_r", 0.055, 0.42, Vector((0.07, 0, 0.62)), pants)
-    cylinder("boot_l", 0.06, 0.16, Vector((-0.07, 0.02, 0.34)), boots)
-    cylinder("boot_r", 0.06, 0.16, Vector((0.07, 0.02, 0.34)), boots)
-    cylinder("arm_l", 0.04, 0.36, Vector((-0.20, 0, 1.12)), skin, rotation=(0, math.radians(12), 0))
-    cylinder("arm_r", 0.04, 0.36, Vector((0.20, 0, 1.12)), skin, rotation=(0, math.radians(-12), 0))
-    sphere("hand_l", 0.045, Vector((-0.27, 0, 0.92)), skin)
-    sphere("hand_r", 0.045, Vector((0.27, 0, 0.92)), skin)
+    for arm in list(bpy.data.armatures):
+        bpy.data.armatures.remove(arm)
+    for img in list(bpy.data.images):
+        bpy.data.images.remove(img)
 
 
 def setup_world() -> None:
     scene = bpy.context.scene
     scene.render.engine = "CYCLES"
     scene.cycles.device = "CPU"
-    scene.cycles.samples = 24
+    scene.cycles.samples = 48
     scene.cycles.use_denoising = False
     scene.render.resolution_x = 500
     scene.render.resolution_y = 800
@@ -137,17 +57,31 @@ def setup_world() -> None:
     bg.inputs["Strength"].default_value = 1.0
 
     sun = bpy.data.lights.new("key", "SUN")
-    sun.energy = 4.5
-    sun.angle = math.radians(8)
+    sun.energy = 3.2
+    sun.angle = math.radians(12)
     sun_obj = bpy.data.objects.new("key", sun)
-    sun_obj.rotation_euler = (math.radians(55), math.radians(-10), math.radians(135))
+    sun_obj.rotation_euler = (math.radians(60), math.radians(-8), math.radians(155))
     scene.collection.objects.link(sun_obj)
 
     fill = bpy.data.lights.new("fill", "SUN")
-    fill.energy = 0.8
+    fill.energy = 0.9
     fill_obj = bpy.data.objects.new("fill", fill)
-    fill_obj.rotation_euler = (math.radians(70), math.radians(-20), math.radians(-50))
+    fill_obj.rotation_euler = (math.radians(70), math.radians(20), math.radians(-40))
     scene.collection.objects.link(fill_obj)
+
+
+def import_character(path: Path, yaw_degrees: float) -> None:
+    bpy.ops.import_scene.gltf(filepath=str(path))
+    bpy.context.view_layer.update()
+    skip = {"key", "fill", "cam"}
+    roots = [obj for obj in bpy.context.scene.objects if obj.parent is None and obj.name not in skip]
+    yaw = math.radians(yaw_degrees)
+    for root in roots:
+        root.rotation_euler.z += yaw
+    for obj in bpy.context.scene.objects:
+        if obj.type == "ARMATURE":
+            obj.hide_render = True
+    bpy.context.view_layer.update()
 
 
 def scene_bounds() -> tuple[Vector, Vector]:
@@ -156,7 +90,7 @@ def scene_bounds() -> tuple[Vector, Vector]:
     mins = Vector((math.inf, math.inf, math.inf))
     maxs = Vector((-math.inf, -math.inf, -math.inf))
     for obj in bpy.context.scene.objects:
-        if obj.type != "MESH":
+        if obj.type != "MESH" or obj.hide_render:
             continue
         evaluated = obj.evaluated_get(depsgraph)
         for corner in evaluated.bound_box:
@@ -172,16 +106,16 @@ def setup_camera() -> None:
     size = maxs - mins
     scene = bpy.context.scene
     aspect = scene.render.resolution_x / scene.render.resolution_y
-    padding = 1.16
+    padding = 1.12
     needed_height = size.z * padding
-    needed_width = max(size.x, size.y) * 1.35 * padding
+    needed_width = max(size.x, size.y) * 1.2 * padding
     ortho_scale = max(needed_height, needed_width / aspect)
 
     cam = bpy.data.cameras.new("cam")
     cam.type = "ORTHO"
     cam.ortho_scale = ortho_scale
     obj = bpy.data.objects.new("cam", cam)
-    offset = Vector((0.45, 1.5, 0.12)).normalized() * 3.0
+    offset = Vector((0.35, 1.6, 0.08)).normalized() * max(3.0, size.length)
     obj.location = center + offset
     direction = center - obj.location
     obj.rotation_euler = direction.to_track_quat("-Z", "Y").to_euler()
@@ -197,12 +131,16 @@ def render_to(path: Path) -> None:
 
 def main() -> None:
     out = Path(argv_value("--out", "factory/out/render.png")).resolve()
+    model = Path(argv_value("--model", "factory/models/michelle.glb"))
+    yaw = float(argv_value("--yaw", "0"))
+    if not model.is_file():
+        raise FileNotFoundError(f"character model missing: {model}")
     clear_scene()
     setup_world()
-    build_mannequin()
+    import_character(model, yaw)
     setup_camera()
     render_to(out)
-    print(f"wrote {out}")
+    print(f"wrote {out} from {model} yaw={yaw}")
 
 
 if __name__ == "__main__":
