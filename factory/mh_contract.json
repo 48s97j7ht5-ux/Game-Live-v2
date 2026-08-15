@@ -1,5 +1,5 @@
 {
-  "cache": "c11",
+  "cache": "c12",
   "official": "makehumancommunity/makehuman makehuman/data/modifiers/modeling_sliders.json",
   "parts": "web/parts/",
   "rules": [

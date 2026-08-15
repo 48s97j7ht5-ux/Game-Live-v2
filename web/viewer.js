@@ -1,8 +1,8 @@
 import * as THREE from "three";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
-import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c11";
-import { defaultState, loadCatalog, morphRecipe, overlays, sizeLabels, tapZones } from "./registry.js?v=c11";
-import { LIGHT, SCENE_BG, SKIN } from "./palette.js?v=c11";
+import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c12";
+import { defaultState, loadCatalog, morphRecipe, overlays, sizeLabels, tapZones } from "./registry.js?v=c12";
+import { LIGHT, SCENE_BG, SKIN } from "./palette.js?v=c12";
 
 const AXIS_STEPS = 7;
 
@@ -168,7 +168,7 @@ function hitZone(clientY) {
 }
 
 function makeToonGradient() {
-  const steps = [40, 72, 118, 175, 255];
+  const steps = [14, 48, 110, 255];
   const data = new Uint8Array(steps.length * 4);
   for (let i = 0; i < steps.length; i += 1) {
     const value = steps[i];
@@ -193,16 +193,16 @@ const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.01, 2000);
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-scene.add(new THREE.HemisphereLight(LIGHT.hemiSky, LIGHT.hemiGround, 0.28));
-const key = new THREE.DirectionalLight(LIGHT.key, 1.7);
+scene.add(new THREE.HemisphereLight(LIGHT.hemiSky, LIGHT.hemiGround, 0.08));
+const key = new THREE.DirectionalLight(LIGHT.key, 2.2);
 key.position.set(-1.2, 2.2, 1.8);
 scene.add(key);
-const fill = new THREE.DirectionalLight(LIGHT.fill, 0.08);
+const fill = new THREE.DirectionalLight(LIGHT.fill, 0.04);
 fill.position.set(1.4, 0.6, 0.8);
 scene.add(fill);
 
 const skin = new THREE.MeshToonMaterial({
-  color: SKIN.light,
+  color: SKIN.mid,
   gradientMap: makeToonGradient(),
 });
 let dummy = null;
@@ -438,7 +438,7 @@ async function attachPixelFilter() {
   const box = document.querySelector("#pixelMode");
   if (!box) return;
   try {
-    const mod = await import("./pixel-mode.js?v=c11");
+    const mod = await import("./pixel-mode.js?v=c12");
     pixelFilter = mod.createPixelFilter(renderer);
     box.addEventListener("change", () => pixelFilter.setEnabled(box.checked));
   } catch (error) {
@@ -448,7 +448,7 @@ async function attachPixelFilter() {
 }
 
 async function boot() {
-  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c11", import.meta.url));
+  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c12", import.meta.url));
   recipe = morphRecipe(catalog);
   sizes = sizeLabels(catalog);
   bodyState = defaultState(catalog);
