@@ -87,11 +87,15 @@ def pack(obj_path: Path, targets_dir: Path) -> dict:
         x, y, z = verts[index]
         packed["rest"].extend([round(x, 4), round(y, 4), round(z, 4)])
     for name, target in loaded.items():
-        values = []
-        for index in indices:
+        slots = []
+        deltas = []
+        for slot, index in enumerate(indices):
             dx, dy, dz = target.get(index, (0.0, 0.0, 0.0))
-            values.extend([round(dx, 4), round(dy, 4), round(dz, 4)])
-        packed["targets"][name] = values
+            if dx == 0 and dy == 0 and dz == 0:
+                continue
+            slots.append(slot)
+            deltas.extend([round(dx, 4), round(dy, 4), round(dz, 4)])
+        packed["targets"][name] = {"s": slots, "d": deltas}
     return packed
 
 

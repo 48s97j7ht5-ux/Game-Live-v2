@@ -31,6 +31,18 @@ function key3(x, y, z) {
 
 function addWeighted(out, source, weight) {
   if (!weight || !source) return;
+  if (source.s && source.d) {
+    const slots = source.s;
+    const deltas = source.d;
+    for (let i = 0; i < slots.length; i += 1) {
+      const o = slots[i] * 3;
+      const p = i * 3;
+      out[o] += deltas[p] * weight;
+      out[o + 1] += deltas[p + 1] * weight;
+      out[o + 2] += deltas[p + 2] * weight;
+    }
+    return;
+  }
   for (let i = 0; i < out.length; i += 1) {
     out[i] += source[i] * weight;
   }
@@ -60,10 +72,10 @@ export function defaultChestState() {
   };
 }
 
-export function mixChestDeltas(targets, state) {
+export function mixChestDeltas(targets, state, restCount) {
   const sizeT = SIZE_T[state.sizeIndex];
   const firm = FIRMNESS;
-  const mixed = new Float32Array(targets.minCupMinFirm.length);
+  const mixed = new Float32Array(restCount);
   addWeighted(mixed, targets.minCupMinFirm, (1 - sizeT) * (1 - firm));
   addWeighted(mixed, targets.minCupMaxFirm, (1 - sizeT) * firm);
   addWeighted(mixed, targets.maxCupMinFirm, sizeT * (1 - firm));
@@ -109,7 +121,7 @@ export function bindChestMorph(group, packed) {
 
 export function applyChestMorph(bound, state) {
   if (!bound) return;
-  const deltas = mixChestDeltas(bound.packed.targets, state);
+  const deltas = mixChestDeltas(bound.packed.targets, state, bound.packed.index.length * 3);
   for (const item of bound.bindings) {
     const position = item.mesh.geometry.getAttribute("position");
     const out = position.array;

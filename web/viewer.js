@@ -388,7 +388,6 @@ function setHeight(px) {
 
 async function loadModel() {
   const loader = new OBJLoader();
-  const targetsPromise = loadChestTargets(new URL("./data/body-targets.json?v=butt2", import.meta.url));
   let lastError = null;
   for (const url of MODEL_URLS) {
     try {
@@ -403,13 +402,15 @@ async function loadModel() {
       dummy = group;
       scene.add(dummy);
       frameObject(dummy);
+      statusEl.textContent = idleStatus();
       try {
-        chestBound = bindChestMorph(dummy, await targetsPromise);
+        const packed = await loadChestTargets(new URL("./data/body-targets.json?v=sparse", import.meta.url));
+        chestBound = bindChestMorph(dummy, packed);
         applyChestMorph(chestBound, bodyState);
       } catch (error) {
         console.error(error);
+        statusEl.textContent = "тело есть, правки формы не загрузились";
       }
-      statusEl.textContent = idleStatus();
       return;
     } catch (error) {
       lastError = error;

@@ -39,18 +39,31 @@ needed = [
     "hipDepthDecr",
     "hipDepthIncr",
 ]
+
+
+def dense(name: str) -> list[float]:
+    src = packed["targets"][name]
+    values = [0.0] * (n * 3)
+    if isinstance(src, dict):
+        for i, slot in enumerate(src["s"]):
+            values[slot * 3 : slot * 3 + 3] = src["d"][i * 3 : i * 3 + 3]
+        return values
+    return src
+
+
 for name in needed:
-    values = packed["targets"][name]
-    assert len(values) == n * 3, name
+    src = packed["targets"][name]
+    assert "s" in src and "d" in src, name
+    assert len(src["d"]) == len(src["s"]) * 3, name
 
 
 def mean_z(name: str) -> float:
-    values = packed["targets"][name]
+    values = dense(name)
     return sum(values[i + 2] for i in range(0, len(values), 3)) / n
 
 
 min_z = (mean_z("minCupMinFirm") + mean_z("minCupMaxFirm")) / 2
-max_z = (mean_z("maxCupMinFirm") + mean_z("maxCupMaxFirm")) / 2
+max_z = (mean_z("maxCupMaxFirm") + mean_z("maxCupMinFirm")) / 2
 assert max_z > min_z + 0.002, (min_z, max_z)
 
 SIZE_T = [0.42, 0.56, 0.7, 0.85, 1]
@@ -84,12 +97,12 @@ def mix(size_index: int, axes: dict[str, int] | None = None) -> list[float]:
     }
     axes = axes or {}
     for name, weight in weights.items():
-        src = packed["targets"][name]
+        src = dense(name)
         for i, value in enumerate(src):
             mixed[i] += value * weight
     for axis, (decr, incr) in AXES.items():
         amount = axis_amount(axes.get(axis, 3))
-        src = packed["targets"][decr if amount < 0 else incr]
+        src = dense(decr if amount < 0 else incr)
         weight = abs(amount)
         if not weight:
             continue
