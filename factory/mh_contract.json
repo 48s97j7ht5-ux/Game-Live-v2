@@ -1,5 +1,5 @@
 {
-  "cache": "c22",
+  "cache": "c23",
   "official": "makehumancommunity/makehuman makehuman/data/modifiers/modeling_sliders.json",
   "parts": "web/parts/",
   "rules": [
@@ -13,7 +13,7 @@
   ],
   "packed_not_in_ui": ["pelvisToneDecr", "pelvisToneIncr"],
   "next": [
-    { "id": "head-focus", "note": "Header тело/голова is camera crop only" },
+    { "id": "head-focus", "note": "Header тело/голова: camera crop plus official MHCLO wigs" },
     { "id": "clothes", "kind": "overlay", "note": "MakeHuman MHCLO wardrobe later; not helper cages" },
     { "mh_group": "Hip", "mod": "hip/hip-trans-in|out", "note": "add floors to web/parts/hips.json" },
     { "mh_group": "Pelvis", "note": "own part JSON, not buttocks" },

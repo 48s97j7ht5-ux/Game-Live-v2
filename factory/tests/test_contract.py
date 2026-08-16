@@ -28,8 +28,8 @@ def test_cache_token_everywhere() -> None:
     assert f"viewer.js?v={CACHE}" in index
     assert f"chest-morph.js?v={CACHE}" in viewer
     assert f"registry.js?v={CACHE}" in viewer
+    assert f"hair.js?v={CACHE}" in viewer
     assert f"parts/manifest.json?v={CACHE}" in viewer
-    assert "hair.js" not in viewer
 
 
 def test_no_unofficial_morph_hacks() -> None:
@@ -83,7 +83,7 @@ def test_live_targets_match_packer_and_json() -> None:
     packed = json.loads((ROOT / "web/data/body-targets.json").read_text())
     needed = list(CONTRACT["packed_not_in_ui"])
     for part in iter_parts():
-        if part.get("kind") in ("overlay", "body"):
+        if part.get("kind") in ("overlay", "body", "hair"):
             continue
         if part.get("macro", {}).get("corners"):
             needed.extend(part["macro"]["corners"])
@@ -103,7 +103,7 @@ def test_parts_are_the_zone_source() -> None:
     live = [part for part in iter_parts() if part.get("enabled") is not False]
     assert {part["id"] for part in live} >= {"chest", "stomach", "hips", "butt", "clay"}
     for part in live:
-        if part.get("kind") in ("overlay", "body"):
+        if part.get("kind") in ("overlay", "body", "hair"):
             continue
         assert part["floors"]
         assert part["views"]
@@ -124,14 +124,32 @@ def test_clay_is_the_only_body() -> None:
     assert [part["id"] for part in bodies] == ["clay"]
 
 
-def test_head_focus_is_camera_only() -> None:
+def test_hair_is_official_mhclo_wigs() -> None:
+    hair = json.loads((PARTS_DIR / "hair.json").read_text())
+    assert hair["kind"] == "hair"
+    assert hair["focus"] == "head"
+    viewer = (ROOT / "web/viewer.js").read_text()
+    studio = (ROOT / "web/hair.js").read_text()
+    assert "createHairStudio" in viewer
+    assert "helper-hair" in studio
+    notice = (ROOT / "models/hair/NOTICE").read_text()
+    assert "helper-hair" in notice
+    for name in hair["styles"]:
+        obj = ROOT / "models/hair" / name / f"{name}.obj"
+        mhclo = ROOT / "models/hair" / name / f"{name}.mhclo"
+        assert obj.is_file(), name
+        assert mhclo.is_file(), name
+        proxy = mhclo.read_text()
+        assert "basemesh hm08" in proxy
+        assert "verts 0" in proxy
+        assert "CC0" in obj.read_text()[:800]
+
+
+def test_head_focus_keeps_camera_crop() -> None:
     viewer = (ROOT / "web/viewer.js").read_text()
     assert "FOCUS" in viewer
     assert "head:" in viewer
-    assert "createHairStudio" not in viewer
-    assert not (ROOT / "web/hair.js").exists()
-    assert not (ROOT / "web/parts/hair.json").exists()
-    assert not (ROOT / "models/hair").exists()
+    assert 'data-focus="head"' in (ROOT / "index.html").read_text()
 
 
 if __name__ == "__main__":
@@ -142,5 +160,6 @@ if __name__ == "__main__":
     test_live_targets_match_packer_and_json()
     test_parts_are_the_zone_source()
     test_clay_is_the_only_body()
-    test_head_focus_is_camera_only()
+    test_hair_is_official_mhclo_wigs()
+    test_head_focus_keeps_camera_crop()
     print("ok contract")

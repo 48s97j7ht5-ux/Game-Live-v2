@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
-import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c22";
+import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c23";
+import { createHairStudio, parseObjVerts } from "./hair.js?v=c23";
 import {
   bodyModel,
   bodyPart,
@@ -11,7 +12,7 @@ import {
   overlays,
   sizeLabels,
   tapZones,
-} from "./registry.js?v=c22";
+} from "./registry.js?v=c23";
 
 const AXIS_STEPS = 7;
 const FOCUS = {
@@ -37,21 +38,25 @@ let currentBody = "clay";
 let currentVariant = "";
 let bodyLoad = 0;
 let focusMode = "body";
+const hairStudio = createHairStudio({ THREE });
 
 function zoneById(id) {
   return zones.find((zone) => zone.id === id);
 }
 
 function currentFloors() {
+  if (editZone === "hair") return hairStudio.floors();
   return zoneById(editZone)?.floors || [];
 }
 
 function floorValue(floor) {
+  if (typeof floor.hint === "function") return floor.hint();
   if (floor.kind === "size") return `${sizes[bodyState.sizeIndex] || ""}`;
   return `${bodyState[floor.id] + 1}/${AXIS_STEPS}`;
 }
 
 function idleStatus() {
+  if (focusMode === "head" && editZone !== "hair") return hairStudio.statusLine();
   if (focusMode === "head") return "голова";
   if (!editZone) {
     const hints = catalog.manifest.hints || {};
@@ -100,6 +105,12 @@ function buildSideBars() {
 
 function stepFloor(floor, delta) {
   lastFloor = floor.id;
+  if (typeof floor.onStep === "function") {
+    floor.onStep(delta);
+    statusEl.textContent = idleStatus();
+    updateFloorDisabled();
+    return;
+  }
   if (floor.kind === "size") {
     bodyState.sizeIndex = Math.max(0, Math.min(sizes.length - 1, bodyState.sizeIndex + delta));
   } else {
@@ -109,6 +120,7 @@ function stepFloor(floor, delta) {
   statusEl.textContent = idleStatus();
   updateFloorDisabled();
   applyMorph(morphBound, bodyState, recipe);
+  hairStudio.refit();
 }
 
 function updateFloorDisabled() {
@@ -116,6 +128,9 @@ function updateFloorDisabled() {
     if (item.floor.kind === "size") {
       item.left.disabled = bodyState.sizeIndex === 0;
       item.right.disabled = bodyState.sizeIndex === sizes.length - 1;
+    } else if (typeof item.floor.atMin === "function") {
+      item.left.disabled = item.floor.atMin();
+      item.right.disabled = item.floor.atMax();
     } else {
       item.left.disabled = bodyState[item.floor.id] === 0;
       item.right.disabled = bodyState[item.floor.id] === AXIS_STEPS - 1;
@@ -379,7 +394,8 @@ function setFocus(mode) {
   });
   applyScale();
   placeCamera();
-  if (focusMode === "head") setEditZone(null);
+  if (focusMode === "head" && zoneById("hair")) setEditZone("hair");
+  else if (editZone === "hair") setEditZone(null);
   else if (dummy) statusEl.textContent = idleStatus();
 }
 
@@ -406,6 +422,7 @@ async function loadOverlays(parent) {
 }
 
 function disposeDummy() {
+  hairStudio.dispose();
   if (!dummy) return;
   scene.remove(dummy);
   dummy.traverse((child) => {
@@ -479,6 +496,21 @@ async function switchBody(bodyId, variantId) {
     const packed = await loadTargets(morphUrl);
     morphBound = bindMorph(dummy, packed);
     applyMorph(morphBound, bodyState, recipe);
+    hairStudio.bind({
+      dummy,
+      restHuman: parseObjVerts(await (await fetch(`${model}?v=${catalog.manifest.cache}`)).text()),
+      packed,
+      recipe,
+      bodyState,
+      setStatus: (text) => {
+        statusEl.textContent = text;
+      },
+      requestRedraw: () => {
+        if (dummy) statusEl.textContent = idleStatus();
+      },
+    });
+    await hairStudio.apply();
+    if (focusMode === "head" && zoneById("hair")) setEditZone("hair");
   } catch (error) {
     console.error(error);
     statusEl.textContent = "тело есть, правки формы не загрузились";
@@ -560,7 +592,7 @@ async function attachPixelFilter() {
   const box = document.querySelector("#pixelMode");
   if (!box) return;
   try {
-    const mod = await import("./pixel-mode.js?v=c22");
+    const mod = await import("./pixel-mode.js?v=c23");
     pixelFilter = mod.createPixelFilter(renderer);
     box.addEventListener("change", () => pixelFilter.setEnabled(box.checked));
   } catch (error) {
@@ -570,7 +602,7 @@ async function attachPixelFilter() {
 }
 
 async function boot() {
-  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c22", import.meta.url));
+  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c23", import.meta.url));
   currentBody = catalog.manifest.defaultBody || bodyParts(catalog)[0]?.id || "clay";
   buildBodySwitcher();
   await switchBody(currentBody);

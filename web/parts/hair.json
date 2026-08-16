@@ -1,0 +1,16 @@
+{
+  "id": "hair",
+  "kind": "hair",
+  "label": "причёска",
+  "enabled": true,
+  "note": "MakeHuman clothes. Official CC0 wigs + MHCLO. helper-hair is never drawn.",
+  "bodies": ["clay"],
+  "focus": "head",
+  "yFrac": 0.88,
+  "views": ["front", "front34", "frontHalf", "side", "backHalf", "back34", "back"],
+  "styles": ["short02", "bob01", "ponytail01", "long01", "braid01"],
+  "floors": [
+    { "id": "hair-style", "label": "стиль" },
+    { "id": "hair-color", "label": "цвет" }
+  ]
+}
