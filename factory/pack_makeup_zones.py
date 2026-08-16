@@ -28,11 +28,14 @@ LIP_VOLUME_FILES = [
 ]
 LIP_EXTRA = [
     (TARGETS / "mouth/mouth-lowerlip-width-incr.target", 0.01, 0.20),
-    (TARGETS / "mouth/mouth-angles-up.target", 0.05, 0.26),
+    (TARGETS / "mouth/mouth-angles-up.target", 0.07, 0.28),
 ]
 LIP_Y_TOP_PAD = 0.008
 LIP_Z_PAD = 0.008
-LIP_EXTRA_Z_SLACK = 0.055
+LIP_EXTRA_Z_SLACK = 0.032
+LIP_MAX_ABS_X = 0.26
+LIP_UV_MAX_ABS_X = 0.25
+LIP_CHEEK_Z_CUT = 0.012
 LIP_BORDER_LATERAL = 0.20
 LIP_FILES = [(p, MIN_MAG) for p in LIP_VOLUME_FILES] + [(p, m) for p, m, _ in LIP_EXTRA]
 CHEEK_FILES = [
@@ -91,7 +94,7 @@ def collect_lips(verts: list[tuple[float, float, float]]) -> set[int]:
         x, y, z = verts[index]
         if y < y_floor or y > y_ceil:
             return False
-        if abs(x) < min_abs_x:
+        if abs(x) < min_abs_x or abs(x) > LIP_MAX_ABS_X:
             return False
         return z >= z0 - LIP_EXTRA_Z_SLACK and z <= z1 + LIP_Z_PAD
 
@@ -102,7 +105,17 @@ def collect_lips(verts: list[tuple[float, float, float]]) -> set[int]:
             if in_extra_band(index, min_abs_x):
                 lips.add(index)
 
-    return {i for i in lips if in_core_band(i) or in_extra_band(i, LIP_BORDER_LATERAL)}
+    def cheek_smear(index: int) -> bool:
+        x, _, z = verts[index]
+        return abs(x) > 0.22 and z < z0 + LIP_CHEEK_Z_CUT
+
+    return {
+        i
+        for i in lips
+        if (in_core_band(i) or in_extra_band(i, LIP_BORDER_LATERAL))
+        and abs(verts[i][0]) <= LIP_MAX_ABS_X
+        and not cheek_smear(i)
+    }
 
 
 def parse_body_faces() -> tuple[list[tuple[float, float]], list[list[tuple[int, int]]]]:
@@ -147,6 +160,7 @@ def uv_tris(
     verts: list[tuple[float, float, float]],
     *,
     y_floor: float | None = None,
+    max_abs_x: float | None = None,
     border_lateral: float | None = None,
 ) -> list[list[float]]:
     tris: list[list[float]] = []
@@ -164,6 +178,8 @@ def uv_tris(
         if not ok:
             continue
         if y_floor is not None and any(verts[v][1] < y_floor for v in corner_verts):
+            continue
+        if max_abs_x is not None and any(abs(verts[v][0]) > max_abs_x for v in corner_verts):
             continue
         pts = [uvs[vt] for _, vt in corners]
         for i in range(1, len(pts) - 1):
@@ -185,6 +201,7 @@ def find_zones() -> dict:
         faces,
         verts,
         y_floor=y_floor,
+        max_abs_x=LIP_UV_MAX_ABS_X,
         border_lateral=LIP_BORDER_LATERAL,
     )
     cheek_uv = uv_tris(set(cheeks), uvs, faces, verts)
@@ -207,7 +224,7 @@ def find_zones() -> dict:
 
 def main() -> None:
     zones = find_zones()
-    assert 130 <= len(zones["lips"]) <= 220, len(zones["lips"])
+    assert 130 <= len(zones["lips"]) <= 200, len(zones["lips"])
     assert 120 <= len(zones["cheeks"]) <= 250, len(zones["cheeks"])
     assert 180 <= len(zones["lipUv"]) <= 700, len(zones["lipUv"])
     assert 20 <= len(zones["cheekUv"]) <= 400, len(zones["cheekUv"])
