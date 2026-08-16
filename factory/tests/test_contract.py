@@ -278,6 +278,11 @@ def test_poses_on_body_screen() -> None:
     assert len(packed["poses"]) == 3
     assert packed["targets"]["poseAkimbo"]["s"]
     assert len(packed["targets"]["poseAkimbo"]["s"]) > 5000
+    assert max(packed["index"]) < 13380
+    viewer = (ROOT / "web/viewer.js").read_text()
+    morph = (ROOT / "web/chest-morph.js").read_text()
+    assert "bindBodyPose" in viewer
+    assert "poseDeltasByBasemeshIndex" in morph
     assert (ROOT / "factory/mh/POSES.md").is_file()
     assert (ROOT / "factory/bake_body_poses.py").is_file()
     manifest = json.loads((ROOT / "web/parts/manifest.json").read_text())
