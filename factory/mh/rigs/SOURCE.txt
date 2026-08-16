@@ -1,0 +1,11 @@
+Official MakeHuman default rig for hm08 basemesh (CC0).
+
+Source: makehumancommunity/makehuman makehuman/data/rigs/
+  default.mhskel — bone hierarchy + joint vertex indices + roll planes
+  default_weights.mhw — per-vertex bone weights on basemesh
+
+Refresh: python3 factory/fetch_mh_rig.py
+Pack for web: python3 factory/pack_skeleton.py → web/data/body-skeleton.json
+
+The web clay body is models/base.obj (rest mesh only). Poses need this rig
+plus factory/mh/poseunits/body-poseunits.json — not modeling .target sliders.

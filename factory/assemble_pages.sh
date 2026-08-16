@@ -49,6 +49,11 @@ required=(
   web/parts/makeup-cheeks.json
   web/data/body-targets.json
   web/data/makeup-zones.json
+  web/data/body-skeleton.json
+  web/data/body-poseunits.json
+  web/data/body-poses.json
+  web/body-rig.js
+  web/pose.js
   web/vendor/three.module.js
   web/vendor/loaders/OBJLoader.js
   models/base.obj

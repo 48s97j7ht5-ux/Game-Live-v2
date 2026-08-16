@@ -86,7 +86,7 @@ export function applyMorph(bound, state, recipe, poseBound = null, poseKey = nul
   applyBody(bound, state, recipe, poseBound, poseKey);
 }
 
-export function applyBody(morphBound, state, recipe, poseBound = null, poseKey = null) {
+export function applyBody(morphBound, state, recipe, poseBound = null, poseKey = null, poseDriver = null) {
   if (!morphBound) return;
   const morphDeltas = mixDeltas(
     morphBound.packed.targets,
@@ -95,7 +95,7 @@ export function applyBody(morphBound, state, recipe, poseBound = null, poseKey =
     recipe,
   );
   let poseDeltas = null;
-  if (poseBound && poseKey && poseBound.packed.targets[poseKey]) {
+  if (!poseDriver && poseBound && poseKey && poseBound.packed.targets[poseKey]) {
     poseDeltas = new Float32Array(poseBound.packed.index.length * 3);
     addWeighted(poseDeltas, poseBound.packed.targets[poseKey], 1);
   }
@@ -127,6 +127,9 @@ export function applyBody(morphBound, state, recipe, poseBound = null, poseKey =
       }
     }
     position.needsUpdate = true;
-    item.mesh.geometry.computeVertexNormals();
+    if (!poseDriver || !item.mesh.isSkinnedMesh) {
+      item.mesh.geometry.computeVertexNormals();
+    }
   }
+  if (poseDriver) poseDriver.applyRecipe(poseKey);
 }

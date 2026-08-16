@@ -1,8 +1,8 @@
 /**
- * Body poses from official MakeHuman body-poseunits.json (baked hm08 vertex deltas).
+ * Body poses via official MH skeleton + body-poseunits.json (see web/body-rig.js).
  */
 
-export function createPoseStudio({ applyBody, morphBoundRef, poseBoundRef, bodyStateRef, recipeRef, refit }) {
+export function createPoseStudio({ applyBody, morphBoundRef, poseDriverRef, bodyStateRef, recipeRef, refit }) {
   const state = { index: 0 };
   let poses = [{ id: "rest", label: "стоя", key: null }];
   let loaded = null;
@@ -27,11 +27,11 @@ export function createPoseStudio({ applyBody, morphBoundRef, poseBoundRef, bodyS
 
   function apply() {
     const morphBound = morphBoundRef();
-    const poseBound = poseBoundRef();
+    const poseDriver = poseDriverRef();
     const bodyState = bodyStateRef();
     const recipe = recipeRef();
     const key = current()?.key || null;
-    applyBody(morphBound, bodyState, recipe, poseBound, key);
+    applyBody(morphBound, bodyState, recipe, null, key, poseDriver);
     refit();
   }
 

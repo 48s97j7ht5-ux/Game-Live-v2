@@ -32,6 +32,7 @@ def test_cache_token_everywhere() -> None:
     assert f"eye-wear.js?v={CACHE}" in viewer
     assert f"makeup.js?v={CACHE}" in viewer
     assert f"pose.js?v={CACHE}" in viewer
+    assert f"body-rig.js?v={CACHE}" in viewer
     hair = (ROOT / "web/hair.js").read_text()
     catalog_js = (ROOT / "web/hair-catalog.js").read_text()
     assert f"hair-catalog.js?v={CACHE}" in hair
@@ -274,10 +275,18 @@ def test_poses_on_body_screen() -> None:
     assert "createPoseStudio" in pose
     assert "cycle" in pose
     packed = json.loads((ROOT / "web/data/body-poses.json").read_text())
-    assert len(packed["poses"]) == 3
-    assert packed["targets"]["poseAkimbo"]["s"]
-    assert len(packed["targets"]["poseAkimbo"]["s"]) > 800
+    assert packed.get("method") == "pose-units-v1"
+    assert packed.get("recipes", {}).get("poseAkimbo", {}).get("units")
+    skel = json.loads((ROOT / "web/data/body-skeleton.json").read_text())
+    assert len(skel["bones"]) > 100
+    assert len(skel["skinIndex"]) == 13380 * 4
+    assert (ROOT / "factory/mh/rigs/default.mhskel").is_file()
+    assert (ROOT / "factory/mh/rigs/default_weights.mhw").is_file()
     assert (ROOT / "factory/mh/poseunits/body-poseunits.json").is_file()
+    assert (ROOT / "web/data/body-poseunits.json").is_file()
+    packer = (ROOT / "factory/pack_poses.py").read_text()
+    assert "official-targets-v1" not in packer
+    assert "pose-units-v1" in packer
 
 
 if __name__ == "__main__":
