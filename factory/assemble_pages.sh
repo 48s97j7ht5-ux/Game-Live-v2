@@ -33,8 +33,13 @@ required=(
   web/chest-morph.js
   web/registry.js
   web/hair.js
+  web/hair-catalog.js
+  web/hair-wear.js
   web/mhclo.js
   web/parts/manifest.json
+  web/parts/hair-color.json
+  web/parts/hair-style.json
+  web/parts/hair-shelf.json
   web/data/body-targets.json
   web/vendor/three.module.js
   web/vendor/loaders/OBJLoader.js

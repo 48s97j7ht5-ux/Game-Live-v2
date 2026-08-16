@@ -1,0 +1,13 @@
+{
+  "id": "hair-style",
+  "kind": "hair",
+  "label": "стиль",
+  "enabled": true,
+  "note": "Own head slot. Official CC0 wigs plus community shelf.",
+  "bodies": ["clay"],
+  "focus": "head",
+  "yFrac": 0.82,
+  "views": ["front", "front34", "frontHalf", "side", "backHalf", "back34", "back"],
+  "styles": ["short04", "short01", "short02", "short03", "bob01", "bob02", "afro01", "ponytail01", "braid01", "long01"],
+  "floors": [{ "id": "hair-style", "label": "стиль", "kind": "choice" }]
+}

@@ -1,0 +1,12 @@
+{
+  "id": "hair-color",
+  "kind": "hair",
+  "label": "цвет",
+  "enabled": true,
+  "note": "Own head slot. Dye only; does not reload the wig.",
+  "bodies": ["clay"],
+  "focus": "head",
+  "yFrac": 0.9,
+  "views": ["front", "front34", "frontHalf", "side", "backHalf", "back34", "back"],
+  "floors": [{ "id": "hair-color", "label": "цвет", "kind": "choice" }]
+}

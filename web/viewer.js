@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
-import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c29";
-import { createHairStudio, parseObjVerts } from "./hair.js?v=c29";
+import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c30";
+import { createHairStudio, parseObjVerts } from "./hair.js?v=c30";
 import {
   bodyModel,
   bodyPart,
@@ -12,7 +12,7 @@ import {
   overlays,
   sizeLabels,
   tapZones,
-} from "./registry.js?v=c29";
+} from "./registry.js?v=c30";
 
 const AXIS_STEPS = 7;
 const FOCUS = {
@@ -44,8 +44,12 @@ function zoneById(id) {
   return zones.find((zone) => zone.id === id);
 }
 
+function isHairZone(id) {
+  return typeof id === "string" && id.startsWith("hair-");
+}
+
 function currentFloors() {
-  if (editZone === "hair") return hairStudio.floors();
+  if (isHairZone(editZone)) return hairStudio.floorsFor(editZone);
   return zoneById(editZone)?.floors || [];
 }
 
@@ -390,7 +394,7 @@ function stepTurn(delta) {
 
 function setFocus(mode) {
   focusMode = mode === "head" ? "head" : "body";
-  if (focusMode !== "head" && editZone === "hair") {
+  if (focusMode !== "head" && isHairZone(editZone)) {
     editZone = null;
     lastFloor = "";
     clearSideBars();
@@ -403,7 +407,7 @@ function setFocus(mode) {
   });
   applyScale();
   placeCamera();
-  if (focusMode === "head" && zoneById("hair")) setEditZone("hair");
+  if (focusMode === "head" && zoneById("hair-style")) setEditZone("hair-style");
   else if (dummy) statusEl.textContent = idleStatus();
 }
 
@@ -519,7 +523,7 @@ async function switchBody(bodyId, variantId) {
     });
     await hairStudio.loadExtra();
     await hairStudio.apply();
-    if (focusMode === "head" && zoneById("hair")) setEditZone("hair");
+    if (focusMode === "head" && zoneById("hair-style")) setEditZone("hair-style");
   } catch (error) {
     console.error(error);
     statusEl.textContent = "тело есть, правки формы не загрузились";
@@ -601,7 +605,7 @@ async function attachPixelFilter() {
   const box = document.querySelector("#pixelMode");
   if (!box) return;
   try {
-    const mod = await import("./pixel-mode.js?v=c29");
+    const mod = await import("./pixel-mode.js?v=c30");
     pixelFilter = mod.createPixelFilter(renderer);
     box.addEventListener("change", () => pixelFilter.setEnabled(box.checked));
   } catch (error) {
@@ -611,7 +615,7 @@ async function attachPixelFilter() {
 }
 
 async function boot() {
-  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c29", import.meta.url));
+  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c30", import.meta.url));
   currentBody = catalog.manifest.defaultBody || bodyParts(catalog)[0]?.id || "clay";
   buildBodySwitcher();
   await switchBody(currentBody);

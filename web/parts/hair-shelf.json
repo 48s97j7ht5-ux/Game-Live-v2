@@ -1,0 +1,12 @@
+{
+  "id": "hair-shelf",
+  "kind": "hair",
+  "label": "полка",
+  "enabled": true,
+  "note": "Own head slot. Official system wigs or community packs hair01–03.",
+  "bodies": ["clay"],
+  "focus": "head",
+  "yFrac": 0.74,
+  "views": ["front", "front34", "frontHalf", "side", "backHalf", "back34", "back"],
+  "floors": [{ "id": "hair-shelf", "label": "полка", "kind": "choice" }]
+}

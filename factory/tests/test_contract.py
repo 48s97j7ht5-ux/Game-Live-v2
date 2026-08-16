@@ -29,6 +29,9 @@ def test_cache_token_everywhere() -> None:
     assert f"chest-morph.js?v={CACHE}" in viewer
     assert f"registry.js?v={CACHE}" in viewer
     assert f"hair.js?v={CACHE}" in viewer
+    hair = (ROOT / "web/hair.js").read_text()
+    assert f"hair-catalog.js?v={CACHE}" in hair
+    assert f"hair-wear.js?v={CACHE}" in hair
     assert f"parts/manifest.json?v={CACHE}" in viewer
 
 
@@ -55,8 +58,10 @@ def test_assemble_contains_imports() -> None:
         viewer = (dest / "web/viewer.js").read_text()
         html = (dest / "index.html").read_text()
         rels = set(re.findall(r'(?:src|href)="(\./[^"?]+|web/[^"?]+)"', html))
-        rels.update(re.findall(r'from "(\./[^"?]+)"', viewer))
-        rels.update(re.findall(r'new URL\("(\./[^"?]+)"', viewer))
+        for name in ("viewer.js", "hair.js", "hair-catalog.js", "hair-wear.js"):
+            text = (dest / "web" / name).read_text()
+            rels.update(re.findall(r'from "(\./[^"?]+)"', text))
+            rels.update(re.findall(r'new URL\("(\./[^"?]+)"', text))
         rels.update(
             [
                 "web/vendor/three.module.js",
@@ -125,24 +130,38 @@ def test_clay_is_the_only_body() -> None:
     assert [part["id"] for part in bodies] == ["clay"]
 
 
-def test_hair_is_official_mhclo_wigs() -> None:
-    hair = json.loads((PARTS_DIR / "hair.json").read_text())
-    assert hair["kind"] == "hair"
-    assert hair["focus"] == "head"
+def test_hair_is_three_head_modules() -> None:
+    assert not (PARTS_DIR / "hair.json").exists()
+    color = json.loads((PARTS_DIR / "hair-color.json").read_text())
+    style = json.loads((PARTS_DIR / "hair-style.json").read_text())
+    shelf = json.loads((PARTS_DIR / "hair-shelf.json").read_text())
+    for part in (color, style, shelf):
+        assert part["kind"] == "hair"
+        assert part["focus"] == "head"
+        assert part["yFrac"]
+        assert len(part["floors"]) == 1
+    assert color["yFrac"] > style["yFrac"] > shelf["yFrac"]
     viewer = (ROOT / "web/viewer.js").read_text()
     studio = (ROOT / "web/hair.js").read_text()
+    catalog = (ROOT / "web/hair-catalog.js").read_text()
+    wear = (ROOT / "web/hair-wear.js").read_text()
     assert "createHairStudio" in viewer
-    assert "zone.yFrac" in viewer
+    assert "floorsFor" in viewer
+    assert "isHairZone" in viewer
+    assert 'setEditZone("hair-style")' in viewer
+    assert "editZone === \"hair\"" not in viewer
     assert "zoneById(editZone).yFrac" not in viewer
     assert "helper-hair" in studio
+    assert "dye(" in wear
+    assert "cycleColor" in studio
     notice = (ROOT / "models/hair/NOTICE").read_text()
     assert (ROOT / "models/hair/scalp.obj").is_file()
     scalp = (ROOT / "models/hair/scalp.obj").read_text()
     assert "g scalp" in scalp[:200]
-    assert "hair-scalp" in studio
+    assert "hair-scalp" in wear
     assert sum(1 for line in scalp.splitlines() if line.startswith("v ")) >= 180
     assert "helper-hair" in notice
-    for name in hair["styles"]:
+    for name in style["styles"]:
         obj = ROOT / "models/hair" / name / f"{name}.obj"
         mhclo = ROOT / "models/hair" / name / f"{name}.mhclo"
         assert obj.is_file(), name
@@ -151,12 +170,10 @@ def test_hair_is_official_mhclo_wigs() -> None:
         assert "basemesh hm08" in proxy
         assert "verts 0" in proxy
         assert "CC0" in obj.read_text()[:800]
-    assert len(hair["styles"]) >= 10
-    for name in hair["styles"]:
-        assert f'id: "{name}"' in studio
-    assert "loadExtra" in studio
-    assert "hair-shelf" in studio
-    assert "общая" in studio
+        assert f'id: "{name}"' in catalog
+    assert len(style["styles"]) >= 10
+    assert "loadCommunity" in catalog
+    assert "общая" in catalog
     fetch = (ROOT / "factory/fetch_community_hair.py").read_text()
     assert "learning_anime_hair" in fetch
     assert "hair01_cc0.zip" in fetch
@@ -177,6 +194,6 @@ if __name__ == "__main__":
     test_live_targets_match_packer_and_json()
     test_parts_are_the_zone_source()
     test_clay_is_the_only_body()
-    test_hair_is_official_mhclo_wigs()
+    test_hair_is_three_head_modules()
     test_head_focus_keeps_camera_crop()
     print("ok contract")

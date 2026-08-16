@@ -3,7 +3,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 HAIR = ROOT / "models/hair"
-STYLES = json.loads((ROOT / "web/parts/hair.json").read_text())["styles"]
+STYLES = json.loads((ROOT / "web/parts/hair-style.json").read_text())["styles"]
 
 
 def _maps(text: str) -> int:
@@ -22,15 +22,19 @@ def _maps(text: str) -> int:
 
 
 def test_maps_cover_obj_verts() -> None:
+    catalog = (ROOT / "web/hair-catalog.js").read_text()
     studio = (ROOT / "web/hair.js").read_text()
-    assert 'id: "bob01", label: "каре"' in studio
-    assert "style: 5" in studio
+    assert 'id: "bob01", label: "каре"' in catalog
+    assert "DEFAULT_OFFICIAL_STYLE = 5" in catalog
+    assert "floorsFor" in studio
+    assert "cycleColor" in studio
+    assert 'cycle("style", styles, dir)' not in studio
     for name in STYLES:
         obj = (HAIR / name / f"{name}.obj").read_text()
         verts = [line for line in obj.splitlines() if line.startswith("v ")]
         maps = _maps((HAIR / name / f"{name}.mhclo").read_text())
         assert maps >= len(verts), (name, maps, len(verts))
-        assert f'id: "{name}"' in studio, name
+        assert f'id: "{name}"' in catalog, name
 
 
 def test_scalp_is_a_crown_cap() -> None:
@@ -66,13 +70,15 @@ def test_community_catalog_if_present() -> None:
     if not catalog.is_file():
         return
     data = json.loads(catalog.read_text())
-    assert data["styles"]
-    studio = (ROOT / "web/hair.js").read_text()
-    assert "loadExtra" in studio
-    assert "shelfStyles()" in studio
-    assert "cycleStyle" in studio
-    assert 'cycle("style", styles, dir)' not in studio
     assert len(data["styles"]) >= 50
+    catalog_js = (ROOT / "web/hair-catalog.js").read_text()
+    studio = (ROOT / "web/hair.js").read_text()
+    wear = (ROOT / "web/hair-wear.js").read_text()
+    assert "loadCommunity" in catalog_js
+    assert "floorsFor" in studio
+    assert "cycleColor" in studio
+    assert "dye(" in wear
+    assert 'cycle("style", styles, dir)' not in studio
     for item in data["styles"]:
         name = item["id"]
         assert name != "learning_anime_hair"
