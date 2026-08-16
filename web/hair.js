@@ -5,12 +5,12 @@
  * These wigs are hair cards, not a knit cap. A same-color scalp.obj sits
  * under them so the clay skull does not show through the gaps.
  *
- * Official CC0 system shelf: ten wigs (shorts, bobs, afro, ponytail, braid, long).
+ * Official CC0 system shelf plus optional community packs (hair01–03).
  */
-import { applyDeltasToHuman, fitProxy, parseMhclo, parseObjMesh, parseObjVerts } from "./mhclo.js?v=c26";
-import { mixDeltas } from "./chest-morph.js?v=c26";
+import { applyDeltasToHuman, fitProxy, parseMhclo, parseObjMesh, parseObjVerts } from "./mhclo.js?v=c27";
+import { mixDeltas } from "./chest-morph.js?v=c27";
 
-export const HAIR_CACHE = "c26";
+export const HAIR_CACHE = "c27";
 
 const STYLES = [
   { id: "none", label: "нет" },
@@ -38,8 +38,9 @@ const COLORS = {
 const COLOR_KEYS = Object.keys(COLORS);
 
 export function createHairStudio({ THREE }) {
-  const state = { style: 5, color: 1 };
+  const state = { shelf: 0, style: 5, color: 1 };
   const cache = new Map();
+  let extra = [];
   let dummy = null;
   let restHuman = null;
   let packed = null;
@@ -59,6 +60,23 @@ export function createHairStudio({ THREE }) {
     bodyState = opts.bodyState || bodyState;
     setStatus = opts.setStatus || setStatus;
     requestRedraw = opts.requestRedraw || requestRedraw;
+  }
+
+  async function loadExtra() {
+    try {
+      const res = await fetch(new URL("./parts/hair-community.json?v=" + HAIR_CACHE, import.meta.url));
+      if (!res.ok) {
+        extra = [];
+        return;
+      }
+      extra = (await res.json()).styles || [];
+    } catch {
+      extra = [];
+    }
+  }
+
+  function shelfStyles() {
+    return state.shelf === 1 ? extra : STYLES;
   }
 
   function matcapFromDummy() {
@@ -133,7 +151,7 @@ export function createHairStudio({ THREE }) {
   async function apply() {
     if (!dummy) return;
     const token = (loadToken += 1);
-    const style = STYLES[state.style];
+    const style = shelfStyles()[state.style];
     if (!style || style.id === "none") {
       detach();
       requestRedraw();
@@ -180,7 +198,7 @@ export function createHairStudio({ THREE }) {
 
   function refit() {
     if (!mesh || !dummy) return;
-    const style = STYLES[state.style];
+    const style = shelfStyles()[state.style];
     if (!style || style.id === "none") return;
     const asset = cache.get(style.id);
     if (!asset) return;
@@ -190,10 +208,11 @@ export function createHairStudio({ THREE }) {
   }
 
   function statusLine() {
-    const style = STYLES[state.style];
+    const style = shelfStyles()[state.style];
     const color = COLORS[COLOR_KEYS[state.color]];
-    if (style.id === "none") return "голова · без волос";
-    return `голова · ${style.label} · ${color.label}`;
+    if (!style || style.id === "none") return "голова · без волос";
+    const shelf = state.shelf === 1 ? "общая · " : "";
+    return `голова · ${shelf}${style.label} · ${color.label}`;
   }
 
   function cycle(key, list, dir) {
@@ -203,16 +222,38 @@ export function createHairStudio({ THREE }) {
     apply();
   }
 
+  function cycleShelf(dir) {
+    if (!extra.length) return;
+    const next = state.shelf + dir;
+    if (next < 0 || next > 1) return;
+    state.shelf = next;
+    state.style = next === 0 ? 5 : 0;
+    apply();
+  }
+
   function floors() {
-    return [
+    const styles = shelfStyles();
+    const rows = [];
+    if (extra.length) {
+      rows.push({
+        id: "hair-shelf",
+        label: "полка",
+        kind: "choice",
+        hint: () => (state.shelf === 1 ? "общая" : "официальная"),
+        onStep: cycleShelf,
+        atMin: () => state.shelf === 0,
+        atMax: () => state.shelf === 1,
+      });
+    }
+    rows.push(
       {
         id: "hair-style",
         label: "стиль",
         kind: "choice",
-        hint: () => STYLES[state.style].label,
-        onStep: (dir) => cycle("style", STYLES, dir),
+        hint: () => styles[state.style]?.label || "",
+        onStep: (dir) => cycle("style", styles, dir),
         atMin: () => state.style === 0,
-        atMax: () => state.style === STYLES.length - 1,
+        atMax: () => state.style === styles.length - 1,
       },
       {
         id: "hair-color",
@@ -223,7 +264,8 @@ export function createHairStudio({ THREE }) {
         atMin: () => state.color === 0,
         atMax: () => state.color === COLOR_KEYS.length - 1,
       },
-    ];
+    );
+    return rows;
   }
 
   function dispose() {
@@ -231,7 +273,7 @@ export function createHairStudio({ THREE }) {
     detach();
   }
 
-  return { bind, apply, refit, statusLine, floors, dispose, state };
+  return { bind, loadExtra, apply, refit, statusLine, floors, dispose, state };
 }
 
 export { parseObjVerts };

@@ -41,6 +41,7 @@ def test_no_unofficial_morph_hacks() -> None:
 def test_pages_workflow_uses_assemble_script() -> None:
     workflow = (ROOT / ".github/workflows/pages.yml").read_text()
     assert "factory/assemble_pages.sh" in workflow
+    assert "fetch_community_hair.py" in workflow
     assert "cp web/viewer.css web/viewer.js" not in workflow
 
 
@@ -153,6 +154,12 @@ def test_hair_is_official_mhclo_wigs() -> None:
     assert len(hair["styles"]) >= 10
     for name in hair["styles"]:
         assert f'id: "{name}"' in studio
+    assert "loadExtra" in studio
+    assert "hair-shelf" in studio
+    assert "общая" in studio
+    fetch = (ROOT / "factory/fetch_community_hair.py").read_text()
+    assert "learning_anime_hair" in fetch
+    assert "hair01_cc0.zip" in fetch
 
 
 def test_head_focus_keeps_camera_crop() -> None:

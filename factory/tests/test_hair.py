@@ -61,8 +61,31 @@ def test_mhclo_indices_fit_hm08() -> None:
         assert found, name
 
 
+def test_community_catalog_if_present() -> None:
+    catalog = ROOT / "web/parts/hair-community.json"
+    if not catalog.is_file():
+        return
+    data = json.loads(catalog.read_text())
+    assert data["styles"]
+    studio = (ROOT / "web/hair.js").read_text()
+    assert "loadExtra" in studio
+    for item in data["styles"]:
+        name = item["id"]
+        assert name != "learning_anime_hair"
+        obj = HAIR / name / f"{name}.obj"
+        mhclo = HAIR / name / f"{name}.mhclo"
+        assert obj.is_file(), name
+        assert mhclo.is_file(), name
+        proxy = mhclo.read_text()
+        assert "basemesh hm08" in proxy
+        maps = _maps(proxy)
+        verts = [line for line in obj.read_text().splitlines() if line.startswith("v ")]
+        assert maps >= len(verts), (name, maps, len(verts))
+
+
 if __name__ == "__main__":
     test_maps_cover_obj_verts()
     test_mhclo_indices_fit_hm08()
     test_scalp_is_a_crown_cap()
+    test_community_catalog_if_present()
     print("ok hair")

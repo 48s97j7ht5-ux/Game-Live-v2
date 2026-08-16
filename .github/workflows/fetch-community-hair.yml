@@ -1,0 +1,45 @@
+name: fetch-community-hair
+
+on:
+  push:
+    branches: [cursor/character-factory-v0-a4d4]
+    paths:
+      - factory/fetch_community_hair.py
+      - .github/workflows/fetch-community-hair.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Download community wigs
+        run: python3 factory/fetch_community_hair.py
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: community-hair
+          path: |
+            models/hair
+            web/parts/hair-community.json
+            models/hair/NOTICE
+
+      - name: Commit vendored wigs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add models/hair web/parts/hair-community.json
+          if git diff --cached --quiet; then
+            echo "no new hair files"
+          else
+            git commit -m "Vendor community MakeHuman wigs from hair01–03."
+            git push
+          fi
