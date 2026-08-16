@@ -1,5 +1,5 @@
 /**
- * Body poses: official MakeHuman skinMesh factory bake (mh-posed-obj-v1).
+ * Body poses: official MakeHuman arms/legs targets (factory/pack_poses.py).
  */
 
 export function createPoseStudio({ applyBody, morphBoundRef, poseBoundRef, bodyStateRef, recipeRef, refit }) {
