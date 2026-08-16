@@ -1,0 +1,12 @@
+{
+  "id": "makeup-lips",
+  "kind": "makeup",
+  "label": "губы",
+  "enabled": true,
+  "note": "Face module. Tints lip vertices on the clay; no texture, no decal.",
+  "bodies": ["clay"],
+  "focus": "face",
+  "yFrac": 0.62,
+  "views": ["front", "front34", "frontHalf", "side", "backHalf", "back34", "back"],
+  "floors": [{ "id": "makeup-lips", "label": "губы", "kind": "choice" }]
+}

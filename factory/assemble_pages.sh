@@ -39,12 +39,16 @@ required=(
   web/hair-catalog.js
   web/hair-wear.js
   web/eye-wear.js
+  web/makeup.js
   web/mhclo.js
   web/parts/manifest.json
   web/parts/hair-color.json
   web/parts/hair-style.json
   web/parts/hair-shelf.json
+  web/parts/makeup-lips.json
+  web/parts/makeup-cheeks.json
   web/data/body-targets.json
+  web/data/makeup-zones.json
   web/vendor/three.module.js
   web/vendor/loaders/OBJLoader.js
   models/base.obj

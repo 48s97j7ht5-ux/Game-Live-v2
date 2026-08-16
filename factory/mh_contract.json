@@ -1,5 +1,5 @@
 {
-  "cache": "c34",
+  "cache": "c35",
   "official": "makehumancommunity/makehuman makehuman/data/modifiers/modeling_sliders.json",
   "parts": "web/parts/",
   "rules": [
@@ -10,13 +10,14 @@
     "kind=morph morphs the clay hm08 body; kind=overlay loads extra OBJ clothes",
     "kind=body is the dummy. Clay is MakeHuman hm08",
     "kind=hair is one code slot (color / style / shelf). Head screen shows all three rows at once in even canvas slots",
+    "kind=makeup tints clay vertex colors (lips/cheeks); no texture. Face screen shows all makeup rows at once",
     "Eyes are official HighPolyEyes clothes, always on the dummy. helper-l-eye is a cage and is not drawn",
     "Pages must ship the whole web/ folder; bump cache in manifest.json and all ?v= URLs together"
   ],
   "packed_not_in_ui": ["pelvisToneDecr", "pelvisToneIncr"],
   "next": [
     { "id": "head-focus", "note": "Tap skull/wig: body→hair→face. Tap elsewhere: one step back. Face crop is for makeup later. Hair is three parts: hair-color, hair-style, hair-shelf" },
-    { "id": "makeup", "note": "Face camera exists. Official eyes are on the dummy. Makeup textures/lipstick later; do not put makeup floors on the hair screen" },
+    { "id": "makeup", "note": "Done: lips + cheeks tint the clay body vertex colors on the face screen (kind=makeup, focus=face). No texture, no decal. Add eyeshadow/liner the same way: pick raw-vertex zone geometrically, pack in factory/pack_makeup_zones.py" },
     { "id": "clothes", "kind": "overlay", "note": "MakeHuman MHCLO wardrobe later; not helper cages" },
     { "mh_group": "Hip", "mod": "hip/hip-trans-in|out", "note": "add floors to web/parts/hips.json" },
     { "mh_group": "Pelvis", "note": "own part JSON, not buttocks" },

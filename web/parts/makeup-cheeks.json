@@ -1,0 +1,12 @@
+{
+  "id": "makeup-cheeks",
+  "kind": "makeup",
+  "label": "щёки",
+  "enabled": true,
+  "note": "Face module. Tints cheek vertices on the clay; no texture, no decal.",
+  "bodies": ["clay"],
+  "focus": "face",
+  "yFrac": 0.7,
+  "views": ["front", "front34", "frontHalf", "side", "backHalf", "back34", "back"],
+  "floors": [{ "id": "makeup-cheeks", "label": "щёки", "kind": "choice" }]
+}

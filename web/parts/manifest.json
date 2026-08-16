@@ -1,14 +1,26 @@
 {
-  "cache": "c34",
+  "cache": "c35",
   "defaultBody": "clay",
   "body": "./models/base.obj",
   "morphs": "./data/body-targets.json",
-  "parts": ["clay", "chest", "stomach", "hips", "butt", "hair-color", "hair-style", "hair-shelf", "clothes"],
+  "parts": [
+    "clay",
+    "chest",
+    "stomach",
+    "hips",
+    "butt",
+    "hair-color",
+    "hair-style",
+    "hair-shelf",
+    "makeup-lips",
+    "makeup-cheeks",
+    "clothes"
+  ],
   "hints": {
     "frontHalf": "на ½: грудь сверху, бёдра ниже",
     "backHalf": "на ½ сзади нажми на бёдра",
     "back": "сзади и на задней ¾ нажми на попу",
     "back34": "сзади и на задней ¾ нажми на попу",
-    "default": "нажми на голову — причёска, ещё раз — лицо; спереди грудь или живот"
+    "default": "нажми на голову — причёска, ещё раз — лицо и мейкап; спереди грудь или живот"
   }
 }

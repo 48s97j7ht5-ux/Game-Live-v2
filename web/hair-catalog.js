@@ -2,7 +2,7 @@
  * Hair lists only. Official system wigs, community pack catalog, dye colors.
  * Wearing the wig is hair-wear.js. Buttons are three head parts, not this file.
  */
-export const HAIR_CACHE = "c34";
+export const HAIR_CACHE = "c35";
 
 export const OFFICIAL = [
   { id: "none", label: "нет" },

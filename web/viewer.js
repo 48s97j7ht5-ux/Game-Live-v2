@@ -1,8 +1,9 @@
 import * as THREE from "three";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
-import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c34";
-import { createHairStudio, parseObjVerts } from "./hair.js?v=c34";
-import { createEyes } from "./eye-wear.js?v=c34";
+import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c35";
+import { createHairStudio, parseObjVerts } from "./hair.js?v=c35";
+import { createEyes } from "./eye-wear.js?v=c35";
+import { createMakeupStudio } from "./makeup.js?v=c35";
 import {
   bodyModel,
   bodyPart,
@@ -13,7 +14,7 @@ import {
   overlays,
   sizeLabels,
   tapZones,
-} from "./registry.js?v=c34";
+} from "./registry.js?v=c35";
 
 const AXIS_STEPS = 7;
 // Tap skull: body → hair → face. Tap not-skull: one step back. Face crop is for makeup later.
@@ -44,27 +45,41 @@ let bodyLoad = 0;
 let focusMode = "body";
 const hairStudio = createHairStudio({ THREE });
 const eyes = createEyes({ THREE });
+const makeupStudio = createMakeupStudio({ THREE });
 
 function zoneById(id) {
   return zones.find((zone) => zone.id === id);
 }
 
-// Body: tap one zone, one arrow row. Head is one zoomed crop, so color/style/shelf stay on screen together.
+// Body: tap one zone, one arrow row. Head/face are zoomed crops, so their rows stay on screen together.
 const HAIR_HEAD_IDS = ["hair-color", "hair-style", "hair-shelf"];
+const MAKEUP_FACE_IDS = ["makeup-lips", "makeup-cheeks"];
 
 function isHairZone(id) {
   return typeof id === "string" && id.startsWith("hair-");
+}
+
+function isMakeupZone(id) {
+  return typeof id === "string" && id.startsWith("makeup-");
 }
 
 function currentFloors() {
   if (focusMode === "head") {
     return HAIR_HEAD_IDS.flatMap((id) => hairStudio.floorsFor(id));
   }
+  if (focusMode === "face") {
+    return MAKEUP_FACE_IDS.flatMap((id) => makeupStudio.floorsFor(id));
+  }
   return zoneById(editZone)?.floors || [];
 }
 
 function openHairStudio() {
   const first = HAIR_HEAD_IDS.find((id) => zoneById(id));
+  if (first) setEditZone(first);
+}
+
+function openMakeupStudio() {
+  const first = MAKEUP_FACE_IDS.find((id) => zoneById(id));
   if (first) setEditZone(first);
 }
 
@@ -75,7 +90,7 @@ function floorValue(floor) {
 }
 
 function idleStatus() {
-  if (focusMode === "face") return "лицо · мейкап скоро";
+  if (focusMode === "face") return makeupStudio.statusLine();
   if (focusMode === "head") return hairStudio.statusLine();
   if (!editZone) {
     const hints = catalog.manifest.hints || {};
@@ -185,7 +200,7 @@ function layoutFloorButtons() {
   const height = Math.max(canvas.clientHeight, 1);
   const count = floorButtons.length;
   if (!count) return;
-  if (focusMode === "head") {
+  if (focusMode === "head" || focusMode === "face") {
     const buttonSize = Math.min(44, Math.max(32, height / (count + 2)));
     for (let i = 0; i < count; i += 1) {
       const y = ((i + 1) / (count + 1)) * height;
@@ -312,11 +327,17 @@ const fill = new THREE.DirectionalLight(0x99aacc, 0.45);
 fill.position.set(1.4, 0.6, 0.8);
 scene.add(fill);
 
+const SKIN_HEX = 0xffd7b8;
+const clayMatcap = makeClayMatcap();
+// vertexColors:true so makeup.js can tint lips/cheeks; every mesh needs a
+// "color" attribute once this material is assigned, filled with skin tone.
 const skin = new THREE.MeshMatcapMaterial({
-  color: 0xffd7b8,
-  matcap: makeClayMatcap(),
+  color: 0xffffff,
+  vertexColors: true,
+  matcap: clayMatcap,
 });
 let dummy = null;
+let bodyMesh = null;
 let morphBound = null;
 let radius = 1.7;
 let bodyHeight = 1.6;
@@ -447,7 +468,9 @@ function stepTurn(delta) {
 
 function setFocus(mode) {
   focusMode = mode in FOCUS ? mode : "body";
-  if (focusMode !== "head" && isHairZone(editZone)) {
+  const strayZone =
+    (focusMode !== "head" && isHairZone(editZone)) || (focusMode !== "face" && isMakeupZone(editZone));
+  if (strayZone) {
     editZone = null;
     lastFloor = "";
     clearSideBars();
@@ -458,6 +481,7 @@ function setFocus(mode) {
   applyScale();
   placeCamera();
   if (focusMode === "head") openHairStudio();
+  else if (focusMode === "face") openMakeupStudio();
   else if (dummy) statusEl.textContent = idleStatus();
 }
 
@@ -486,6 +510,8 @@ async function loadOverlays(parent) {
 function disposeDummy() {
   hairStudio.dispose();
   eyes.dispose();
+  makeupStudio.dispose();
+  bodyMesh = null;
   if (!dummy) return;
   scene.remove(dummy);
   dummy.traverse((child) => {
@@ -539,15 +565,27 @@ async function switchBody(bodyId, variantId) {
     });
     return;
   }
+  const skinRgb = [((SKIN_HEX >> 16) & 255) / 255, ((SKIN_HEX >> 8) & 255) / 255, (SKIN_HEX & 255) / 255];
   group.traverse((child) => {
-    if (child.isMesh) {
-      child.material = skin;
-      child.geometry.computeVertexNormals();
+    if (!child.isMesh) return;
+    child.material = skin;
+    child.geometry.computeVertexNormals();
+    const count = child.geometry.getAttribute("position")?.count || 0;
+    const colors = new Float32Array(count * 3);
+    for (let i = 0; i < count; i += 1) {
+      colors[i * 3] = skinRgb[0];
+      colors[i * 3 + 1] = skinRgb[1];
+      colors[i * 3 + 2] = skinRgb[2];
     }
+    child.geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
   });
   hideHelpers(group);
   disposeDummy();
   dummy = group;
+  bodyMesh = null;
+  dummy.traverse((child) => {
+    if (!bodyMesh && child.isMesh && partName(child) === "body") bodyMesh = child;
+  });
   scene.add(dummy);
   frameObject(dummy);
   statusEl.textContent = idleStatus();
@@ -581,7 +619,16 @@ async function switchBody(bodyId, variantId) {
     } catch (eyeError) {
       console.warn("eyes skip", eyeError);
     }
+    await makeupStudio.bind({
+      bodyMesh,
+      restHuman,
+      cache: catalog.manifest.cache,
+      requestRedraw: () => {
+        if (dummy) statusEl.textContent = idleStatus();
+      },
+    });
     if (focusMode === "head") openHairStudio();
+    else if (focusMode === "face") openMakeupStudio();
   } catch (error) {
     console.error(error);
     statusEl.textContent = "тело есть, правки формы не загрузились";
@@ -677,7 +724,7 @@ async function attachPixelFilter() {
   const box = document.querySelector("#pixelMode");
   if (!box) return;
   try {
-    const mod = await import("./pixel-mode.js?v=c34");
+    const mod = await import("./pixel-mode.js?v=c35");
     pixelFilter = mod.createPixelFilter(renderer);
     box.addEventListener("change", () => pixelFilter.setEnabled(box.checked));
   } catch (error) {
@@ -687,7 +734,7 @@ async function attachPixelFilter() {
 }
 
 async function boot() {
-  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c34", import.meta.url));
+  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c35", import.meta.url));
   currentBody = catalog.manifest.defaultBody || bodyParts(catalog)[0]?.id || "clay";
   buildBodySwitcher();
   await switchBody(currentBody);

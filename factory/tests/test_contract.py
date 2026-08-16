@@ -30,6 +30,7 @@ def test_cache_token_everywhere() -> None:
     assert f"registry.js?v={CACHE}" in viewer
     assert f"hair.js?v={CACHE}" in viewer
     assert f"eye-wear.js?v={CACHE}" in viewer
+    assert f"makeup.js?v={CACHE}" in viewer
     hair = (ROOT / "web/hair.js").read_text()
     catalog_js = (ROOT / "web/hair-catalog.js").read_text()
     assert f"hair-catalog.js?v={CACHE}" in hair
@@ -92,7 +93,7 @@ def test_live_targets_match_packer_and_json() -> None:
     packed = json.loads((ROOT / "web/data/body-targets.json").read_text())
     needed = list(CONTRACT["packed_not_in_ui"])
     for part in iter_parts():
-        if part.get("kind") in ("overlay", "body", "hair"):
+        if part.get("kind") in ("overlay", "body", "hair", "makeup"):
             continue
         if part.get("macro", {}).get("corners"):
             needed.extend(part["macro"]["corners"])
@@ -112,7 +113,7 @@ def test_parts_are_the_zone_source() -> None:
     live = [part for part in iter_parts() if part.get("enabled") is not False]
     assert {part["id"] for part in live} >= {"chest", "stomach", "hips", "butt", "clay"}
     for part in live:
-        if part.get("kind") in ("overlay", "body", "hair"):
+        if part.get("kind") in ("overlay", "body", "hair", "makeup"):
             continue
         assert part["floors"]
         assert part["views"]
@@ -198,7 +199,6 @@ def test_head_focus_keeps_camera_crop() -> None:
     assert 'setFocus("head")' in viewer
     assert 'setFocus("face")' in viewer
     assert 'setFocus("body")' in viewer
-    assert "лицо · мейкап скоро" in viewer
     assert "span: 0.16" in viewer
     assert "span: 0.46" in viewer
     assert 'id="focus"' not in html
@@ -218,6 +218,35 @@ def test_eyes_are_official_clothes() -> None:
     assert (ROOT / "models/eyes/brown_eye.png").is_file()
 
 
+def test_makeup_is_two_face_modules() -> None:
+    lips = json.loads((PARTS_DIR / "makeup-lips.json").read_text())
+    cheeks = json.loads((PARTS_DIR / "makeup-cheeks.json").read_text())
+    for part in (lips, cheeks):
+        assert part["kind"] == "makeup"
+        assert part["focus"] == "face"
+        assert part["yFrac"]
+        assert len(part["floors"]) == 1
+    viewer = (ROOT / "web/viewer.js").read_text()
+    studio = (ROOT / "web/makeup.js").read_text()
+    assert "createMakeupStudio" in viewer
+    assert "makeupStudio" in viewer
+    assert "MAKEUP_FACE_IDS" in viewer
+    assert "MAKEUP_FACE_IDS.flatMap" in viewer
+    assert "openMakeupStudio" in viewer
+    assert "isMakeupZone" in viewer
+    assert "vertexColors: true" in viewer
+    assert "bodyMesh" in viewer
+    assert "cycleLip" in studio
+    assert "cycleCheek" in studio
+    assert "SKIN_HEX" in studio
+    assert "makeup-zones.json" in studio
+    zones = json.loads((ROOT / "web/data/makeup-zones.json").read_text())
+    assert len(zones["lips"]) >= 40
+    assert len(zones["cheeks"]) >= 100
+    packer = (ROOT / "factory/pack_makeup_zones.py").read_text()
+    assert "BODY_VERTS" in packer
+
+
 if __name__ == "__main__":
     test_cache_token_everywhere()
     test_no_unofficial_morph_hacks()
@@ -229,4 +258,5 @@ if __name__ == "__main__":
     test_hair_is_three_head_modules()
     test_head_focus_keeps_camera_crop()
     test_eyes_are_official_clothes()
+    test_makeup_is_two_face_modules()
     print("ok contract")
