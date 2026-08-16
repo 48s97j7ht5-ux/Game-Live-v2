@@ -2,9 +2,9 @@
  * Put a MakeHuman wig on the clay. Not helper-hair. Not Hair Editor curves.
  * Color tint is a separate paint step so dye never reloads the mesh.
  */
-import { applyDeltasToHuman, fitProxy, parseMhclo, parseObjMesh } from "./mhclo.js?v=c54";
-import { mixDeltas } from "./chest-morph.js?v=c54";
-import { HAIR_CACHE } from "./hair-catalog.js?v=c54";
+import { applyDeltasToHuman, fitProxy, parseMhclo, parseObjMesh } from "./mhclo.js?v=c55";
+import { mixDeltas } from "./chest-morph.js?v=c55";
+import { HAIR_CACHE } from "./hair-catalog.js?v=c55";
 
 export function createWear({ THREE }) {
   const cache = new Map();

@@ -43,7 +43,9 @@ export function createPoseStudio({ applyBody, morphBoundRef, poseBoundRef, bodyS
 
   function statusLine() {
     const pose = current();
-    return pose ? `поза · ${pose.label}` : "";
+    const ver = loaded?.poseRecipeVersion;
+    const base = pose ? `поза · ${pose.label}` : "";
+    return ver ? `${base} · ${ver}` : base;
   }
 
   const row = {
