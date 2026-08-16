@@ -13,12 +13,17 @@ Makeup zones (factory/pack_makeup_zones.py):
 
 Body morphs: vendored under factory/mh/targets/ (see factory/models/SOURCE.txt).
 
-Poses (official pipeline):
-  factory/mh/rigs/default.mhskel + default_weights.mhw — skeleton + skin weights
-  factory/mh/poseunits/body-poseunits.json — pose unit bone quaternions
-  factory/pack_skeleton.py → web/data/body-skeleton.json
-  factory/pack_poses.py → web/data/body-poses.json (unit recipes only)
-  Runtime: web/body-rig.js (SkinnedMesh + pose units)
+Poses — read factory/mh/POSES.md (verified against makehuman/plugins):
+
+  Face in MH app: face-poseunits.json + face-poseunits.bvh + framemapping.
+
+  body-poseunits.json: no BVH, not loaded by MH core; not a standalone web runtime format.
+
+  Official mesh pose: skeleton.setPose + skeleton.skinMesh with default.mhskel + default_weights.mhw.
+
+  Web ships now: factory/pack_poses.py → official-targets-v1 (arms/legs modeling .target @ 1.0).
+
+  pack_skeleton.py / body-rig.js kept for future MH Collada/glTF or skinMesh bake only.
 
 What models/base.obj alone does NOT include:
   armature, inverse bind matrices, skin weights, posed vertices.

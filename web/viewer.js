@@ -1,11 +1,10 @@
 import * as THREE from "three";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
-import { applyBody, bindMorph, loadTargets } from "./chest-morph.js?v=c48";
-import { createHairStudio, parseObjVerts } from "./hair.js?v=c48";
-import { createEyes } from "./eye-wear.js?v=c48";
-import { createMakeupStudio } from "./makeup.js?v=c48";
-import { createPoseStudio } from "./pose.js?v=c48";
-import { bindBodyRig, createPoseDriver, loadBodyRig, loadPoseUnits } from "./body-rig.js?v=c48";
+import { applyBody, bindMorph, loadTargets } from "./chest-morph.js?v=c49";
+import { createHairStudio, parseObjVerts } from "./hair.js?v=c49";
+import { createEyes } from "./eye-wear.js?v=c49";
+import { createMakeupStudio } from "./makeup.js?v=c49";
+import { createPoseStudio } from "./pose.js?v=c49";
 import {
   bodyModel,
   bodyPart,
@@ -16,7 +15,7 @@ import {
   overlays,
   sizeLabels,
   tapZones,
-} from "./registry.js?v=c48";
+} from "./registry.js?v=c49";
 
 const AXIS_STEPS = 7;
 // Tap skull: body → hair → face. Tap not-skull: one step back. Face crop is for makeup later.
@@ -56,7 +55,7 @@ const makeupStudio = createMakeupStudio({ THREE });
 const poseStudio = createPoseStudio({
   applyBody,
   morphBoundRef: () => morphBound,
-  poseDriverRef: () => poseDriver,
+  poseBoundRef: () => poseBound,
   bodyStateRef: () => bodyState,
   recipeRef: () => recipe,
   refit: () => {
@@ -83,7 +82,7 @@ function isMakeupZone(id) {
 
 function applyShape() {
   const key = poseStudio.current()?.key || null;
-  applyBody(morphBound, bodyState, recipe, null, key, poseDriver);
+  applyBody(morphBound, bodyState, recipe, poseBound, key, null);
   hairStudio.refit();
   eyes.refit();
 }
@@ -390,8 +389,7 @@ const skin = new THREE.MeshMatcapMaterial({
 let dummy = null;
 let bodyMesh = null;
 let morphBound = null;
-let bodyRig = null;
-let poseDriver = null;
+let poseBound = null;
 let radius = 1.7;
 let bodyHeight = 1.6;
 let targetPx = 400;
@@ -573,11 +571,7 @@ function disposeDummy() {
   });
   dummy = null;
   morphBound = null;
-  if (bodyRig) {
-    bodyRig.dispose();
-    bodyRig = null;
-  }
-  poseDriver = null;
+  poseBound = null;
 }
 
 function syncBodyUi() {
@@ -657,35 +651,14 @@ async function switchBody(bodyId, variantId) {
       poseStudio.reset();
     }
     syncPoseBar();
-    if (currentBody === "clay" && bodyMesh?.parent && poseMeta?.recipes) {
-      try {
-        const skelUrl = new URL(`./data/body-skeleton.json?v=${catalog.manifest.cache}`, import.meta.url);
-        const poseUnitsUrl = new URL(`./data/body-poseunits.json?v=${catalog.manifest.cache}`, import.meta.url);
-        const [skelPacked, poseUnits] = await Promise.all([loadBodyRig(skelUrl), loadPoseUnits(poseUnitsUrl)]);
-        bodyRig = bindBodyRig({
-          bodyMesh,
-          parent: bodyMesh.parent,
-          packed: skelPacked,
-          restHuman,
-          material: skin,
-        });
-        if (bodyRig) {
-          bodyMesh = bodyRig.skinnedMesh;
-          poseDriver = createPoseDriver({
-            rig: bodyRig,
-            poseUnits,
-            recipes: poseMeta.recipes,
-          });
-        }
-      } catch (rigError) {
-        console.warn("skeleton skip", rigError);
-        bodyRig = null;
-        poseDriver = null;
-      }
-    }
     const morphUrl = new URL(`${morphFile}?v=${catalog.manifest.cache}`, import.meta.url);
     const packed = await loadTargets(morphUrl);
     morphBound = bindMorph(dummy, packed);
+    if (poseMeta?.method === "official-targets-v1" && poseMeta?.targets) {
+      poseBound = bindMorph(dummy, poseMeta);
+    } else {
+      poseBound = null;
+    }
     applyShape();
     hairStudio.bind({
       dummy,
@@ -824,7 +797,7 @@ async function attachPixelFilter() {
   const box = document.querySelector("#pixelMode");
   if (!box) return;
   try {
-    const mod = await import("./pixel-mode.js?v=c48");
+    const mod = await import("./pixel-mode.js?v=c49");
     pixelFilter = mod.createPixelFilter(renderer);
     box.addEventListener("change", () => pixelFilter.setEnabled(box.checked));
   } catch (error) {
@@ -834,7 +807,7 @@ async function attachPixelFilter() {
 }
 
 async function boot() {
-  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c48", import.meta.url));
+  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c49", import.meta.url));
   currentBody = catalog.manifest.defaultBody || bodyParts(catalog)[0]?.id || "clay";
   buildBodySwitcher();
   await switchBody(currentBody);

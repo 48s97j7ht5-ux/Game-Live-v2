@@ -1,6 +1,7 @@
 {
-  "cache": "c48",
+  "cache": "c49",
   "defaultBody": "clay",
+  "poseMethod": "official-targets-v1",
   "body": "./models/base.obj",
   "morphs": "./data/body-targets.json",
   "parts": [
