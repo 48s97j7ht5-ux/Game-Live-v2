@@ -1,7 +1,8 @@
-Official CC0 MakeHuman hm08 targets. Used only to know which body
-vertices are lips and cheeks — not a geometric guess.
+Official CC0 MakeHuman hm08 data used by the factory (not guessed geometry).
 
-Source: makehumancommunity/makehuman (CC0, September 2020)
+Source repo: makehumancommunity/makehuman (CC0, September 2020)
+
+Makeup zones (factory/pack_makeup_zones.py):
   makehuman/data/targets/mouth/mouth-upperlip-volume-incr.target
   makehuman/data/targets/mouth/mouth-lowerlip-volume-incr.target
   makehuman/data/targets/mouth/mouth-lowerlip-width-incr.target
@@ -10,31 +11,15 @@ Source: makehumancommunity/makehuman (CC0, September 2020)
   makehuman/data/targets/cheek/l-cheek-volume-incr.target
   makehuman/data/targets/cheek/r-cheek-volume-incr.target
 
-Volume is the lip pads. lowerlip-width + lowerlip-ext are the outer lip.
-mouth-angles-up at high displacement is the official commissure; the
-low-mag falloff of that target walks onto the cheek and is dropped.
+Body morphs: vendored under factory/mh/targets/ (see factory/models/SOURCE.txt).
 
-Official default.mhmat sets shaderConfig vertexColors false.
-The official skin shader colours the body with texture2D on the
-hm08 UV, not per-vertex colours. Makeup in this repo paints those
-official UV islands.
+Poses (official pipeline):
+  factory/mh/rigs/default.mhskel + default_weights.mhw — skeleton + skin weights
+  factory/mh/poseunits/body-poseunits.json — pose unit bone quaternions
+  factory/pack_skeleton.py → web/data/body-skeleton.json
+  factory/pack_poses.py → web/data/body-poses.json (unit recipes only)
+  Runtime: web/body-rig.js (SkinnedMesh + pose units)
 
-Poses (factory/pack_poses.py):
-  Official MH *poses* need skeleton + makehuman/data/poseunits/body-poseunits.json
-  + skin weights (see makehuman animation3d). hm08 web export has no armature;
-  we do not rotate verts around joints (breaks normals).
-
-  Until skeleton export: official arms/legs *modeling* targets at weight 1.0
-  (same as modeling_sliders UniversalModifier):
-    makehuman/data/targets/armslegs/l-hand-trans-out.target
-    makehuman/data/targets/armslegs/r-hand-trans-out.target
-    makehuman/data/targets/armslegs/l-upperarm-scale-horiz-incr.target
-    makehuman/data/targets/armslegs/r-upperarm-scale-horiz-incr.target
-    makehuman/data/targets/armslegs/l-lowerarm-scale-horiz-incr.target
-    makehuman/data/targets/armslegs/r-lowerarm-scale-horiz-incr.target
-    (step) l-foot-trans-forward, r-foot-trans-backward, l-foot-trans-up,
-           l-leg-valgus-incr
-
-  body-poseunits.json is vendored under factory/mh/poseunits/ for a future skinned path.
-  Akimbo skeleton units (reference only): UpperArmDownLeft, UpperArmRollOutLeft,
-  LowerArmBend1Left1, HandDownLeft.
+What models/base.obj alone does NOT include:
+  armature, inverse bind matrices, skin weights, posed vertices.
+  joint-* groups in the OBJ are helper cubes for DCC tools, not a runtime rig.
