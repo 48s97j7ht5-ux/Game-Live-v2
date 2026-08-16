@@ -26,6 +26,20 @@ def test_bob_maps_cover_obj_verts() -> None:
     assert maps == len(verts), (maps, len(verts))
 
 
+def test_scalp_is_a_crown_cap() -> None:
+    text = (HAIR / "scalp.obj").read_text()
+    verts = [line for line in text.splitlines() if line.startswith("v ")]
+    faces = [line for line in text.splitlines() if line.startswith("f ")]
+    assert "g scalp" in text
+    assert len(verts) >= 180
+    assert len(faces) >= 140
+    ys = [float(line.split()[2]) for line in verts]
+    zs = [float(line.split()[3]) for line in verts]
+    assert max(ys) > 8.4
+    assert min(ys) > 7.3
+    assert max(zs) < 1.35
+
+
 def test_mhclo_indices_fit_hm08() -> None:
     proxy = (HAIR / "bob01/bob01.mhclo").read_text()
     for line in proxy.splitlines():
@@ -39,4 +53,5 @@ def test_mhclo_indices_fit_hm08() -> None:
 if __name__ == "__main__":
     test_bob_maps_cover_obj_verts()
     test_mhclo_indices_fit_hm08()
+    test_scalp_is_a_crown_cap()
     print("ok hair")

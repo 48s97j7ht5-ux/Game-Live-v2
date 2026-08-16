@@ -41,6 +41,7 @@ required=(
   models/base.obj
   models/hair/bob01/bob01.obj
   models/hair/bob01/bob01.mhclo
+  models/hair/scalp.obj
   models/hair/short02/short02.obj
   models/hair/long01/long01.obj
   models/hair/ponytail01/ponytail01.obj

@@ -135,6 +135,11 @@ def test_hair_is_official_mhclo_wigs() -> None:
     assert "zoneById(editZone).yFrac" not in viewer
     assert "helper-hair" in studio
     notice = (ROOT / "models/hair/NOTICE").read_text()
+    assert (ROOT / "models/hair/scalp.obj").is_file()
+    scalp = (ROOT / "models/hair/scalp.obj").read_text()
+    assert "g scalp" in scalp[:200]
+    assert "hair-scalp" in studio
+    assert sum(1 for line in scalp.splitlines() if line.startswith("v ")) >= 180
     assert "helper-hair" in notice
     for name in hair["styles"]:
         obj = ROOT / "models/hair" / name / f"{name}.obj"

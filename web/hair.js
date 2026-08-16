@@ -2,12 +2,15 @@
  * Hair is MakeHuman clothes: a wig mesh + MHCLO sitting on the clay.
  * Not helper-hair (that cage is never drawn). Not Blender Hair Editor curves.
  *
+ * These wigs are hair cards, not a knit cap. A same-color scalp.obj sits
+ * under them so the clay skull does not show through the gaps.
+ *
  * First shelf: five CC0 system wigs (bob, long, ponytail, short, braid).
  */
-import { applyDeltasToHuman, fitProxy, parseMhclo, parseObjMesh, parseObjVerts } from "./mhclo.js?v=c24";
-import { mixDeltas } from "./chest-morph.js?v=c24";
+import { applyDeltasToHuman, fitProxy, parseMhclo, parseObjMesh, parseObjVerts } from "./mhclo.js?v=c25";
+import { mixDeltas } from "./chest-morph.js?v=c25";
 
-export const HAIR_CACHE = "c24";
+export const HAIR_CACHE = "c25";
 
 const STYLES = [
   { id: "none", label: "нет" },
@@ -38,6 +41,7 @@ export function createHairStudio({ THREE }) {
   let recipe = null;
   let bodyState = null;
   let mesh = null;
+  let scalp = null;
   let loadToken = 0;
   let setStatus = () => {};
   let requestRedraw = () => {};
@@ -84,15 +88,26 @@ export function createHairStudio({ THREE }) {
     return asset;
   }
 
+  async function loadScalp() {
+    if (cache.has("scalp")) return cache.get("scalp");
+    const url = new URL(`../models/hair/scalp.obj?v=${HAIR_CACHE}`, import.meta.url).href;
+    const obj = parseObjMesh(await fetch(url).then((r) => {
+      if (!r.ok) throw new Error("нет шапочки");
+      return r.text();
+    }));
+    cache.set("scalp", obj);
+    return obj;
+  }
+
   function detach() {
-    if (!mesh || !dummy) {
-      mesh = null;
-      return;
+    for (const item of [mesh, scalp]) {
+      if (!item || !dummy) continue;
+      dummy.remove(item);
+      if (item.geometry) item.geometry.dispose();
+      if (item.material && item.material.dispose) item.material.dispose();
     }
-    dummy.remove(mesh);
-    mesh.geometry.dispose();
-    mesh.material.dispose();
     mesh = null;
+    scalp = null;
   }
 
   function buildGeometry(asset, fitted) {
@@ -120,22 +135,38 @@ export function createHairStudio({ THREE }) {
       return;
     }
     try {
-      const asset = await loadStyle(style.id);
+      const [asset, scalpObj] = await Promise.all([loadStyle(style.id), loadScalp().catch(() => null)]);
       if (token !== loadToken || !dummy) return;
       const human = humanNow();
       if (!human) throw new Error("нет тела");
       const fitted = fitProxy(asset.proxy, human);
       const geometry = buildGeometry(asset, fitted);
-      const material = new THREE.MeshMatcapMaterial({
-        color: COLORS[COLOR_KEYS[state.color]].hex,
-        matcap: matcapFromDummy(),
-        side: THREE.DoubleSide,
-      });
+      const matcap = matcapFromDummy();
+      const color = COLORS[COLOR_KEYS[state.color]].hex;
       detach();
-      mesh = new THREE.Mesh(geometry, material);
+      mesh = new THREE.Mesh(
+        geometry,
+        new THREE.MeshMatcapMaterial({ color, matcap, side: THREE.DoubleSide }),
+      );
       mesh.name = "hair";
       mesh.renderOrder = 2;
       dummy.add(mesh);
+      if (scalpObj) {
+        scalp = new THREE.Mesh(
+          buildGeometry({ obj: scalpObj }, scalpObj.verts),
+          new THREE.MeshMatcapMaterial({
+            color,
+            matcap,
+            side: THREE.FrontSide,
+            polygonOffset: true,
+            polygonOffsetFactor: -1,
+            polygonOffsetUnits: -1,
+          }),
+        );
+        scalp.name = "hair-scalp";
+        scalp.renderOrder = 1;
+        dummy.add(scalp);
+      }
     } catch (err) {
       setStatus("причёска: " + (err.message || err));
     }

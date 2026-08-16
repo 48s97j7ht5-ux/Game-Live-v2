@@ -4,6 +4,8 @@ Sources (already released CC0, September 2020):
   short02, bob01, ponytail01, long01, braid01
 
 helper-hair is a fitting cage and is not drawn.
-MPFB Hair Editor (Blender curves) is not used; these are mesh wigs.
+A tight scalp cap (scalp.obj) from the body skin sits under the wig
+so the skull does not show through hair cards.
 
+MPFB Hair Editor (Blender curves) is not used; these are mesh wigs.
 More styles live in community packs hair01 / hair02 / hair03.
