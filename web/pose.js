@@ -1,8 +1,9 @@
 /**
- * Body poses via official MH skeleton + body-poseunits.json (see web/body-rig.js).
+ * Body poses: official modeling targets (official-targets-v1) until MH skinMesh bake ships.
+ * See factory/mh/POSES.md for why body-poseunits.json is not applied like face BVH in core MH.
  */
 
-export function createPoseStudio({ applyBody, morphBoundRef, poseDriverRef, bodyStateRef, recipeRef, refit }) {
+export function createPoseStudio({ applyBody, morphBoundRef, poseBoundRef, bodyStateRef, recipeRef, refit }) {
   const state = { index: 0 };
   let poses = [{ id: "rest", label: "стоя", key: null }];
   let loaded = null;
@@ -27,11 +28,11 @@ export function createPoseStudio({ applyBody, morphBoundRef, poseDriverRef, body
 
   function apply() {
     const morphBound = morphBoundRef();
-    const poseDriver = poseDriverRef();
+    const poseBound = poseBoundRef();
     const bodyState = bodyStateRef();
     const recipe = recipeRef();
     const key = current()?.key || null;
-    applyBody(morphBound, bodyState, recipe, null, key, poseDriver);
+    applyBody(morphBound, bodyState, recipe, poseBound, key, null);
     refit();
   }
 
