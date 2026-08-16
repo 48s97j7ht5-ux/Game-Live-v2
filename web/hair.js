@@ -7,10 +7,10 @@
  *
  * Official CC0 system shelf plus optional community packs (hair01–03).
  */
-import { applyDeltasToHuman, fitProxy, parseMhclo, parseObjMesh, parseObjVerts } from "./mhclo.js?v=c27";
-import { mixDeltas } from "./chest-morph.js?v=c27";
+import { applyDeltasToHuman, fitProxy, parseMhclo, parseObjMesh, parseObjVerts } from "./mhclo.js?v=c28";
+import { mixDeltas } from "./chest-morph.js?v=c28";
 
-export const HAIR_CACHE = "c27";
+export const HAIR_CACHE = "c28";
 
 const STYLES = [
   { id: "none", label: "нет" },

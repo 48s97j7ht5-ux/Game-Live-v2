@@ -28,7 +28,7 @@ OFFICIAL = {
     "short03",
     "short04",
 }
-SKIP = {"learning_anime_hair"}
+SKIP = {"learning_anime_hair", "elvs_lara_hair"}
 
 PACKS = [
     {
@@ -198,6 +198,22 @@ def extract_pack(pack: dict, data: bytes) -> list[dict]:
             obj = zf.read(obj_path).decode("utf-8", errors="replace")
             if "verts 0" not in raw:
                 print(f"skip {aid}: no verts 0")
+                continue
+            obj_text = obj
+            nverts = sum(1 for line in obj_text.splitlines() if line.startswith("v "))
+            nmaps = 0
+            started = False
+            for line in raw.splitlines():
+                if line.strip().startswith("verts "):
+                    started = True
+                    continue
+                if not started:
+                    continue
+                parts = line.split()
+                if len(parts) >= 9 and parts[0].lstrip("-").replace(".", "", 1).isdigit():
+                    nmaps += 1
+            if nmaps < nverts:
+                print(f"skip {aid}: maps {nmaps} < verts {nverts}")
                 continue
             dest = HAIR / aid
             dest.mkdir(parents=True, exist_ok=True)
