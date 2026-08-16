@@ -1,7 +1,7 @@
 {
-  "cache": "c49",
+  "cache": "c50",
   "defaultBody": "clay",
-  "poseMethod": "official-targets-v1",
+  "poseMethod": "mh-skinmesh-v1",
   "body": "./models/base.obj",
   "morphs": "./data/body-targets.json",
   "parts": [

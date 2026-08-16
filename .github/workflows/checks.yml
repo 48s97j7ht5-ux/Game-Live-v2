@@ -14,6 +14,8 @@ jobs:
           python-version: "3.12"
       - name: Morph and Pages contract
         run: |
+          python3 factory/fetch_makehuman.py
+          python3 factory/bake_body_poses.py
           python3 factory/tests/test_chest_targets.py
           python3 factory/tests/test_contract.py
           python3 factory/tests/test_hair.py

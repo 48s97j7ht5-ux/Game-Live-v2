@@ -274,16 +274,22 @@ def test_poses_on_body_screen() -> None:
     assert "createPoseStudio" in pose
     assert "cycle" in pose
     packed = json.loads((ROOT / "web/data/body-poses.json").read_text())
-    assert packed.get("method") == "official-targets-v1"
+    assert packed.get("method") == "mh-skinmesh-v1"
     assert len(packed["poses"]) == 3
     assert packed["targets"]["poseAkimbo"]["s"]
-    assert len(packed["targets"]["poseAkimbo"]["s"]) > 800
+    assert len(packed["targets"]["poseAkimbo"]["s"]) > 5000
     assert (ROOT / "factory/mh/POSES.md").is_file()
+    assert (ROOT / "factory/bake_body_poses.py").is_file()
     manifest = json.loads((ROOT / "web/parts/manifest.json").read_text())
-    assert manifest.get("poseMethod") == "official-targets-v1"
-    packer = (ROOT / "factory/pack_poses.py").read_text()
-    assert "pose-units-v1" not in packer
-    assert "official-targets-v1" in packer
+    assert manifest.get("poseMethod") == "mh-skinmesh-v1"
+    bake = (ROOT / "factory/bake_body_poses.py").read_text()
+    assert "mh-skinmesh-v1" in bake
+    assert "UpperArmRollOutLeft" in bake
+    pages = (ROOT / ".github/workflows/pages.yml").read_text()
+    checks = (ROOT / ".github/workflows/checks.yml").read_text()
+    assert "fetch_makehuman.py" in checks
+    assert "bake_body_poses.py" in checks
+    assert "bake_body_poses.py" in pages
 
 
 if __name__ == "__main__":

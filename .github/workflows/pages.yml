@@ -23,6 +23,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Bake official body poses
+        run: |
+          python3 factory/fetch_makehuman.py
+          python3 factory/bake_body_poses.py
+
       - name: Contract
         run: |
           python3 factory/tests/test_contract.py

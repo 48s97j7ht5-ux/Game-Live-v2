@@ -16,21 +16,26 @@ Face JSON alone is **not** enough; it points at the BVH.
 - **No** `animation_file`, **no** `framemapping`, **no** matching `body-poseunits.bvh` in the repo
 - **No** Python plugin references `body-poseunits.json` (grep the tree)
 
-So the official desktop app does **not** document a “apply this JSON directly in JS” path for body. External tools (e.g. MPFB) may consume it.
+External tools (e.g. MPFB) may consume it; this repo applies it in the **factory** only.
 
 ## Official deformation pipeline (mesh)
 
-1. Rest coordinates (basemesh)
-2. Modeling `.target` deltas (UniversalModifier) — what hm08 morphs use
-3. Skeleton pose as **4×4 matrices per bone** (breadth-first), via `AnimationTrack` / BVH
+1. Rest coordinates (basemesh / hm08 OBJ)
+2. Modeling `.target` deltas (UniversalModifier) — morph sliders
+3. Skeleton pose as **4×4 matrices per bone** (breadth-first), from pose units or BVH
 4. **`Skeleton.skinMesh()`** with `VertexBoneWeights` from `default_weights.mhw`
 
-Rig files: `makehuman/data/rigs/default.mhskel` + `default_weights.mhw`.
+Rig files: `factory/mh/rigs/default.mhskel` + `default_weights.mhw` (CC0, from MH data).
 
 ## hm08 web viewer (this repo)
 
-Until we run step 3–4 through MakeHuman (or Collada/FBX export from MH), **runtime Three.js skinning + raw body-poseunits quaternions is not an official path** and has produced broken binds.
+**Shipping method:** `mh-skinmesh-v1`
 
-**Current shipping method:** `official-targets-v1` — same as modeling sliders (`pack_poses.py`), documented in `factory/mh/SOURCE.txt`.
+- CI clones MakeHuman (`factory/fetch_makehuman.py`) and runs `factory/bake_body_poses.py`.
+- Recipes blend official **body-poseunits** (see `factory/mh/recipes/*.json`) with L→R mirror where documented.
+- Output is packed vertex deltas in `web/data/body-poses.json` (same wire format as morph targets).
+- Runtime applies deltas only — **no** Three.js `SkinnedMesh` / hand-rolled bind matrices (`web/body-rig.js` stays off).
 
-**Next official step:** factory bake using `shared.skeleton` + `skinMesh()` (or MH Collada export), then optional glTF for Three.js — not hand-rolled bind matrices.
+**Legacy:** `official-targets-v1` (`factory/pack_poses.py`) used modeling `.target` files; kept for reference, not used in CI.
+
+**Not official for web:** applying body-poseunits quaternions directly in JavaScript without MH `skinMesh()`.
