@@ -1,18 +1,18 @@
 import * as THREE from "three";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
-import { applyMorph, axisAmount, bindMorph, loadTargets } from "./chest-morph.js?v=c19";
+import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c20";
+import { createHairStudio } from "./hair.js?v=c20";
 import {
   bodyModel,
   bodyPart,
   bodyParts,
   defaultState,
-  hairPart,
   loadCatalog,
   morphRecipe,
   overlays,
   sizeLabels,
   tapZones,
-} from "./registry.js?v=c19";
+} from "./registry.js?v=c20";
 
 const AXIS_STEPS = 7;
 const FOCUS = {
@@ -38,75 +38,25 @@ let currentBody = "clay";
 let currentVariant = "";
 let bodyLoad = 0;
 let focusMode = "body";
-const HAIR_PIVOT_Y = 8.2;
-const BANGS_PIVOT_Y = 7.95;
+const hairStudio = createHairStudio({ THREE });
 
 function zoneById(id) {
   return zones.find((zone) => zone.id === id);
 }
 
 function currentFloors() {
-  const floors = zoneById(editZone)?.floors || [];
-  if (editZone !== "hair") return floors;
-  const hasHair = Boolean(hairChoice()?.model);
-  return floors.filter((floor) => !floor.needsHair || hasHair);
-}
-
-function hairFloorChoices(floor) {
-  if (floor.choices) return floor.choices;
-  const part = hairPart(catalog, currentBody);
-  if (floor.id === "style") return part?.choices || [];
-  const found = (part?.floors || []).find((item) => item.id === floor.id);
-  return found?.choices || [];
-}
-
-function hairStyleFloor() {
-  return zoneById("hair")?.floors?.find((floor) => floor.id === "style") || { id: "style", choices: hairPart(catalog, currentBody)?.choices || [] };
-}
-
-function hairChoice() {
-  const floor = hairStyleFloor();
-  const list = hairFloorChoices(floor);
-  if (!list.length) return null;
-  const index = Math.max(0, Math.min(list.length - 1, bodyState.style ?? 0));
-  return list[index];
-}
-
-function hairBangsChoice() {
-  const floor = zoneById("hair")?.floors?.find((item) => item.id === "bangs");
-  const list = hairFloorChoices(floor || { id: "bangs", choices: [] });
-  if (!list.length) return { model: "", label: "нет" };
-  const index = Math.max(0, Math.min(list.length - 1, bodyState.bangs ?? 0));
-  return list[index];
-}
-
-function hairColorChoice() {
-  const floor = zoneById("hair")?.floors?.find((item) => item.id === "color");
-  const list = hairFloorChoices(floor || { id: "color", choices: [] });
-  if (!list.length) return { hex: "#3f2a1c", label: "каштан" };
-  const index = Math.max(0, Math.min(list.length - 1, bodyState.color ?? 1));
-  return list[index];
+  if (editZone === "hair") return hairStudio.floors();
+  return zoneById(editZone)?.floors || [];
 }
 
 function floorValue(floor) {
+  if (typeof floor.hint === "function") return floor.hint();
   if (floor.kind === "size") return `${sizes[bodyState.sizeIndex] || ""}`;
-  if (floor.kind === "choice") {
-    const list = hairFloorChoices(floor);
-    const index = Math.max(0, Math.min(list.length - 1, bodyState[floor.id] ?? 0));
-    return list[index]?.label || "";
-  }
   return `${bodyState[floor.id] + 1}/${AXIS_STEPS}`;
 }
 
 function idleStatus() {
-  if (focusMode === "hair") {
-    const style = hairChoice();
-    const color = hairColorChoice();
-    if (!style?.model) return "причёска · нет";
-    const bangs = hairBangsChoice();
-    const fringe = bangs.model ? ` · чёлка ${bangs.label}` : "";
-    return `причёска · ${style.label} · ${color.label}${fringe}`;
-  }
+  if (focusMode === "hair") return hairStudio.statusLine();
   if (!editZone) {
     const body = bodyPart(catalog, currentBody);
     if (body?.kind === "body" && currentBody !== "clay") return body.hint || body.label;
@@ -156,21 +106,17 @@ function buildSideBars() {
 
 function stepFloor(floor, delta) {
   lastFloor = floor.id;
+  if (typeof floor.onStep === "function") {
+    floor.onStep(delta);
+    statusEl.textContent = idleStatus();
+    updateFloorDisabled();
+    return;
+  }
   if (floor.kind === "size") {
     bodyState.sizeIndex = Math.max(0, Math.min(sizes.length - 1, bodyState.sizeIndex + delta));
-  } else if (floor.kind === "choice") {
-    const list = hairFloorChoices(floor);
-    const now = Number.isFinite(bodyState[floor.id]) ? bodyState[floor.id] : 0;
-    bodyState[floor.id] = Math.max(0, Math.min(list.length - 1, now + delta));
-    if (floor.id === "style" || floor.id === "bangs") {
-      applyHair();
-      buildSideBars();
-      layoutFloorButtons();
-    } else applyHairLook();
   } else {
     const now = Number.isFinite(bodyState[floor.id]) ? bodyState[floor.id] : 3;
     bodyState[floor.id] = Math.max(0, Math.min(AXIS_STEPS - 1, now + delta));
-    if (editZone === "hair") applyHairLook();
   }
   statusEl.textContent = idleStatus();
   updateFloorDisabled();
@@ -182,11 +128,9 @@ function updateFloorDisabled() {
     if (item.floor.kind === "size") {
       item.left.disabled = bodyState.sizeIndex === 0;
       item.right.disabled = bodyState.sizeIndex === sizes.length - 1;
-    } else if (item.floor.kind === "choice") {
-      const list = hairFloorChoices(item.floor);
-      const index = bodyState[item.floor.id] ?? 0;
-      item.left.disabled = index === 0;
-      item.right.disabled = index >= list.length - 1;
+    } else if (typeof item.floor.atMin === "function") {
+      item.left.disabled = item.floor.atMin();
+      item.right.disabled = item.floor.atMax();
     } else {
       item.left.disabled = bodyState[item.floor.id] === 0;
       item.right.disabled = bodyState[item.floor.id] === AXIS_STEPS - 1;
@@ -312,11 +256,6 @@ scene.add(fill);
 const skin = new THREE.MeshMatcapMaterial({
   color: 0xffd7b8,
   matcap: makeClayMatcap(),
-});
-const hairSkin = new THREE.MeshMatcapMaterial({
-  color: 0x3f2a1c,
-  matcap: makeClayMatcap(),
-  side: THREE.DoubleSide,
 });
 let dummy = null;
 let morphBound = null;
@@ -469,70 +408,6 @@ function setHeight(px) {
   placeCamera();
 }
 
-function disposeObject(object) {
-  object.traverse((child) => {
-    if (child.geometry) child.geometry.dispose();
-  });
-}
-
-let hairLoad = 0;
-
-function applyHairLook() {
-  const hex = hairColorChoice().hex || "#3f2a1c";
-  hairSkin.color.set(hex);
-  const length = axisAmount(bodyState.length ?? 3);
-  const volume = axisAmount(bodyState.volume ?? 3);
-  const hair = dummy?.getObjectByName("hair");
-  const bangs = dummy?.getObjectByName("bangs");
-  if (hair) hair.scale.set(1 + volume * 0.2, 1 + length * 0.28, 1 + volume * 0.2);
-  if (bangs) bangs.scale.set(1 + volume * 0.1, 1, 1 + volume * 0.06);
-}
-
-async function attachHairPiece(name, url, pivotY, token) {
-  const old = dummy.getObjectByName(name);
-  if (old) {
-    dummy.remove(old);
-    disposeObject(old);
-  }
-  if (!url) return true;
-  const loader = new OBJLoader();
-  const group = await loader.loadAsync(`${url}?v=${catalog.manifest.cache}`);
-  if (token !== hairLoad || !dummy) {
-    disposeObject(group);
-    return false;
-  }
-  const pivot = new THREE.Group();
-  pivot.name = name;
-  pivot.position.set(0, pivotY, 0);
-  group.position.set(0, -pivotY, 0);
-  group.traverse((child) => {
-    if (child.isMesh) {
-      child.material = hairSkin;
-      child.geometry.computeVertexNormals();
-      child.visible = true;
-    }
-  });
-  pivot.add(group);
-  dummy.add(pivot);
-  return true;
-}
-
-async function applyHair() {
-  if (!dummy) return;
-  const token = (hairLoad += 1);
-  try {
-    const style = hairChoice();
-    const ok = await attachHairPiece("hair", style?.model, HAIR_PIVOT_Y, token);
-    if (!ok) return;
-    const bangsUrl = style?.model ? hairBangsChoice()?.model : "";
-    const bangsOk = await attachHairPiece("bangs", bangsUrl, BANGS_PIVOT_Y, token);
-    if (!bangsOk) return;
-    applyHairLook();
-  } catch (error) {
-    console.warn("hair skip", error);
-  }
-}
-
 async function loadOverlays(parent) {
   const loader = new OBJLoader();
   for (const part of overlays(catalog, currentBody)) {
@@ -547,6 +422,7 @@ async function loadOverlays(parent) {
 }
 
 function disposeDummy() {
+  hairStudio.dispose();
   if (!dummy) return;
   scene.remove(dummy);
   dummy.traverse((child) => {
@@ -611,9 +487,20 @@ async function switchBody(bodyId, variantId) {
   dummy = group;
   scene.add(dummy);
   frameObject(dummy);
+  hairStudio.bind({
+    dummy,
+    loader: new OBJLoader(),
+    getBodyKind: () => currentBody,
+    setStatus: (text) => {
+      statusEl.textContent = text;
+    },
+    requestRedraw: () => {
+      if (dummy) statusEl.textContent = idleStatus();
+    },
+  });
   statusEl.textContent = idleStatus();
   await loadOverlays(dummy);
-  await applyHair();
+  await hairStudio.apply();
   if (focusMode === "hair" && zoneById("hair")) setEditZone("hair");
   const morphFile = body.morphs || (currentBody === "clay" ? catalog.manifest.morphs : "");
   if (!morphFile) return;
@@ -700,7 +587,7 @@ async function attachPixelFilter() {
   const box = document.querySelector("#pixelMode");
   if (!box) return;
   try {
-    const mod = await import("./pixel-mode.js?v=c19");
+    const mod = await import("./pixel-mode.js?v=c20");
     pixelFilter = mod.createPixelFilter(renderer);
     box.addEventListener("change", () => pixelFilter.setEnabled(box.checked));
   } catch (error) {
@@ -710,7 +597,7 @@ async function attachPixelFilter() {
 }
 
 async function boot() {
-  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c19", import.meta.url));
+  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c20", import.meta.url));
   currentBody = catalog.manifest.defaultBody || bodyParts(catalog)[0]?.id || "clay";
   buildBodySwitcher();
   await switchBody(currentBody);

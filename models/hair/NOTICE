@@ -1,17 +1,6 @@
-Hair for the clay hm08 dummy
-============================
-
-MakeClothes (official):
-
-  Hair is a *proxy* (clothes), not the helper. Each hair vertex follows
-  three vertices on the helper or the body. The helper mesh is a fitting
-  cage (helper-hair, helper-tights, …) and is not drawn.
-
-  https://static.makehumancommunity.org/assets/creatingassets/makeclothes/introduction.html
-  https://static.makehumancommunity.org/makehuman/docs/hairstyles_and_clothes.html
-
-These OBJ files offset the hm08 *body* scalp/nape (CC0), a few centimetres
-out. They are not the helper-hair cage (that looked like slabs over the face).
-
-Bangs are a separate MHCLO in community packs. Here: bangs_brow / bangs_face
-are a thin hairline strip, optional.
+Hair is MakeHuman clothes type Hair: mesh + MHCLO proxy + mhmat.
+helper-hair is not exported and must not be drawn.
+These OBJ shells offset the hm08 body scalp/nape (CC0). They are
+placeholders until a fitted community MHCLO (hair01 / similar) is dropped in.
+Bangs are a separate clothes layer, as in community packs.
+MPFB Hair Editor (Blender curves: frizz/curl/clump) does not apply to mesh shells.

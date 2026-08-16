@@ -35,6 +35,7 @@ required=(
   web/viewer.css
   web/chest-morph.js
   web/registry.js
+  web/hair.js
   web/parts/manifest.json
   web/data/body-targets.json
   web/vendor/three.module.js
@@ -48,6 +49,8 @@ required=(
   models/hair/long.obj
   models/hair/bangs_brow.obj
   models/hair/bangs_face.obj
+  models/hair/bob.mhclo
+  models/hair/bob.mhmat
   index.html
 )
 for rel in "${required[@]}"; do

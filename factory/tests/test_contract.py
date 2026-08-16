@@ -28,6 +28,7 @@ def test_cache_token_everywhere() -> None:
     assert f"viewer.js?v={CACHE}" in index
     assert f"chest-morph.js?v={CACHE}" in viewer
     assert f"registry.js?v={CACHE}" in viewer
+    assert f"hair.js?v={CACHE}" in viewer
     assert f"parts/manifest.json?v={CACHE}" in viewer
 
 
@@ -82,7 +83,7 @@ def test_live_targets_match_packer_and_json() -> None:
     packed = json.loads((ROOT / "web/data/body-targets.json").read_text())
     needed = list(CONTRACT["packed_not_in_ui"])
     for part in iter_parts():
-        if part.get("kind") in ("overlay", "body"):
+        if part.get("kind") in ("overlay", "body", "hair"):
             continue
         if part.get("macro", {}).get("corners"):
             needed.extend(part["macro"]["corners"])
@@ -102,7 +103,7 @@ def test_parts_are_the_zone_source() -> None:
     live = [part for part in iter_parts() if part.get("enabled") is not False]
     assert {part["id"] for part in live} >= {"chest", "stomach", "hips", "butt", "clay", "anime"}
     for part in live:
-        if part.get("kind") in ("overlay", "body"):
+        if part.get("kind") in ("overlay", "body", "hair"):
             continue
         assert part["floors"]
         assert part["views"]
@@ -130,26 +131,46 @@ def test_anime_is_separate_body_module() -> None:
         assert "\ng body\n" in text or text.startswith("#") and "g body" in text
 
 
-def test_hair_is_mhclo_style_overlay() -> None:
+def test_hair_is_mh_clothes_module() -> None:
     hair = json.loads((PARTS_DIR / "hair.json").read_text())
-    assert hair["kind"] == "overlay"
+    assert hair["kind"] == "hair"
+    assert hair["mhType"] == "Hair"
     assert hair["enabled"] is True
     assert hair["focus"] == "hair"
+    assert {floor["id"] for floor in hair["floors"]} >= {
+        "hair-style",
+        "hair-bangs",
+        "hair-color",
+        "hair-length",
+        "hair-volume",
+    }
     viewer = (ROOT / "web/viewer.js").read_text()
-    assert "applyHairLook" in viewer
-    style = next(floor for floor in hair["floors"] if floor["id"] == "style")
-    color = next(floor for floor in hair["floors"] if floor["id"] == "color")
-    assert {floor["id"] for floor in hair["floors"]} >= {"style", "bangs", "color", "length", "volume"}
-    bangs = next(floor for floor in hair["floors"] if floor["id"] == "bangs")
-    for choice in list(style["choices"]) + list(bangs["choices"]):
-        if not choice.get("model"):
-            continue
-        rel = choice["model"][2:] if choice["model"].startswith("./") else choice["model"]
-        path = ROOT / rel
-        assert path.is_file(), rel
-        text = path.read_text()
-        assert "\ng hair\n" in text or "\ng bangs\n" in text
-        assert "helper-hair" in text or "helper-hair" in (ROOT / "models/hair/NOTICE").read_text()
+    studio = (ROOT / "web/hair.js").read_text()
+    assert "createHairStudio" in viewer
+    assert "applyHairLook" not in viewer
+    assert "helper-hair" in studio
+    notice = (ROOT / "models/hair/NOTICE").read_text()
+    assert "helper-hair" in notice
+    for name, group in (
+        ("short", "hair"),
+        ("bob", "hair"),
+        ("long", "hair"),
+        ("bangs_brow", "bangs"),
+        ("bangs_face", "bangs"),
+    ):
+        obj = ROOT / "models/hair" / f"{name}.obj"
+        mhclo = ROOT / "models/hair" / f"{name}.mhclo"
+        mhmat = ROOT / "models/hair" / f"{name}.mhmat"
+        assert obj.is_file(), name
+        assert mhclo.is_file(), name
+        assert mhmat.is_file(), name
+        text = obj.read_text()
+        assert f"\ng {group}\n" in text
+        proxy = mhclo.read_text()
+        assert "basemesh hm08" in proxy
+        assert "verts 0" in proxy
+        assert "obj_file" in proxy
+        assert "helper-hair" not in text.lower() or "not helper-hair" in text.lower()
 
 
 if __name__ == "__main__":
@@ -160,5 +181,5 @@ if __name__ == "__main__":
     test_live_targets_match_packer_and_json()
     test_parts_are_the_zone_source()
     test_anime_is_separate_body_module()
-    test_hair_is_mhclo_style_overlay()
+    test_hair_is_mh_clothes_module()
     print("ok contract")

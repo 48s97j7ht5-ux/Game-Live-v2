@@ -1,5 +1,5 @@
 # Tight hair from hm08 body scalp (CC0). Not helper-hair.
-# MakeClothes: hair is a proxy fitted to helper/body; helpers are not rendered.
+# MakeHuman clothes type Hair: mesh + MHCLO proxy. Helpers are not rendered.
 # https://static.makehumancommunity.org/assets/creatingassets/makeclothes/introduction.html
 o bangs
 g bangs
