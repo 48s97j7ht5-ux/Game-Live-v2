@@ -101,7 +101,7 @@ def test_parts_are_the_zone_source() -> None:
     viewer = (ROOT / "web/viewer.js").read_text()
     assert "tapZones(catalog, currentBody, focusMode)" in viewer
     live = [part for part in iter_parts() if part.get("enabled") is not False]
-    assert {part["id"] for part in live} >= {"chest", "stomach", "hips", "butt", "clay", "anime"}
+    assert {part["id"] for part in live} >= {"chest", "stomach", "hips", "butt", "clay"}
     for part in live:
         if part.get("kind") in ("overlay", "body"):
             continue
@@ -110,26 +110,18 @@ def test_parts_are_the_zone_source() -> None:
         assert "clay" in (part.get("bodies") or ["clay"])
 
 
-def test_anime_is_separate_body_module() -> None:
-    anime = json.loads((PARTS_DIR / "anime.json").read_text())
+def test_clay_is_the_only_body() -> None:
     clay = json.loads((PARTS_DIR / "clay.json").read_text())
-    assert anime["kind"] == "body"
     assert clay["kind"] == "body"
-    assert anime["model"].startswith("./models/mblab/")
     assert clay["model"] == "./models/base.obj"
+    assert not (PARTS_DIR / "anime.json").exists()
+    assert not (ROOT / "models/mblab").exists()
     viewer = (ROOT / "web/viewer.js").read_text()
     assert "setFocus" in viewer
     assert 'data-focus="head"' in (ROOT / "index.html").read_text()
     assert "голова" in (ROOT / "index.html").read_text()
-    assert "kind=body" in "\n".join(CONTRACT["rules"]) or any(
-        "kind=body" in rule for rule in CONTRACT["rules"]
-    )
-    for variant in anime["variants"]:
-        rel = variant["model"][2:] if variant["model"].startswith("./") else variant["model"]
-        assert (ROOT / rel).is_file(), rel
-        text = (ROOT / rel).read_text()
-        assert "AGPL" in text
-        assert "\ng body\n" in text or text.startswith("#") and "g body" in text
+    bodies = [part for part in iter_parts() if part.get("kind") == "body"]
+    assert [part["id"] for part in bodies] == ["clay"]
 
 
 def test_head_focus_is_camera_only() -> None:
@@ -149,6 +141,6 @@ if __name__ == "__main__":
     test_assemble_contains_imports()
     test_live_targets_match_packer_and_json()
     test_parts_are_the_zone_source()
-    test_anime_is_separate_body_module()
+    test_clay_is_the_only_body()
     test_head_focus_is_camera_only()
     print("ok contract")

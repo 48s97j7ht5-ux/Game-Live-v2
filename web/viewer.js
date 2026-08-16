@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
-import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c21";
+import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c22";
 import {
   bodyModel,
   bodyPart,
@@ -11,7 +11,7 @@ import {
   overlays,
   sizeLabels,
   tapZones,
-} from "./registry.js?v=c21";
+} from "./registry.js?v=c22";
 
 const AXIS_STEPS = 7;
 const FOCUS = {
@@ -54,10 +54,8 @@ function floorValue(floor) {
 function idleStatus() {
   if (focusMode === "head") return "голова";
   if (!editZone) {
-    const body = bodyPart(catalog, currentBody);
-    if (body?.kind === "body" && currentBody !== "clay") return body.hint || body.label;
     const hints = catalog.manifest.hints || {};
-    return hints[currentView()] || hints.default || body?.hint || "";
+    return hints[currentView()] || hints.default || "";
   }
   const floor = currentFloors().find((item) => item.id === lastFloor) || currentFloors()[0];
   const zone = zoneById(editZone);
@@ -491,7 +489,10 @@ function buildBodySwitcher() {
   const row = document.querySelector("#bodies");
   if (!row) return;
   row.innerHTML = "";
-  for (const part of bodyParts(catalog)) {
+  const parts = bodyParts(catalog);
+  row.hidden = parts.length < 2;
+  if (parts.length < 2) return;
+  for (const part of parts) {
     const button = document.createElement("button");
     button.type = "button";
     button.dataset.body = part.id;
@@ -559,7 +560,7 @@ async function attachPixelFilter() {
   const box = document.querySelector("#pixelMode");
   if (!box) return;
   try {
-    const mod = await import("./pixel-mode.js?v=c21");
+    const mod = await import("./pixel-mode.js?v=c22");
     pixelFilter = mod.createPixelFilter(renderer);
     box.addEventListener("change", () => pixelFilter.setEnabled(box.checked));
   } catch (error) {
@@ -569,7 +570,7 @@ async function attachPixelFilter() {
 }
 
 async function boot() {
-  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c21", import.meta.url));
+  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c22", import.meta.url));
   currentBody = catalog.manifest.defaultBody || bodyParts(catalog)[0]?.id || "clay";
   buildBodySwitcher();
   await switchBody(currentBody);

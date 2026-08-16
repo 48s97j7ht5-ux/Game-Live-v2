@@ -1,5 +1,5 @@
 {
-  "cache": "c21",
+  "cache": "c22",
   "official": "makehumancommunity/makehuman makehuman/data/modifiers/modeling_sliders.json",
   "parts": "web/parts/",
   "rules": [
@@ -8,16 +8,15 @@
     "One official group per part; do not mix Hip into Buttocks or Pelvis into Buttocks",
     "Add a part as web/parts/<id>.json and list it in web/parts/manifest.json",
     "kind=morph morphs the clay hm08 body; kind=overlay loads extra OBJ clothes",
-    "kind=body is a separate dummy (different topology). Anime is MB-Lab AGPL-3.0, not a MakeHuman morph",
+    "kind=body is the dummy. Clay is MakeHuman hm08",
     "Pages must ship the whole web/ folder; bump cache in manifest.json and all ?v= URLs together"
   ],
   "packed_not_in_ui": ["pelvisToneDecr", "pelvisToneIncr"],
   "next": [
-    { "id": "head-focus", "note": "Header тело/голова is camera crop only; no hair clothes yet" },
-    { "id": "clothes", "kind": "overlay", "note": "models/clothes.obj then set enabled true in web/parts/clothes.json" },
+    { "id": "head-focus", "note": "Header тело/голова is camera crop only" },
+    { "id": "clothes", "kind": "overlay", "note": "MakeHuman MHCLO wardrobe later; not helper cages" },
     { "mh_group": "Hip", "mod": "hip/hip-trans-in|out", "note": "add floors to web/parts/hips.json" },
     { "mh_group": "Pelvis", "note": "own part JSON, not buttocks" },
-    { "mh_group": "Torso", "note": "own part JSON later" },
-    { "id": "anime", "kind": "body", "note": "MB-Lab library dummies in models/mblab; do not morph with hm08 targets" }
+    { "mh_group": "Torso", "note": "own part JSON later" }
   ]
 }

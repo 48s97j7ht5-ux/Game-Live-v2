@@ -1,9 +1,9 @@
 {
-  "cache": "c21",
+  "cache": "c22",
   "defaultBody": "clay",
   "body": "./models/base.obj",
   "morphs": "./data/body-targets.json",
-  "parts": ["clay", "anime", "chest", "stomach", "hips", "butt", "clothes"],
+  "parts": ["clay", "chest", "stomach", "hips", "butt", "clothes"],
   "hints": {
     "frontHalf": "на ½: грудь сверху, бёдра ниже",
     "backHalf": "на ½ сзади нажми на бёдра",

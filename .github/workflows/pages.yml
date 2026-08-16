@@ -26,7 +26,6 @@ jobs:
       - name: Contract
         run: |
           python3 factory/tests/test_contract.py
-          python3 factory/tests/test_mblab_bodies.py
 
       - name: Assemble site
         run: bash factory/assemble_pages.sh dist
