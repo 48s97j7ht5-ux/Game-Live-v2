@@ -234,17 +234,25 @@ def test_makeup_is_two_face_modules() -> None:
     assert "MAKEUP_FACE_IDS.flatMap" in viewer
     assert "openMakeupStudio" in viewer
     assert "isMakeupZone" in viewer
-    assert "vertexColors: true" in viewer
+    assert "vertexColors" not in viewer
     assert "bodyMesh" in viewer
     assert "cycleLip" in studio
     assert "cycleCheek" in studio
     assert "SKIN_HEX" in studio
     assert "makeup-zones.json" in studio
+    assert "CanvasTexture" in studio
     zones = json.loads((ROOT / "web/data/makeup-zones.json").read_text())
-    assert len(zones["lips"]) >= 40
-    assert len(zones["cheeks"]) >= 100
+    assert 80 <= len(zones["lips"]) <= 200
+    assert 120 <= len(zones["cheeks"]) <= 250
+    assert 20 <= len(zones["lipUv"]) <= 400
+    assert 20 <= len(zones["cheekUv"]) <= 400
+    assert len(zones["lipBox"]) == 4
+    assert len(zones["cheekBoxes"]) == 2
+    assert "mouth-upperlip-volume" in json.dumps(zones["source"])
     packer = (ROOT / "factory/pack_makeup_zones.py").read_text()
-    assert "BODY_VERTS" in packer
+    assert "MOUTH_Y" not in packer
+    assert "mouth-upperlip-volume-incr.target" in packer
+    assert (ROOT / "factory/mh/targets/mouth/mouth-upperlip-volume-incr.target").is_file()
 
 
 if __name__ == "__main__":

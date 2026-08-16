@@ -3,7 +3,7 @@
   "kind": "makeup",
   "label": "щёки",
   "enabled": true,
-  "note": "Face module. Tints cheek vertices on the clay; no texture, no decal.",
+  "note": "Face module. Paints official *-cheek-volume UV islands. Not vertex colours.",
   "bodies": ["clay"],
   "focus": "face",
   "yFrac": 0.7,

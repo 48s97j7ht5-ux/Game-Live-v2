@@ -1,11 +1,13 @@
 /**
- * Lips/cheeks tint on the clay body itself — not a decal, not a texture.
- * Two face modules (lips, cheeks) paint vertex colors on fixed raw-vertex
- * zones (web/data/makeup-zones.json). Matches vertex positions the same
- * way chest-morph.js binds morphs: round-key lookup, not the OBJLoader's
- * reordered buffer index.
+ * Makeup on the official hm08 UV — not vertex colours.
+ *
+ * Official default.mhmat: shaderConfig vertexColors false.
+ * Official skin shader samples texture2D on the body UV.
+ * Which pixels: official mouth-*-lip-volume / *-cheek-volume targets,
+ * packed as UV triangles in web/data/makeup-zones.json.
  */
 const SKIN_HEX = 0xffd7b8;
+const MAP_SIZE = 1024;
 
 const LIP_COLORS = [
   { key: "none", label: "без", hex: null },
@@ -23,10 +25,6 @@ const CHEEK_COLORS = [
   { key: "peach", label: "персиковые", hex: 0xf0a888 },
 ];
 
-function key3(x, y, z) {
-  return `${x.toFixed(4)},${y.toFixed(4)},${z.toFixed(4)}`;
-}
-
 function hexToRgb(hex) {
   return [((hex >> 16) & 255) / 255, ((hex >> 8) & 255) / 255, (hex & 255) / 255];
 }
@@ -35,13 +33,25 @@ function lerp3(a, b, t) {
   return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 }
 
+function mapTint(skin, makeup, amount) {
+  const desired = lerp3(skin, makeup, amount);
+  return [
+    desired[0] / Math.max(skin[0], 1e-4),
+    desired[1] / Math.max(skin[1], 1e-4),
+    desired[2] / Math.max(skin[2], 1e-4),
+  ];
+}
+
 export function createMakeupStudio({ THREE }) {
   const skinRgb = hexToRgb(SKIN_HEX);
   const state = { lip: 0, cheek: 0 };
   let zonesPromise = null;
-  let bodyMesh = null;
-  let lipBufferIdx = [];
-  let cheekBufferIdx = [];
+  let material = null;
+  let lipUv = [];
+  let cheekUv = [];
+  let mapCanvas = null;
+  let mapCtx = null;
+  let mapTexture = null;
   let requestRedraw = () => {};
 
   async function loadZones(cache) {
@@ -52,59 +62,72 @@ export function createMakeupStudio({ THREE }) {
           if (!r.ok) throw new Error("нет зон мейкапа");
           return r.json();
         })
-        .catch(() => ({ lips: [], cheeks: [] }));
+        .catch(() => ({ lipUv: [], cheekUv: [] }));
     }
     return zonesPromise;
   }
 
-  function findBufferIndices(restHuman, rawIds) {
-    if (!bodyMesh) return [];
-    const wanted = new Set(rawIds);
-    const lookup = new Map();
-    for (const id of wanted) {
-      const o = id * 3;
-      lookup.set(key3(restHuman[o], restHuman[o + 1], restHuman[o + 2]), true);
+  function ensureMap() {
+    if (mapTexture) return;
+    mapCanvas = document.createElement("canvas");
+    mapCanvas.width = MAP_SIZE;
+    mapCanvas.height = MAP_SIZE;
+    mapCtx = mapCanvas.getContext("2d");
+    mapTexture = new THREE.CanvasTexture(mapCanvas);
+    mapTexture.colorSpace = THREE.SRGBColorSpace;
+    mapTexture.flipY = true;
+  }
+
+  function fillTris(tris, rgb) {
+    const ctx = mapCtx;
+    const s = MAP_SIZE;
+    const css = `rgb(${Math.round(rgb[0] * 255)} ${Math.round(rgb[1] * 255)} ${Math.round(rgb[2] * 255)})`;
+    ctx.fillStyle = css;
+    ctx.strokeStyle = css;
+    ctx.lineWidth = 1.1;
+    ctx.lineJoin = "round";
+    for (const t of tris) {
+      ctx.beginPath();
+      ctx.moveTo(t[0] * s, (1 - t[1]) * s);
+      ctx.lineTo(t[2] * s, (1 - t[3]) * s);
+      ctx.lineTo(t[4] * s, (1 - t[5]) * s);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
     }
-    const position = bodyMesh.geometry.getAttribute("position");
-    const out = [];
-    for (let i = 0; i < position.count; i += 1) {
-      const o = i * 3;
-      if (lookup.has(key3(position.array[o], position.array[o + 1], position.array[o + 2]))) out.push(i);
-    }
-    return out;
   }
 
   async function bind(opts) {
-    bodyMesh = opts.bodyMesh || null;
+    material = opts.material || opts.bodyMesh?.material || null;
     requestRedraw = opts.requestRedraw || requestRedraw;
-    if (!bodyMesh || !opts.restHuman) {
-      lipBufferIdx = [];
-      cheekBufferIdx = [];
-      return;
-    }
     const zones = await loadZones(opts.cache);
-    lipBufferIdx = findBufferIndices(opts.restHuman, zones.lips || []);
-    cheekBufferIdx = findBufferIndices(opts.restHuman, zones.cheeks || []);
+    lipUv = zones.lipUv || [];
+    cheekUv = zones.cheekUv || [];
     apply();
   }
 
-  function paint(indices, hex, amount) {
-    if (!bodyMesh) return;
-    const color = bodyMesh.geometry.getAttribute("color");
-    if (!color) return;
-    const rgb = hex == null ? skinRgb : lerp3(skinRgb, hexToRgb(hex), amount);
-    for (const i of indices) {
-      const o = i * 3;
-      color.array[o] = rgb[0];
-      color.array[o + 1] = rgb[1];
-      color.array[o + 2] = rgb[2];
-    }
-    color.needsUpdate = true;
-  }
-
   function apply() {
-    paint(cheekBufferIdx, CHEEK_COLORS[state.cheek].hex, 0.55);
-    paint(lipBufferIdx, LIP_COLORS[state.lip].hex, 0.6);
+    if (!material) return;
+    const lipHex = LIP_COLORS[state.lip].hex;
+    const cheekHex = CHEEK_COLORS[state.cheek].hex;
+    if (lipHex == null && cheekHex == null) {
+      if (material.map) {
+        material.map = null;
+        material.needsUpdate = true;
+      }
+      requestRedraw();
+      return;
+    }
+    ensureMap();
+    mapCtx.fillStyle = "#ffffff";
+    mapCtx.fillRect(0, 0, MAP_SIZE, MAP_SIZE);
+    if (cheekHex != null) fillTris(cheekUv, mapTint(skinRgb, hexToRgb(cheekHex), 0.5));
+    if (lipHex != null) fillTris(lipUv, mapTint(skinRgb, hexToRgb(lipHex), 0.88));
+    mapTexture.needsUpdate = true;
+    if (material.map !== mapTexture) {
+      material.map = mapTexture;
+      material.needsUpdate = true;
+    }
     requestRedraw();
   }
 
@@ -153,18 +176,14 @@ export function createMakeupStudio({ THREE }) {
   }
 
   function dispose() {
-    bodyMesh = null;
-    lipBufferIdx = [];
-    cheekBufferIdx = [];
+    if (material?.map === mapTexture) {
+      material.map = null;
+      material.needsUpdate = true;
+    }
+    material = null;
+    lipUv = [];
+    cheekUv = [];
   }
 
-  return {
-    bind,
-    apply,
-    floorsFor,
-    statusLine,
-    dispose,
-    state,
-    debug: () => ({ lipBufferIdx: lipBufferIdx.slice(), cheekBufferIdx: cheekBufferIdx.slice() }),
-  };
+  return { bind, apply, floorsFor, statusLine, dispose, state };
 }

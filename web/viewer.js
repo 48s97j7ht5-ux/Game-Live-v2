@@ -1,9 +1,9 @@
 import * as THREE from "three";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
-import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c36";
-import { createHairStudio, parseObjVerts } from "./hair.js?v=c36";
-import { createEyes } from "./eye-wear.js?v=c36";
-import { createMakeupStudio } from "./makeup.js?v=c36";
+import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c37";
+import { createHairStudio, parseObjVerts } from "./hair.js?v=c37";
+import { createEyes } from "./eye-wear.js?v=c37";
+import { createMakeupStudio } from "./makeup.js?v=c37";
 import {
   bodyModel,
   bodyPart,
@@ -14,7 +14,7 @@ import {
   overlays,
   sizeLabels,
   tapZones,
-} from "./registry.js?v=c36";
+} from "./registry.js?v=c37";
 
 const AXIS_STEPS = 7;
 // Tap skull: body → hair → face. Tap not-skull: one step back. Face crop is for makeup later.
@@ -329,11 +329,8 @@ scene.add(fill);
 
 const SKIN_HEX = 0xffd7b8;
 const clayMatcap = makeClayMatcap();
-// vertexColors:true so makeup.js can tint lips/cheeks; every mesh needs a
-// "color" attribute once this material is assigned, filled with skin tone.
 const skin = new THREE.MeshMatcapMaterial({
-  color: 0xffffff,
-  vertexColors: true,
+  color: SKIN_HEX,
   matcap: clayMatcap,
 });
 let dummy = null;
@@ -565,19 +562,10 @@ async function switchBody(bodyId, variantId) {
     });
     return;
   }
-  const skinRgb = [((SKIN_HEX >> 16) & 255) / 255, ((SKIN_HEX >> 8) & 255) / 255, (SKIN_HEX & 255) / 255];
   group.traverse((child) => {
     if (!child.isMesh) return;
     child.material = skin;
     child.geometry.computeVertexNormals();
-    const count = child.geometry.getAttribute("position")?.count || 0;
-    const colors = new Float32Array(count * 3);
-    for (let i = 0; i < count; i += 1) {
-      colors[i * 3] = skinRgb[0];
-      colors[i * 3 + 1] = skinRgb[1];
-      colors[i * 3 + 2] = skinRgb[2];
-    }
-    child.geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
   });
   hideHelpers(group);
   disposeDummy();
@@ -621,6 +609,7 @@ async function switchBody(bodyId, variantId) {
     }
     await makeupStudio.bind({
       bodyMesh,
+      material: skin,
       restHuman,
       cache: catalog.manifest.cache,
       requestRedraw: () => {
@@ -724,7 +713,7 @@ async function attachPixelFilter() {
   const box = document.querySelector("#pixelMode");
   if (!box) return;
   try {
-    const mod = await import("./pixel-mode.js?v=c36");
+    const mod = await import("./pixel-mode.js?v=c37");
     pixelFilter = mod.createPixelFilter(renderer);
     box.addEventListener("change", () => pixelFilter.setEnabled(box.checked));
   } catch (error) {
@@ -734,7 +723,7 @@ async function attachPixelFilter() {
 }
 
 async function boot() {
-  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c36", import.meta.url));
+  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c37", import.meta.url));
   currentBody = catalog.manifest.defaultBody || bodyParts(catalog)[0]?.id || "clay";
   buildBodySwitcher();
   await switchBody(currentBody);
