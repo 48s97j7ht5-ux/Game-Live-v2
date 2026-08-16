@@ -1,9 +1,9 @@
 import * as THREE from "three";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
-import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c39";
-import { createHairStudio, parseObjVerts } from "./hair.js?v=c39";
-import { createEyes } from "./eye-wear.js?v=c39";
-import { createMakeupStudio } from "./makeup.js?v=c39";
+import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c40";
+import { createHairStudio, parseObjVerts } from "./hair.js?v=c40";
+import { createEyes } from "./eye-wear.js?v=c40";
+import { createMakeupStudio } from "./makeup.js?v=c40";
 import {
   bodyModel,
   bodyPart,
@@ -14,7 +14,7 @@ import {
   overlays,
   sizeLabels,
   tapZones,
-} from "./registry.js?v=c39";
+} from "./registry.js?v=c40";
 
 const AXIS_STEPS = 7;
 // Tap skull: body → hair → face. Tap not-skull: one step back. Face crop is for makeup later.
@@ -713,7 +713,7 @@ async function attachPixelFilter() {
   const box = document.querySelector("#pixelMode");
   if (!box) return;
   try {
-    const mod = await import("./pixel-mode.js?v=c39");
+    const mod = await import("./pixel-mode.js?v=c40");
     pixelFilter = mod.createPixelFilter(renderer);
     box.addEventListener("change", () => pixelFilter.setEnabled(box.checked));
   } catch (error) {
@@ -723,7 +723,7 @@ async function attachPixelFilter() {
 }
 
 async function boot() {
-  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c39", import.meta.url));
+  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c40", import.meta.url));
   currentBody = catalog.manifest.defaultBody || bodyParts(catalog)[0]?.id || "clay";
   buildBodySwitcher();
   await switchBody(currentBody);

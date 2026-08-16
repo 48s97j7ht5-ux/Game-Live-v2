@@ -242,7 +242,7 @@ def test_makeup_is_two_face_modules() -> None:
     assert "makeup-zones.json" in studio
     assert "CanvasTexture" in studio
     zones = json.loads((ROOT / "web/data/makeup-zones.json").read_text())
-    assert 140 <= len(zones["lips"]) <= 220
+    assert 140 <= len(zones["lips"]) <= 235
     assert 120 <= len(zones["cheeks"]) <= 250
     assert 250 <= len(zones["lipUv"]) <= 700
     assert 20 <= len(zones["cheekUv"]) <= 400
