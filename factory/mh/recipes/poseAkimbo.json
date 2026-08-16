@@ -1,0 +1,12 @@
+{
+  "name": "poseAkimbo",
+  "label": "руки в боки",
+  "description": "Blended MakeHuman body pose units, mirrored L→R where noted",
+  "unit_poses": {
+    "UpperArmRollOutLeft": 1.0,
+    "UpperArmDownLeft": 0.65,
+    "LowerArmBend1Left1": 0.85,
+    "HandBendOutLeft": 0.45
+  },
+  "mirror_left_to_right": true
+}

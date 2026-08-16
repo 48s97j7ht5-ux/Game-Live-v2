@@ -1,5 +1,5 @@
 /**
- * Body poses: official modeling targets (official-targets-v1) until MH skinMesh bake ships.
+ * Body poses: vertex deltas from factory/bake_body_poses.py (mh-skinmesh-v1).
  * See factory/mh/POSES.md for why body-poseunits.json is not applied like face BVH in core MH.
  */
 

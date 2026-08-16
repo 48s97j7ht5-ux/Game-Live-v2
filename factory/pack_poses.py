@@ -1,16 +1,6 @@
-"""Pack hm08 pose deltas from official MakeHuman modeling targets.
+"""Legacy packer: modeling-target poses (official-targets-v1).
 
-Official MakeHuman *poses* are skeleton + pose units + skin weights
-(see makehuman/data/poseunits/body-poseunits.json and animation3d).
-The hm08 web body is a single mesh without an armature, so we do NOT
-rotate vertices around joints (that breaks normals and folds the mesh).
-
-Until skeleton export is wired, poses use official arms/legs *modeling*
-targets at UniversalModifier weight 1.0 (|value|=1, weight=|value|).
-That matches modeling_sliders.json — not a geometric hack.
-
-body-poseunits.json is kept under factory/mh/poseunits/ for a future
-skinned pose path; it is not baked in this packer.
+Superseded by factory/bake_body_poses.py (mh-skinmesh-v1). Not run in CI.
 """
 
 from __future__ import annotations

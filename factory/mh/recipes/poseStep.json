@@ -1,0 +1,13 @@
+{
+  "name": "poseStep",
+  "label": "шаг",
+  "description": "Walk step from body-poseunits; asymmetric legs (no mirror on forward/up)",
+  "unit_poses": {
+    "UpperLegForwardLeft": 1.0,
+    "UpperLegBackwardLeft": 0.85,
+    "LowerLegBendLeft1": 0.35,
+    "FootUpLeft": 0.25
+  },
+  "mirror_left_to_right": false,
+  "mirror_units": ["UpperLegBackwardLeft"]
+}
