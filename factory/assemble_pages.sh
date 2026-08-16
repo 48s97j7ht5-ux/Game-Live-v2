@@ -42,7 +42,12 @@ required=(
   models/hair/bob01/bob01.obj
   models/hair/bob01/bob01.mhclo
   models/hair/scalp.obj
+  models/hair/short01/short01.obj
   models/hair/short02/short02.obj
+  models/hair/short03/short03.obj
+  models/hair/short04/short04.obj
+  models/hair/bob02/bob02.obj
+  models/hair/afro01/afro01.obj
   models/hair/long01/long01.obj
   models/hair/ponytail01/ponytail01.obj
   models/hair/braid01/braid01.obj

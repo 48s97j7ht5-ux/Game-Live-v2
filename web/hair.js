@@ -5,20 +5,25 @@
  * These wigs are hair cards, not a knit cap. A same-color scalp.obj sits
  * under them so the clay skull does not show through the gaps.
  *
- * First shelf: five CC0 system wigs (bob, long, ponytail, short, braid).
+ * Official CC0 system shelf: ten wigs (shorts, bobs, afro, ponytail, braid, long).
  */
-import { applyDeltasToHuman, fitProxy, parseMhclo, parseObjMesh, parseObjVerts } from "./mhclo.js?v=c25";
-import { mixDeltas } from "./chest-morph.js?v=c25";
+import { applyDeltasToHuman, fitProxy, parseMhclo, parseObjMesh, parseObjVerts } from "./mhclo.js?v=c26";
+import { mixDeltas } from "./chest-morph.js?v=c26";
 
-export const HAIR_CACHE = "c25";
+export const HAIR_CACHE = "c26";
 
 const STYLES = [
   { id: "none", label: "нет" },
+  { id: "short04", label: "ёжик" },
+  { id: "short01", label: "стрижка" },
   { id: "short02", label: "короткая" },
+  { id: "short03", label: "пикси" },
   { id: "bob01", label: "каре" },
+  { id: "bob02", label: "ровное каре" },
+  { id: "afro01", label: "афро" },
   { id: "ponytail01", label: "хвост" },
-  { id: "long01", label: "длинная" },
   { id: "braid01", label: "коса" },
+  { id: "long01", label: "длинная" },
 ];
 
 const COLORS = {
@@ -33,7 +38,7 @@ const COLORS = {
 const COLOR_KEYS = Object.keys(COLORS);
 
 export function createHairStudio({ THREE }) {
-  const state = { style: 2, color: 1 };
+  const state = { style: 5, color: 1 };
   const cache = new Map();
   let dummy = null;
   let restHuman = null;

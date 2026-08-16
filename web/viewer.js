@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
-import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c25";
-import { createHairStudio, parseObjVerts } from "./hair.js?v=c25";
+import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c26";
+import { createHairStudio, parseObjVerts } from "./hair.js?v=c26";
 import {
   bodyModel,
   bodyPart,
@@ -12,7 +12,7 @@ import {
   overlays,
   sizeLabels,
   tapZones,
-} from "./registry.js?v=c25";
+} from "./registry.js?v=c26";
 
 const AXIS_STEPS = 7;
 const FOCUS = {
@@ -600,7 +600,7 @@ async function attachPixelFilter() {
   const box = document.querySelector("#pixelMode");
   if (!box) return;
   try {
-    const mod = await import("./pixel-mode.js?v=c25");
+    const mod = await import("./pixel-mode.js?v=c26");
     pixelFilter = mod.createPixelFilter(renderer);
     box.addEventListener("change", () => pixelFilter.setEnabled(box.checked));
   } catch (error) {
@@ -610,7 +610,7 @@ async function attachPixelFilter() {
 }
 
 async function boot() {
-  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c25", import.meta.url));
+  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c26", import.meta.url));
   currentBody = catalog.manifest.defaultBody || bodyParts(catalog)[0]?.id || "clay";
   buildBodySwitcher();
   await switchBody(currentBody);

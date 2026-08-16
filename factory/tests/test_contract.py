@@ -150,6 +150,9 @@ def test_hair_is_official_mhclo_wigs() -> None:
         assert "basemesh hm08" in proxy
         assert "verts 0" in proxy
         assert "CC0" in obj.read_text()[:800]
+    assert len(hair["styles"]) >= 10
+    for name in hair["styles"]:
+        assert f'id: "{name}"' in studio
 
 
 def test_head_focus_keeps_camera_crop() -> None:

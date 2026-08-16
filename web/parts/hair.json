@@ -8,7 +8,7 @@
   "focus": "head",
   "yFrac": 0.88,
   "views": ["front", "front34", "frontHalf", "side", "backHalf", "back34", "back"],
-  "styles": ["short02", "bob01", "ponytail01", "long01", "braid01"],
+  "styles": ["short04", "short01", "short02", "short03", "bob01", "bob02", "afro01", "ponytail01", "braid01", "long01"],
   "floors": [
     { "id": "hair-style", "label": "стиль" },
     { "id": "hair-color", "label": "цвет" }
