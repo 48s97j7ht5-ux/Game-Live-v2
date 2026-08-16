@@ -242,9 +242,9 @@ def test_makeup_is_two_face_modules() -> None:
     assert "makeup-zones.json" in studio
     assert "CanvasTexture" in studio
     zones = json.loads((ROOT / "web/data/makeup-zones.json").read_text())
-    assert 80 <= len(zones["lips"]) <= 200
+    assert 200 <= len(zones["lips"]) <= 360
     assert 120 <= len(zones["cheeks"]) <= 250
-    assert 20 <= len(zones["lipUv"]) <= 400
+    assert 250 <= len(zones["lipUv"]) <= 700
     assert 20 <= len(zones["cheekUv"]) <= 400
     assert len(zones["lipBox"]) == 4
     assert len(zones["cheekBoxes"]) == 2
@@ -252,7 +252,11 @@ def test_makeup_is_two_face_modules() -> None:
     packer = (ROOT / "factory/pack_makeup_zones.py").read_text()
     assert "MOUTH_Y" not in packer
     assert "mouth-upperlip-volume-incr.target" in packer
+    assert "mouth-lowerlip-width-incr.target" in packer
+    assert "mouth-angles-up.target" in packer
     assert (ROOT / "factory/mh/targets/mouth/mouth-upperlip-volume-incr.target").is_file()
+    assert (ROOT / "factory/mh/targets/mouth/mouth-lowerlip-width-incr.target").is_file()
+    assert (ROOT / "factory/mh/targets/mouth/mouth-angles-up.target").is_file()
 
 
 if __name__ == "__main__":

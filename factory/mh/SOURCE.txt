@@ -4,8 +4,15 @@ vertices are lips and cheeks — not a geometric guess.
 Source: makehumancommunity/makehuman (CC0, September 2020)
   makehuman/data/targets/mouth/mouth-upperlip-volume-incr.target
   makehuman/data/targets/mouth/mouth-lowerlip-volume-incr.target
+  makehuman/data/targets/mouth/mouth-lowerlip-width-incr.target
+  makehuman/data/targets/mouth/mouth-lowerlip-ext-up.target
+  makehuman/data/targets/mouth/mouth-angles-up.target (high displacement only)
   makehuman/data/targets/cheek/l-cheek-volume-incr.target
   makehuman/data/targets/cheek/r-cheek-volume-incr.target
+
+Volume is the lip pads. lowerlip-width + lowerlip-ext are the outer lip.
+mouth-angles-up at high displacement is the official commissure; the
+low-mag falloff of that target walks onto the cheek and is dropped.
 
 Official default.mhmat sets shaderConfig vertexColors false.
 The official skin shader colours the body with texture2D on the

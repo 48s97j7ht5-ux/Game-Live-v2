@@ -1,13 +1,11 @@
 """Pack official MakeHuman lip/cheek vertices and their hm08 UV faces.
 
-Vertices come from official CC0 volume targets (not a bounding box).
-Only verts with a real displacement are kept — the morph falloff around
-the lips/cheeks is what made lipstick look like a smudge.
+Vertices come from official CC0 mouth/cheek targets (not a bounding box).
+Volume = lip pads. Width + ext = commissures / outer lip. Angles/dimples
+are skipped: those official targets walk onto the cheek.
 
-  mouth/mouth-upperlip-volume-incr.target
-  mouth/mouth-lowerlip-volume-incr.target
-  cheek/l-cheek-volume-incr.target
-  cheek/r-cheek-volume-incr.target
+Only verts with a real displacement are kept — the morph falloff is what
+made lipstick look like a smudge.
 
 UV triangles are the official body faces in models/base.obj whose every
 corner is one of those verts. Makeup paints those UV islands
@@ -27,17 +25,22 @@ OUT = ROOT / "web/data/makeup-zones.json"
 BODY_VERTS = 13380
 MIN_MAG = 0.01
 
+# (path, min displacement). Volume = pads. Width/ext = outer lip.
+# angles-up at high mag = official commissures; low-mag angles walk onto the cheek.
 LIP_FILES = [
-    TARGETS / "mouth/mouth-upperlip-volume-incr.target",
-    TARGETS / "mouth/mouth-lowerlip-volume-incr.target",
+    (TARGETS / "mouth/mouth-upperlip-volume-incr.target", 0.01),
+    (TARGETS / "mouth/mouth-lowerlip-volume-incr.target", 0.01),
+    (TARGETS / "mouth/mouth-lowerlip-width-incr.target", 0.0),
+    (TARGETS / "mouth/mouth-lowerlip-ext-up.target", 0.01),
+    (TARGETS / "mouth/mouth-angles-up.target", 0.05),
 ]
 CHEEK_FILES = [
-    TARGETS / "cheek/l-cheek-volume-incr.target",
-    TARGETS / "cheek/r-cheek-volume-incr.target",
+    (TARGETS / "cheek/l-cheek-volume-incr.target", 0.01),
+    (TARGETS / "cheek/r-cheek-volume-incr.target", 0.01),
 ]
 
 
-def parse_target(path: Path) -> list[int]:
+def parse_target(path: Path, min_mag: float = MIN_MAG) -> list[int]:
     out: list[int] = []
     for line in path.read_text().splitlines():
         if not line or line[0] == "#":
@@ -49,7 +52,7 @@ def parse_target(path: Path) -> list[int]:
         if index >= BODY_VERTS:
             continue
         mag = math.sqrt(float(parts[1]) ** 2 + float(parts[2]) ** 2 + float(parts[3]) ** 2)
-        if mag >= MIN_MAG:
+        if mag >= min_mag:
             out.append(index)
     return out
 
@@ -92,7 +95,11 @@ def cheek_boxes(tris: list[list[float]]) -> list[list[float]]:
 def uv_tris(ids: set[int], uvs: list[tuple[float, float]], faces: list[list[tuple[int, int]]]) -> list[list[float]]:
     tris: list[list[float]] = []
     for corners in faces:
-        if any(v >= BODY_VERTS or v not in ids for v, _ in corners):
+        if any(v >= BODY_VERTS for v, _ in corners):
+            continue
+        # Border faces at the commissure have one neighbour vert outside the
+        # official lip group. Keep a face when all-but-one corners are lips.
+        if sum(1 for v, _ in corners if v in ids) < len(corners) - 1:
             continue
         pts = [uvs[vt] for _, vt in corners]
         for i in range(1, len(pts) - 1):
@@ -102,17 +109,17 @@ def uv_tris(ids: set[int], uvs: list[tuple[float, float]], faces: list[list[tupl
 
 
 def find_zones() -> dict:
-    lips = sorted({i for path in LIP_FILES for i in parse_target(path)})
-    cheeks = sorted({i for path in CHEEK_FILES for i in parse_target(path)})
+    lips = sorted({i for path, mag in LIP_FILES for i in parse_target(path, mag)})
+    cheeks = sorted({i for path, mag in CHEEK_FILES for i in parse_target(path, mag)})
     uvs, faces = parse_body_faces()
     lip_uv = uv_tris(set(lips), uvs, faces)
     cheek_uv = uv_tris(set(cheeks), uvs, faces)
     return {
         "source": {
             "official": "makehumancommunity/makehuman makehuman/data/targets",
-            "lips": [str(path.relative_to(ROOT)) for path in LIP_FILES],
-            "cheeks": [str(path.relative_to(ROOT)) for path in CHEEK_FILES],
-            "minMag": MIN_MAG,
+            "lips": [str(path.relative_to(ROOT)) for path, _ in LIP_FILES],
+            "cheeks": [str(path.relative_to(ROOT)) for path, _ in CHEEK_FILES],
+            "minMag": {str(path.relative_to(ROOT)): mag for path, mag in LIP_FILES + CHEEK_FILES},
         },
         "lips": lips,
         "cheeks": cheeks,
@@ -125,9 +132,9 @@ def find_zones() -> dict:
 
 def main() -> None:
     zones = find_zones()
-    assert 80 <= len(zones["lips"]) <= 200, len(zones["lips"])
+    assert 200 <= len(zones["lips"]) <= 360, len(zones["lips"])
     assert 120 <= len(zones["cheeks"]) <= 250, len(zones["cheeks"])
-    assert 20 <= len(zones["lipUv"]) <= 400, len(zones["lipUv"])
+    assert 250 <= len(zones["lipUv"]) <= 700, len(zones["lipUv"])
     assert 20 <= len(zones["cheekUv"]) <= 400, len(zones["cheekUv"])
     OUT.write_text(json.dumps(zones, separators=(",", ":")))
     print(

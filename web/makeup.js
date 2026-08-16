@@ -3,8 +3,8 @@
  *
  * Official default.mhmat: shaderConfig vertexColors false.
  * Official skin shader samples texture2D on the body UV.
- * Which pixels: official mouth-*-lip-volume / *-cheek-volume targets,
- * packed as UV triangles in web/data/makeup-zones.json.
+ * Which pixels: official mouth lip-volume + lowerlip-width + lowerlip-ext
+ * + high-mag mouth-angles-up (commissures), packed as UV triangles.
  */
 const SKIN_HEX = 0xffd7b8;
 const MAP_SIZE = 1024;
