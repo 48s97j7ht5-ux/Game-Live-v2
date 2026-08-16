@@ -4,10 +4,10 @@
  *
  * First shelf: five CC0 system wigs (bob, long, ponytail, short, braid).
  */
-import { applyDeltasToHuman, fitProxy, parseMhclo, parseObjMesh, parseObjVerts } from "./mhclo.js?v=c23";
-import { mixDeltas } from "./chest-morph.js?v=c23";
+import { applyDeltasToHuman, fitProxy, parseMhclo, parseObjMesh, parseObjVerts } from "./mhclo.js?v=c24";
+import { mixDeltas } from "./chest-morph.js?v=c24";
 
-export const HAIR_CACHE = "c23";
+export const HAIR_CACHE = "c24";
 
 const STYLES = [
   { id: "none", label: "нет" },

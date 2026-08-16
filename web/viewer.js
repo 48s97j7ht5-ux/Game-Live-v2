@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
-import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c23";
-import { createHairStudio, parseObjVerts } from "./hair.js?v=c23";
+import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c24";
+import { createHairStudio, parseObjVerts } from "./hair.js?v=c24";
 import {
   bodyModel,
   bodyPart,
@@ -12,7 +12,7 @@ import {
   overlays,
   sizeLabels,
   tapZones,
-} from "./registry.js?v=c23";
+} from "./registry.js?v=c24";
 
 const AXIS_STEPS = 7;
 const FOCUS = {
@@ -56,14 +56,14 @@ function floorValue(floor) {
 }
 
 function idleStatus() {
-  if (focusMode === "head" && editZone !== "hair") return hairStudio.statusLine();
-  if (focusMode === "head") return "голова";
+  if (focusMode === "head") return hairStudio.statusLine();
   if (!editZone) {
     const hints = catalog.manifest.hints || {};
     return hints[currentView()] || hints.default || "";
   }
   const floor = currentFloors().find((item) => item.id === lastFloor) || currentFloors()[0];
   const zone = zoneById(editZone);
+  if (!zone || !floor) return "";
   const cup = floor?.kind === "size" || editZone === "chest" ? ` · ${sizes[bodyState.sizeIndex]}` : "";
   return `${zone.label}${cup} · ${floor.label} ${floorValue(floor)}`;
 }
@@ -162,13 +162,15 @@ function worldToCanvasY(worldY) {
 
 function layoutFloorButtons() {
   if (!editZone) return;
+  const zone = zoneById(editZone);
+  if (!zone || zone.yFrac == null) return;
   const height = Math.max(canvas.clientHeight, 1);
   const count = floorButtons.length;
   if (!count) return;
   const gap = 3;
   const buttonSize = Math.min(40, Math.max(30, (height - 16 - gap * (count - 1)) / count));
   const stack = count * buttonSize + (count - 1) * gap;
-  const zoneY = worldToCanvasY(bodyHeight * zoneById(editZone).yFrac);
+  const zoneY = worldToCanvasY(bodyHeight * zone.yFrac);
   let start = zoneY - stack / 2;
   start = Math.max(8, Math.min(height - stack - 8, start));
   for (let i = 0; i < floorButtons.length; i += 1) {
@@ -388,6 +390,13 @@ function stepTurn(delta) {
 
 function setFocus(mode) {
   focusMode = mode === "head" ? "head" : "body";
+  if (focusMode !== "head" && editZone === "hair") {
+    editZone = null;
+    lastFloor = "";
+    clearSideBars();
+    sideLeft.classList.remove("open");
+    sideRight.classList.remove("open");
+  }
   zones = tapZones(catalog, currentBody, focusMode);
   document.querySelectorAll("#focus button").forEach((button) => {
     button.classList.toggle("active", button.dataset.focus === focusMode);
@@ -395,7 +404,6 @@ function setFocus(mode) {
   applyScale();
   placeCamera();
   if (focusMode === "head" && zoneById("hair")) setEditZone("hair");
-  else if (editZone === "hair") setEditZone(null);
   else if (dummy) statusEl.textContent = idleStatus();
 }
 
@@ -592,7 +600,7 @@ async function attachPixelFilter() {
   const box = document.querySelector("#pixelMode");
   if (!box) return;
   try {
-    const mod = await import("./pixel-mode.js?v=c23");
+    const mod = await import("./pixel-mode.js?v=c24");
     pixelFilter = mod.createPixelFilter(renderer);
     box.addEventListener("change", () => pixelFilter.setEnabled(box.checked));
   } catch (error) {
@@ -602,7 +610,7 @@ async function attachPixelFilter() {
 }
 
 async function boot() {
-  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c23", import.meta.url));
+  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c24", import.meta.url));
   currentBody = catalog.manifest.defaultBody || bodyParts(catalog)[0]?.id || "clay";
   buildBodySwitcher();
   await switchBody(currentBody);

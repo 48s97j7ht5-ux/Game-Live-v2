@@ -131,6 +131,8 @@ def test_hair_is_official_mhclo_wigs() -> None:
     viewer = (ROOT / "web/viewer.js").read_text()
     studio = (ROOT / "web/hair.js").read_text()
     assert "createHairStudio" in viewer
+    assert "zone.yFrac" in viewer
+    assert "zoneById(editZone).yFrac" not in viewer
     assert "helper-hair" in studio
     notice = (ROOT / "models/hair/NOTICE").read_text()
     assert "helper-hair" in notice
