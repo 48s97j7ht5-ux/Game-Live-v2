@@ -30,8 +30,10 @@ def test_cache_token_everywhere() -> None:
     assert f"registry.js?v={CACHE}" in viewer
     assert f"hair.js?v={CACHE}" in viewer
     hair = (ROOT / "web/hair.js").read_text()
+    catalog_js = (ROOT / "web/hair-catalog.js").read_text()
     assert f"hair-catalog.js?v={CACHE}" in hair
     assert f"hair-wear.js?v={CACHE}" in hair
+    assert f'HAIR_CACHE = "{CACHE}"' in catalog_js
     assert f"parts/manifest.json?v={CACHE}" in viewer
 
 
@@ -148,7 +150,11 @@ def test_hair_is_three_head_modules() -> None:
     assert "createHairStudio" in viewer
     assert "floorsFor" in viewer
     assert "isHairZone" in viewer
-    assert 'setEditZone("hair-style")' in viewer
+    assert "HAIR_HEAD_IDS" in viewer
+    assert "openHairStudio" in viewer
+    assert "HAIR_HEAD_IDS.flatMap" in viewer
+    assert '((i + 1) / (count + 1)) * height' in viewer
+    assert 'setEditZone("hair-style")' not in viewer
     assert "editZone === \"hair\"" not in viewer
     assert "zoneById(editZone).yFrac" not in viewer
     assert "helper-hair" in studio

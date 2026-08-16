@@ -1,5 +1,6 @@
 /**
  * Hair studio: three head modules (shelf, style, color) share one worn wig.
+ * Each floorsFor(id) returns that one row. The head screen concatenates all three.
  * Not helper-hair. Not Blender Hair Editor curves.
  */
 import {
@@ -10,9 +11,9 @@ import {
   OFFICIAL,
   SHELVES,
   loadCommunity,
-} from "./hair-catalog.js?v=c30";
-import { createWear } from "./hair-wear.js?v=c30";
-import { parseObjVerts } from "./mhclo.js?v=c30";
+} from "./hair-catalog.js?v=c31";
+import { createWear } from "./hair-wear.js?v=c31";
+import { parseObjVerts } from "./mhclo.js?v=c31";
 
 export { HAIR_CACHE, parseObjVerts };
 

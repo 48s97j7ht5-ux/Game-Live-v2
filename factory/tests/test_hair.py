@@ -29,6 +29,10 @@ def test_maps_cover_obj_verts() -> None:
     assert "floorsFor" in studio
     assert "cycleColor" in studio
     assert 'cycle("style", styles, dir)' not in studio
+    viewer = (ROOT / "web/viewer.js").read_text()
+    assert "HAIR_HEAD_IDS.flatMap" in viewer
+    assert "openHairStudio" in viewer
+    assert '((i + 1) / (count + 1)) * height' in viewer
     for name in STYLES:
         obj = (HAIR / name / f"{name}.obj").read_text()
         verts = [line for line in obj.splitlines() if line.startswith("v ")]

@@ -1,5 +1,5 @@
 {
-  "cache": "c30",
+  "cache": "c31",
   "official": "makehumancommunity/makehuman makehuman/data/modifiers/modeling_sliders.json",
   "parts": "web/parts/",
   "rules": [
@@ -9,7 +9,7 @@
     "Add a part as web/parts/<id>.json and list it in web/parts/manifest.json",
     "kind=morph morphs the clay hm08 body; kind=overlay loads extra OBJ clothes",
     "kind=body is the dummy. Clay is MakeHuman hm08",
-    "kind=hair is one head slot (color / style / shelf). Do not stack hair floors on one part",
+    "kind=hair is one code slot (color / style / shelf). Head screen shows all three rows at once in even canvas slots",
     "Pages must ship the whole web/ folder; bump cache in manifest.json and all ?v= URLs together"
   ],
   "packed_not_in_ui": ["pelvisToneDecr", "pelvisToneIncr"],

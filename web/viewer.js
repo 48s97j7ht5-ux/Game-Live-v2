@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
-import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c30";
-import { createHairStudio, parseObjVerts } from "./hair.js?v=c30";
+import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c31";
+import { createHairStudio, parseObjVerts } from "./hair.js?v=c31";
 import {
   bodyModel,
   bodyPart,
@@ -12,7 +12,7 @@ import {
   overlays,
   sizeLabels,
   tapZones,
-} from "./registry.js?v=c30";
+} from "./registry.js?v=c31";
 
 const AXIS_STEPS = 7;
 const FOCUS = {
@@ -44,13 +44,23 @@ function zoneById(id) {
   return zones.find((zone) => zone.id === id);
 }
 
+// Body: tap one zone, one arrow row. Head is one zoomed crop, so color/style/shelf stay on screen together.
+const HAIR_HEAD_IDS = ["hair-color", "hair-style", "hair-shelf"];
+
 function isHairZone(id) {
   return typeof id === "string" && id.startsWith("hair-");
 }
 
 function currentFloors() {
-  if (isHairZone(editZone)) return hairStudio.floorsFor(editZone);
+  if (focusMode === "head") {
+    return HAIR_HEAD_IDS.flatMap((id) => hairStudio.floorsFor(id));
+  }
   return zoneById(editZone)?.floors || [];
+}
+
+function openHairStudio() {
+  const first = HAIR_HEAD_IDS.find((id) => zoneById(id));
+  if (first) setEditZone(first);
 }
 
 function floorValue(floor) {
@@ -165,12 +175,26 @@ function worldToCanvasY(worldY) {
 }
 
 function layoutFloorButtons() {
-  if (!editZone) return;
-  const zone = zoneById(editZone);
-  if (!zone || zone.yFrac == null) return;
   const height = Math.max(canvas.clientHeight, 1);
   const count = floorButtons.length;
   if (!count) return;
+  if (focusMode === "head") {
+    const buttonSize = Math.min(44, Math.max(32, height / (count + 2)));
+    for (let i = 0; i < count; i += 1) {
+      const y = ((i + 1) / (count + 1)) * height;
+      const item = floorButtons[i];
+      item.left.style.top = `${y}px`;
+      item.right.style.top = `${y}px`;
+      item.left.style.height = `${buttonSize}px`;
+      item.right.style.height = `${buttonSize}px`;
+      item.left.style.transform = "translateY(-50%)";
+      item.right.style.transform = "translateY(-50%)";
+    }
+    return;
+  }
+  if (!editZone) return;
+  const zone = zoneById(editZone);
+  if (!zone || zone.yFrac == null) return;
   const gap = 3;
   const buttonSize = Math.min(40, Math.max(30, (height - 16 - gap * (count - 1)) / count));
   const stack = count * buttonSize + (count - 1) * gap;
@@ -407,7 +431,7 @@ function setFocus(mode) {
   });
   applyScale();
   placeCamera();
-  if (focusMode === "head" && zoneById("hair-style")) setEditZone("hair-style");
+  if (focusMode === "head") openHairStudio();
   else if (dummy) statusEl.textContent = idleStatus();
 }
 
@@ -523,7 +547,7 @@ async function switchBody(bodyId, variantId) {
     });
     await hairStudio.loadExtra();
     await hairStudio.apply();
-    if (focusMode === "head" && zoneById("hair-style")) setEditZone("hair-style");
+    if (focusMode === "head") openHairStudio();
   } catch (error) {
     console.error(error);
     statusEl.textContent = "тело есть, правки формы не загрузились";
@@ -605,7 +629,7 @@ async function attachPixelFilter() {
   const box = document.querySelector("#pixelMode");
   if (!box) return;
   try {
-    const mod = await import("./pixel-mode.js?v=c30");
+    const mod = await import("./pixel-mode.js?v=c31");
     pixelFilter = mod.createPixelFilter(renderer);
     box.addEventListener("change", () => pixelFilter.setEnabled(box.checked));
   } catch (error) {
@@ -615,7 +639,7 @@ async function attachPixelFilter() {
 }
 
 async function boot() {
-  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c30", import.meta.url));
+  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c31", import.meta.url));
   currentBody = catalog.manifest.defaultBody || bodyParts(catalog)[0]?.id || "clay";
   buildBodySwitcher();
   await switchBody(currentBody);
