@@ -26,16 +26,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install bake deps
-        run: pip install numpy
-      - name: Official MakeHuman pose bake
+      - name: Pack official body poses
         run: |
-          python3 factory/fetch_makehuman.py
-          python3 factory/bake_pose_objs.py
+          python3 factory/fetch_pose_targets.py
+          python3 factory/pack_poses.py
 
       - name: Contract
-        run: |
-          python3 factory/tests/test_contract.py
+        run: python3 factory/tests/test_contract.py
 
       - name: Community hair
         continue-on-error: true

@@ -263,31 +263,25 @@ def test_makeup_is_two_face_modules() -> None:
 def test_poses_on_body_screen() -> None:
     part = json.loads((PARTS_DIR / "poses.json").read_text())
     assert part["kind"] == "pose"
-    assert part["focus"] == "body"
     viewer = (ROOT / "web/viewer.js").read_text()
-    pose = (ROOT / "web/pose.js").read_text()
-    morph = (ROOT / "web/chest-morph.js").read_text()
     assert "createPoseStudio" in viewer
-    assert "poseStudio" in viewer
-    assert "syncPoseBar" in viewer
-    assert "bindBodyBasemesh" in viewer
-    assert "mh-posed-obj-v1" in viewer
-    assert "bindBodyBasemesh" in morph
-    assert "createPoseStudio" in pose
+    assert "mh-posed-obj-v1" not in viewer
+    assert "bindBodyBasemesh" not in viewer
     packed = json.loads((ROOT / "web/data/body-poses.json").read_text())
-    assert packed.get("method") == "mh-posed-obj-v1"
+    assert packed.get("method") == "official-targets-v1"
     assert len(packed["poses"]) == 3
-    assert (ROOT / "models/poses/akimbo.obj").is_file()
-    assert (ROOT / "models/poses/step.obj").is_file()
+    assert len(packed["targets"]["poseAkimbo"]["s"]) > 800
     manifest = json.loads((ROOT / "web/parts/manifest.json").read_text())
-    assert manifest.get("poseMethod") == "mh-posed-obj-v1"
-    assert (ROOT / "factory/bake_pose_objs.py").is_file()
-    assert (ROOT / "factory/mh/POSES.md").is_file()
+    assert manifest.get("poseMethod") == "official-targets-v1"
+    fetch = (ROOT / "factory/fetch_pose_targets.py").read_text()
+    packer = (ROOT / "factory/pack_poses.py").read_text()
+    assert "armslegs" in fetch
+    assert "official-targets-v1" in packer
     pages = (ROOT / ".github/workflows/pages.yml").read_text()
-    checks = (ROOT / ".github/workflows/checks.yml").read_text()
-    assert "bake_pose_objs.py" in checks
-    assert "bake_pose_objs.py" in pages
-    assert "pack_poses.py" not in pages
+    assert "fetch_pose_targets.py" in pages
+    assert "pack_poses.py" in pages
+    assert "bake_pose_objs.py" not in pages
+    assert not (ROOT / "models/poses").exists()
 
 
 if __name__ == "__main__":

@@ -1,11 +1,7 @@
 """Pack hm08 body poses from official MakeHuman modeling targets (CC0).
 
-This is the only supported web pose path: same UniversalModifier deltas as
-morph sliders (makehuman/data/targets/...), baked once in CI via pack_poses.py.
-
-Runtime does not skin skeletons or apply body-poseunits quaternions in JS —
-that path shredded the hm08 mesh. True skeletal poses need MH/MPFB export
-(e.g. glTF) later; see factory/mh/POSES.md.
+Single supported web pose path. CI: fetch_pose_targets.py → pack_poses.py.
+Same UniversalModifier rules as chest/hip morphs (weight = |value|).
 """
 
 from __future__ import annotations
@@ -19,17 +15,18 @@ TARGETS = ROOT / "factory/mh/targets/armslegs"
 OUT = ROOT / "web/data/body-poses.json"
 BODY_VERTS = 13380
 
-# Official arms/legs targets @ weight 1.0 (UniversalModifier: weight = |value|).
 POSE_RECIPES = {
     "poseAkimbo": {
         "label": "руки в боки",
         "mix": [
             ("l-hand-trans-out.target", 1.0),
             ("r-hand-trans-out.target", 1.0),
-            ("l-upperarm-scale-horiz-incr.target", 1.0),
-            ("r-upperarm-scale-horiz-incr.target", 1.0),
-            ("l-lowerarm-scale-horiz-incr.target", 1.0),
-            ("r-lowerarm-scale-horiz-incr.target", 1.0),
+            ("l-hand-trans-in.target", 0.5),
+            ("r-hand-trans-in.target", 0.5),
+            ("l-upperarm-scale-horiz-incr.target", 0.85),
+            ("r-upperarm-scale-horiz-incr.target", 0.85),
+            ("l-lowerarm-scale-horiz-incr.target", 0.75),
+            ("r-lowerarm-scale-horiz-incr.target", 0.75),
         ],
     },
     "poseStep": {
@@ -88,7 +85,7 @@ def pack() -> dict:
         "mesh": "hm08",
         "license": "CC0 MakeHuman arms/legs modeling targets",
         "method": "official-targets-v1",
-        "source": "makehumancommunity/makehuman makehuman/data/targets/arms_legs",
+        "source": "makehumancommunity/makehuman makehuman/data/targets/armslegs",
         "index": indices,
         "rest": [],
         "targets": {},
@@ -116,14 +113,13 @@ def pack() -> dict:
 
 def main() -> None:
     data = pack()
-    assert len(data["poses"]) == 3
     assert data["method"] == "official-targets-v1"
+    assert len(data["poses"]) == 3
     assert len(data["targets"]["poseAkimbo"]["s"]) > 500
-    assert len(data["targets"]["poseStep"]["s"]) > 200
     OUT.write_text(json.dumps(data, separators=(",", ":")), encoding="utf-8")
     print(
         f"poses {len(data['poses'])} indices {len(data['index'])} "
-        f"akimbo {len(data['targets']['poseAkimbo']['s'])} step {len(data['targets']['poseStep']['s'])} -> {OUT}"
+        f"akimbo {len(data['targets']['poseAkimbo']['s'])} -> {OUT}"
     )
 
 

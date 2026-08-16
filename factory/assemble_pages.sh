@@ -20,9 +20,6 @@ else
   echo "missing models/base.obj" >&2
   exit 1
 fi
-if [[ -d "$ROOT/models/poses" ]]; then
-  cp -a "$ROOT/models/poses" "$DEST/models/poses"
-fi
 if [[ -d "$ROOT/models/hair" ]]; then
   cp -a "$ROOT/models/hair" "$DEST/models/hair"
 fi
@@ -60,8 +57,6 @@ required=(
   web/vendor/three.module.js
   web/vendor/loaders/OBJLoader.js
   models/base.obj
-  models/poses/akimbo.obj
-  models/poses/step.obj
   models/hair/bob01/bob01.obj
   models/hair/bob01/bob01.mhclo
   models/hair/scalp.obj
