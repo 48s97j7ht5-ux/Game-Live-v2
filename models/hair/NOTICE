@@ -1,6 +1,0 @@
-Hair is MakeHuman clothes type Hair: mesh + MHCLO proxy + mhmat.
-helper-hair is not exported and must not be drawn.
-These OBJ shells offset the hm08 body scalp/nape (CC0). They are
-placeholders until a fitted community MHCLO (hair01 / similar) is dropped in.
-Bangs are a separate clothes layer, as in community packs.
-MPFB Hair Editor (Blender curves: frizz/curl/clump) does not apply to mesh shells.

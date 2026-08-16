@@ -23,9 +23,6 @@ fi
 if [[ -d "$ROOT/models/mblab" ]]; then
   cp -a "$ROOT/models/mblab" "$DEST/models/mblab"
 fi
-if [[ -d "$ROOT/models/hair" ]]; then
-  cp -a "$ROOT/models/hair" "$DEST/models/hair"
-fi
 if [[ -f "$ROOT/factory/out/front.png" ]]; then
   cp "$ROOT/factory/out/front.png" "$DEST/factory/out/front.png"
 fi
@@ -35,7 +32,6 @@ required=(
   web/viewer.css
   web/chest-morph.js
   web/registry.js
-  web/hair.js
   web/parts/manifest.json
   web/data/body-targets.json
   web/vendor/three.module.js
@@ -44,13 +40,6 @@ required=(
   models/mblab/f_an01.obj
   models/mblab/f_an02.obj
   models/mblab/m_an01.obj
-  models/hair/short.obj
-  models/hair/bob.obj
-  models/hair/long.obj
-  models/hair/bangs_brow.obj
-  models/hair/bangs_face.obj
-  models/hair/bob.mhclo
-  models/hair/bob.mhmat
   index.html
 )
 for rel in "${required[@]}"; do

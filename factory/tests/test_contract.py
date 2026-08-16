@@ -28,8 +28,8 @@ def test_cache_token_everywhere() -> None:
     assert f"viewer.js?v={CACHE}" in index
     assert f"chest-morph.js?v={CACHE}" in viewer
     assert f"registry.js?v={CACHE}" in viewer
-    assert f"hair.js?v={CACHE}" in viewer
     assert f"parts/manifest.json?v={CACHE}" in viewer
+    assert "hair.js" not in viewer
 
 
 def test_no_unofficial_morph_hacks() -> None:
@@ -83,7 +83,7 @@ def test_live_targets_match_packer_and_json() -> None:
     packed = json.loads((ROOT / "web/data/body-targets.json").read_text())
     needed = list(CONTRACT["packed_not_in_ui"])
     for part in iter_parts():
-        if part.get("kind") in ("overlay", "body", "hair"):
+        if part.get("kind") in ("overlay", "body"):
             continue
         if part.get("macro", {}).get("corners"):
             needed.extend(part["macro"]["corners"])
@@ -103,7 +103,7 @@ def test_parts_are_the_zone_source() -> None:
     live = [part for part in iter_parts() if part.get("enabled") is not False]
     assert {part["id"] for part in live} >= {"chest", "stomach", "hips", "butt", "clay", "anime"}
     for part in live:
-        if part.get("kind") in ("overlay", "body", "hair"):
+        if part.get("kind") in ("overlay", "body"):
             continue
         assert part["floors"]
         assert part["views"]
@@ -119,7 +119,8 @@ def test_anime_is_separate_body_module() -> None:
     assert clay["model"] == "./models/base.obj"
     viewer = (ROOT / "web/viewer.js").read_text()
     assert "setFocus" in viewer
-    assert 'data-focus="hair"' in (ROOT / "index.html").read_text()
+    assert 'data-focus="head"' in (ROOT / "index.html").read_text()
+    assert "голова" in (ROOT / "index.html").read_text()
     assert "kind=body" in "\n".join(CONTRACT["rules"]) or any(
         "kind=body" in rule for rule in CONTRACT["rules"]
     )
@@ -131,46 +132,14 @@ def test_anime_is_separate_body_module() -> None:
         assert "\ng body\n" in text or text.startswith("#") and "g body" in text
 
 
-def test_hair_is_mh_clothes_module() -> None:
-    hair = json.loads((PARTS_DIR / "hair.json").read_text())
-    assert hair["kind"] == "hair"
-    assert hair["mhType"] == "Hair"
-    assert hair["enabled"] is True
-    assert hair["focus"] == "hair"
-    assert {floor["id"] for floor in hair["floors"]} >= {
-        "hair-style",
-        "hair-bangs",
-        "hair-color",
-        "hair-length",
-        "hair-volume",
-    }
+def test_head_focus_is_camera_only() -> None:
     viewer = (ROOT / "web/viewer.js").read_text()
-    studio = (ROOT / "web/hair.js").read_text()
-    assert "createHairStudio" in viewer
-    assert "applyHairLook" not in viewer
-    assert "helper-hair" in studio
-    notice = (ROOT / "models/hair/NOTICE").read_text()
-    assert "helper-hair" in notice
-    for name, group in (
-        ("short", "hair"),
-        ("bob", "hair"),
-        ("long", "hair"),
-        ("bangs_brow", "bangs"),
-        ("bangs_face", "bangs"),
-    ):
-        obj = ROOT / "models/hair" / f"{name}.obj"
-        mhclo = ROOT / "models/hair" / f"{name}.mhclo"
-        mhmat = ROOT / "models/hair" / f"{name}.mhmat"
-        assert obj.is_file(), name
-        assert mhclo.is_file(), name
-        assert mhmat.is_file(), name
-        text = obj.read_text()
-        assert f"\ng {group}\n" in text
-        proxy = mhclo.read_text()
-        assert "basemesh hm08" in proxy
-        assert "verts 0" in proxy
-        assert "obj_file" in proxy
-        assert "helper-hair" not in text.lower() or "not helper-hair" in text.lower()
+    assert "FOCUS" in viewer
+    assert "head:" in viewer
+    assert "createHairStudio" not in viewer
+    assert not (ROOT / "web/hair.js").exists()
+    assert not (ROOT / "web/parts/hair.json").exists()
+    assert not (ROOT / "models/hair").exists()
 
 
 if __name__ == "__main__":
@@ -181,5 +150,5 @@ if __name__ == "__main__":
     test_live_targets_match_packer_and_json()
     test_parts_are_the_zone_source()
     test_anime_is_separate_body_module()
-    test_hair_is_mh_clothes_module()
+    test_head_focus_is_camera_only()
     print("ok contract")

@@ -1,9 +1,0 @@
-name bangs_brow
-description Game-Live hair placeholder material
-diffuseColor 0.12 0.08 0.06
-specularColor 0.08 0.08 0.08
-shininess 0.12
-transparent True
-alphaToCoverage True
-backfaceCull False
-shadeless False

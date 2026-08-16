@@ -51,10 +51,6 @@ export function overlays(catalog, bodyId = "clay") {
   );
 }
 
-export function hairPart(catalog, bodyId = "clay") {
-  return catalog.parts.find((part) => part.id === "hair" && part.kind === "hair" && onBody(part, bodyId));
-}
-
 export function morphRecipe(catalog, bodyId = "clay") {
   const axes = [];
   let macro = null;
