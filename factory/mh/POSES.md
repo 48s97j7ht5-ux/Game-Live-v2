@@ -1,31 +1,30 @@
-# MakeHuman poses — hm08 web (Game-Live-v2)
+# MakeHuman body poses — official factory path
 
-Official data: `makehumancommunity/makehuman` (CC0 targets, AGPL app code).
+Sources (CC0 data + AGPL app code): `makehumancommunity/makehuman`.
 
-## What ships on GitHub Pages
+## Production pipeline (`mh-posed-obj-v1`)
 
-**Method: `official-targets-v1`** — factory `pack_poses.py` only.
+1. **Rig:** `factory/mh/rigs/default.mhskel` + `default_weights.mhw` (from MH `makehuman/data/rigs/`).
+2. **Pose units:** `factory/mh/poseunits/body-poseunits.json` blended per `factory/mh/recipes/*.json`.
+3. **Deform:** vendored `makehuman/shared/skeleton.py` → `setPose()` → **`skinMesh()`** (headless via `factory/mh_runtime.py`).
+4. **Output:** `models/poses/akimbo.obj`, `models/poses/step.obj` — same vertex order as `models/base.obj`, basemesh indices `0..13379` updated.
+5. **Catalog:** `web/data/body-poses.json` lists poses and OBJ paths.
+6. **Viewer:** loads posed OBJ, sets body mesh corners by **basemesh vertex index** (from rest OBJ), then applies morph sliders on top.
 
-- Poses are **pre-baked vertex deltas** from official **arms/legs modeling `.target`** files (`factory/mh/targets/armslegs/`), same rules as chest/hip morphs (`UniversalModifier`, weight = |value|).
-- CI runs `python3 factory/pack_poses.py` before contract tests and Pages deploy.
-- The viewer applies deltas through `bindMorph` / `applyBody` — **no runtime skeleton**, no `body-poseunits.json` in JS.
+CI: `fetch_makehuman.py` + `bake_pose_objs.py` (checks + Pages).
 
-This is official MakeHuman **geometry** (targets), not a hand-rolled hack. It is **not** full skeletal pose units; akimbo/step are recipes of modeling sliders at 1.0.
+No runtime JavaScript skeleton. No modeling `.target` files pretending to be poses.
 
-## What we tried and removed from production
+## Face vs body in core MakeHuman
 
-| Attempt | Why it failed |
-|--------|----------------|
-| Vertex rotation around joints | Not official; breaks normals |
-| Three.js `SkinnedMesh` + body-poseunits quaternions | Wrong bind for hm08; mesh collapsed |
-| Factory `skinMesh()` bake → sparse deltas | hm08 OBJ + default weights ≠ reliable posed bake for web; shredded mesh even with basemesh-index fix |
+Face pose units ship with matching **BVH**; body JSON has **no BVH** in the upstream repo. This factory uses the same **skinMesh** path the desktop app uses for face, applied to official body unit quaternions.
 
-Scripts `bake_body_poses.py`, `mh_runtime.py`, `fetch_makehuman.py` remain for a future **glTF/Collada export** path, not used in CI.
+## Not used on Pages
 
-## True skeletal poses (later)
+- `factory/pack_poses.py` (modeling targets only — legacy)
+- `web/body-rig.js` (runtime SkinnedMesh experiment)
+- `factory/bake_body_poses.py` (sparse delta pack — mapping fragile)
 
-1. Pose in MakeHuman or MPFB with **game_engine** / default rig on basemesh  
-2. Export **glTF** (mesh + skin + one animation per pose) or Collada  
-3. Load in Three.js `SkinnedMesh` — no manual bind matrices in this repo  
+## Later: glTF
 
-Reference data kept for tooling: `factory/mh/rigs/`, `factory/mh/poseunits/body-poseunits.json`, `web/data/body-skeleton.json` (not loaded by viewer).
+Export skin + animation clips from MakeHuman/MPFB once; until then, posed OBJ bake is the supported official deform path.

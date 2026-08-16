@@ -26,8 +26,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Pack official body poses
-        run: python3 factory/pack_poses.py
+      - name: Install bake deps
+        run: pip install numpy
+      - name: Official MakeHuman pose bake
+        run: |
+          python3 factory/fetch_makehuman.py
+          python3 factory/bake_pose_objs.py
 
       - name: Contract
         run: |

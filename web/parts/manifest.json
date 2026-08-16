@@ -1,7 +1,7 @@
 {
-  "cache": "c52",
+  "cache": "c53",
   "defaultBody": "clay",
-  "poseMethod": "official-targets-v1",
+  "poseMethod": "mh-posed-obj-v1",
   "body": "./models/base.obj",
   "morphs": "./data/body-targets.json",
   "parts": [

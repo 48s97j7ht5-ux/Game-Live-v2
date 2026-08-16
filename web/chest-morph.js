@@ -1,12 +1,13 @@
 /**
  * UniversalModifier mixer: value -1..+1, weight = |value|, no gain, no mask.
- * Recipe (axes + optional breast macros) comes from web/parts/*.json.
- * Body poses use the same packed target format (official-targets-v1).
+ * Body poses (mh-posed-obj-v1): factory skinMesh → models/poses/*.obj, basemesh by index.
  */
 
 function key3(x, y, z) {
   return `${x.toFixed(4)},${y.toFixed(4)},${z.toFixed(4)}`;
 }
+
+export const BASEMESH_VERTS = 13380;
 
 function addWeighted(out, source, weight) {
   if (!weight || !source) return;
@@ -59,6 +60,39 @@ export async function loadTargets(url) {
   return response.json();
 }
 
+export function buildBasemeshPositionIndex(restHuman) {
+  const map = new Map();
+  const n = Math.min(BASEMESH_VERTS, restHuman.length / 3);
+  for (let i = 0; i < n; i += 1) {
+    const o = i * 3;
+    map.set(key3(restHuman[o], restHuman[o + 1], restHuman[o + 2]), i);
+  }
+  return map;
+}
+
+/** Map visible body mesh corners → hm08 basemesh vertex index (0..13379). */
+export function bindBodyBasemesh(group, restHuman, meshName = "body") {
+  const posToBi = buildBasemeshPositionIndex(restHuman);
+  const bindings = [];
+  group.traverse((child) => {
+    if (!child.isMesh || !child.visible || !child.geometry?.getAttribute("position")) return;
+    const name = (child.name || "").toLowerCase().trim();
+    if (name !== meshName) return;
+    const position = child.geometry.getAttribute("position");
+    const rest = position.array.slice();
+    const basemeshIndex = new Int32Array(position.count);
+    let hits = 0;
+    for (let i = 0; i < position.count; i += 1) {
+      const o = i * 3;
+      const bi = posToBi.get(key3(rest[o], rest[o + 1], rest[o + 2]));
+      basemeshIndex[i] = bi === undefined ? -1 : bi;
+      if (bi !== undefined) hits += 1;
+    }
+    if (hits) bindings.push({ mesh: child, rest, basemeshIndex });
+  });
+  return bindings;
+}
+
 export function bindMorph(group, packed) {
   const lookup = new Map();
   for (let i = 0; i < packed.index.length; i += 1) {
@@ -95,21 +129,54 @@ export function applyBody(morphBound, state, recipe, poseBound = null, poseKey =
     morphBound.packed.index.length * 3,
     recipe,
   );
+
   let poseDeltas = null;
-  if (!poseDriver && poseBound && poseKey && poseBound.packed.targets[poseKey]) {
-    poseDeltas = new Float32Array(poseBound.packed.index.length * 3);
-    addWeighted(poseDeltas, poseBound.packed.targets[poseKey], 1);
+  let posedHuman = null;
+  let bodyBasemeshBindings = null;
+
+  if (!poseDriver && poseBound) {
+    if (poseBound.method === "mh-posed-obj-v1") {
+      posedHuman = poseKey ? poseBound.posed.get(poseKey) : poseBound.restHuman;
+      bodyBasemeshBindings = poseBound.bodyBindings;
+    } else if (poseKey && poseBound.packed?.targets?.[poseKey]) {
+      poseDeltas = new Float32Array(poseBound.packed.index.length * 3);
+      addWeighted(poseDeltas, poseBound.packed.targets[poseKey], 1);
+    }
   }
-  const poseByMesh = poseBound ? new Map(poseBound.bindings.map((item) => [item.mesh, item])) : null;
+
+  const poseByMesh =
+    poseBound && poseBound.bindings
+      ? new Map(poseBound.bindings.map((item) => [item.mesh, item]))
+      : null;
+  const bodyPoseByMesh =
+    bodyBasemeshBindings?.length
+      ? new Map(bodyBasemeshBindings.map((item) => [item.mesh, item]))
+      : null;
+
   for (const item of morphBound.bindings) {
     const poseItem = poseByMesh?.get(item.mesh);
+    const bodyPoseItem = bodyPoseByMesh?.get(item.mesh);
     const position = item.mesh.geometry.getAttribute("position");
     const out = position.array;
     for (let i = 0; i < position.count; i += 1) {
       const o = i * 3;
-      out[o] = item.rest[o];
-      out[o + 1] = item.rest[o + 1];
-      out[o + 2] = item.rest[o + 2];
+      if (posedHuman && bodyPoseItem) {
+        const bi = bodyPoseItem.basemeshIndex[i];
+        if (bi >= 0) {
+          const p = bi * 3;
+          out[o] = posedHuman[p];
+          out[o + 1] = posedHuman[p + 1];
+          out[o + 2] = posedHuman[p + 2];
+        } else {
+          out[o] = item.rest[o];
+          out[o + 1] = item.rest[o + 1];
+          out[o + 2] = item.rest[o + 2];
+        }
+      } else {
+        out[o] = item.rest[o];
+        out[o + 1] = item.rest[o + 1];
+        out[o + 2] = item.rest[o + 2];
+      }
       const slot = item.slots[i];
       if (slot >= 0) {
         const d = slot * 3;
