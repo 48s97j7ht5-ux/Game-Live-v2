@@ -1,6 +1,11 @@
-"""Legacy packer: modeling-target poses (official-targets-v1).
+"""Pack hm08 body poses from official MakeHuman modeling targets (CC0).
 
-Superseded by factory/bake_body_poses.py (mh-skinmesh-v1). Not run in CI.
+This is the only supported web pose path: same UniversalModifier deltas as
+morph sliders (makehuman/data/targets/...), baked once in CI via pack_poses.py.
+
+Runtime does not skin skeletons or apply body-poseunits quaternions in JS —
+that path shredded the hm08 mesh. True skeletal poses need MH/MPFB export
+(e.g. glTF) later; see factory/mh/POSES.md.
 """
 
 from __future__ import annotations
@@ -14,7 +19,7 @@ TARGETS = ROOT / "factory/mh/targets/armslegs"
 OUT = ROOT / "web/data/body-poses.json"
 BODY_VERTS = 13380
 
-# Full slider (1.0) on official CC0 targets only.
+# Official arms/legs targets @ weight 1.0 (UniversalModifier: weight = |value|).
 POSE_RECIPES = {
     "poseAkimbo": {
         "label": "руки в боки",
@@ -83,7 +88,7 @@ def pack() -> dict:
         "mesh": "hm08",
         "license": "CC0 MakeHuman arms/legs modeling targets",
         "method": "official-targets-v1",
-        "note": "Pose units need skeleton; see factory/mh/poseunits/body-poseunits.json",
+        "source": "makehumancommunity/makehuman makehuman/data/targets/arms_legs",
         "index": indices,
         "rest": [],
         "targets": {},
@@ -104,7 +109,7 @@ def pack() -> dict:
             if dx == 0 and dy == 0 and dz == 0:
                 continue
             slots.append(slot)
-            deltas.extend([round(dx, 4), round(dy, 4), round(dz, 4)])
+            deltas.extend([round(dx, 4), round(dy, 4), round(z, 4)])
         packed["targets"][name] = {"s": slots, "d": deltas}
     return packed
 
@@ -115,7 +120,7 @@ def main() -> None:
     assert data["method"] == "official-targets-v1"
     assert len(data["targets"]["poseAkimbo"]["s"]) > 500
     assert len(data["targets"]["poseStep"]["s"]) > 200
-    OUT.write_text(json.dumps(data, separators=(",", ":")))
+    OUT.write_text(json.dumps(data, separators=(",", ":")), encoding="utf-8")
     print(
         f"poses {len(data['poses'])} indices {len(data['index'])} "
         f"akimbo {len(data['targets']['poseAkimbo']['s'])} step {len(data['targets']['poseStep']['s'])} -> {OUT}"

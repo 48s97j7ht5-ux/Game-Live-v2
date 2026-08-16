@@ -1,6 +1,7 @@
 /**
  * UniversalModifier mixer: value -1..+1, weight = |value|, no gain, no mask.
  * Recipe (axes + optional breast macros) comes from web/parts/*.json.
+ * Body poses use the same packed target format (official-targets-v1).
  */
 
 function key3(x, y, z) {
@@ -58,59 +59,6 @@ export async function loadTargets(url) {
   return response.json();
 }
 
-/** hm08 basemesh vertex count (helpers in base.obj are excluded from skinMesh pose bake). */
-export const BASEMESH_VERTS = 13380;
-
-export function buildBasemeshPositionIndex(restHuman) {
-  const map = new Map();
-  const n = Math.min(BASEMESH_VERTS, restHuman.length / 3);
-  for (let i = 0; i < n; i += 1) {
-    const o = i * 3;
-    map.set(key3(restHuman[o], restHuman[o + 1], restHuman[o + 2]), i);
-  }
-  return map;
-}
-
-export function poseDeltasByBasemeshIndex(packed, poseKey) {
-  const out = new Float32Array(BASEMESH_VERTS * 3);
-  const tgt = packed.targets?.[poseKey];
-  if (!tgt?.s) return out;
-  for (let i = 0; i < tgt.s.length; i += 1) {
-    const slot = tgt.s[i];
-    const vi = packed.index[slot];
-    if (vi === undefined || vi < 0 || vi >= BASEMESH_VERTS) continue;
-    const o = vi * 3;
-    const p = i * 3;
-    out[o] = tgt.d[p];
-    out[o + 1] = tgt.d[p + 1];
-    out[o + 2] = tgt.d[p + 2];
-  }
-  return out;
-}
-
-/** Pose bind for mh-skinmesh-v1: map body mesh corners to hm08 basemesh indices (not pack slots). */
-export function bindBodyPose(group, packed, restHuman, meshName = "body") {
-  const posToBasemesh = buildBasemeshPositionIndex(restHuman);
-  const bindings = [];
-  group.traverse((child) => {
-    if (!child.isMesh || !child.visible || !child.geometry?.getAttribute("position")) return;
-    const name = (child.name || "").toLowerCase().trim();
-    if (name !== meshName) return;
-    const position = child.geometry.getAttribute("position");
-    const rest = position.array.slice();
-    const basemeshIndex = new Int32Array(position.count);
-    let hits = 0;
-    for (let i = 0; i < position.count; i += 1) {
-      const o = i * 3;
-      const bi = posToBasemesh.get(key3(rest[o], rest[o + 1], rest[o + 2]));
-      basemeshIndex[i] = bi === undefined ? -1 : bi;
-      if (bi !== undefined) hits += 1;
-    }
-    if (hits) bindings.push({ mesh: child, rest, basemeshIndex });
-  });
-  return { packed, bindings, mode: "basemesh" };
-}
-
 export function bindMorph(group, packed) {
   const lookup = new Map();
   for (let i = 0; i < packed.index.length; i += 1) {
@@ -148,14 +96,9 @@ export function applyBody(morphBound, state, recipe, poseBound = null, poseKey =
     recipe,
   );
   let poseDeltas = null;
-  let poseBasemesh = null;
   if (!poseDriver && poseBound && poseKey && poseBound.packed.targets[poseKey]) {
-    if (poseBound.packed.method === "mh-skinmesh-v1" || poseBound.mode === "basemesh") {
-      poseBasemesh = poseDeltasByBasemeshIndex(poseBound.packed, poseKey);
-    } else {
-      poseDeltas = new Float32Array(poseBound.packed.index.length * 3);
-      addWeighted(poseDeltas, poseBound.packed.targets[poseKey], 1);
-    }
+    poseDeltas = new Float32Array(poseBound.packed.index.length * 3);
+    addWeighted(poseDeltas, poseBound.packed.targets[poseKey], 1);
   }
   const poseByMesh = poseBound ? new Map(poseBound.bindings.map((item) => [item.mesh, item])) : null;
   for (const item of morphBound.bindings) {
@@ -174,15 +117,7 @@ export function applyBody(morphBound, state, recipe, poseBound = null, poseKey =
         out[o + 1] += morphDeltas[d + 1];
         out[o + 2] += morphDeltas[d + 2];
       }
-      if (poseBasemesh && poseItem?.basemeshIndex) {
-        const bi = poseItem.basemeshIndex[i];
-        if (bi >= 0) {
-          const d = bi * 3;
-          out[o] += poseBasemesh[d];
-          out[o + 1] += poseBasemesh[d + 1];
-          out[o + 2] += poseBasemesh[d + 2];
-        }
-      } else if (poseDeltas && poseItem) {
+      if (poseDeltas && poseItem) {
         const pSlot = poseItem.slots[i];
         if (pSlot >= 0) {
           const d = pSlot * 3;

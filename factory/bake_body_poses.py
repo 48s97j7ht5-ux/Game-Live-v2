@@ -1,6 +1,7 @@
-"""Bake hm08 body poses via official MakeHuman skeleton.skinMesh().
+"""Bake hm08 body poses via MakeHuman skeleton.skinMesh().
 
-Run after factory/fetch_makehuman.py. Writes web/data/body-poses.json (method mh-skinmesh-v1).
+NOT USED IN CI — shredded hm08 in the browser. See factory/mh/POSES.md.
+Kept for a future glTF export path only.
 """
 
 from __future__ import annotations
