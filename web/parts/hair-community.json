@@ -1,0 +1,417 @@
+{
+  "styles": [
+    {
+      "id": "elvs_adrienne_hair",
+      "label": "адриен",
+      "license": "CC-BY",
+      "pack": "hair02",
+      "author": "Elvaerwyn"
+    },
+    {
+      "id": "elvs_micky_afro",
+      "label": "афро 2",
+      "license": "CC-BY",
+      "pack": "hair02",
+      "author": "Elvaerwyn"
+    },
+    {
+      "id": "grinsegold_wig_bow_tie",
+      "label": "бант",
+      "license": "CC-BY",
+      "pack": "hair03",
+      "author": "culturalibre, grinsegold, punkduck"
+    },
+    {
+      "id": "elvs_wavy_bob",
+      "label": "волнистое каре",
+      "license": "CC-BY",
+      "pack": "hair02",
+      "author": "Elvaerwyn"
+    },
+    {
+      "id": "elvs_that_80s_babe_hair",
+      "label": "восьмидесятые",
+      "license": "CC-BY",
+      "pack": "hair02",
+      "author": "Elvaerwyn"
+    },
+    {
+      "id": "elvs_50s_updo",
+      "label": "высокая",
+      "license": "CC-BY",
+      "pack": "hair02",
+      "author": "Elvaerwyn"
+    },
+    {
+      "id": "elvs_double_mh_braid",
+      "label": "две косы",
+      "license": "CC0",
+      "pack": "hair01",
+      "author": "Cortu, culturalibre, Elvaerwyn, Faydaen, littleright, punkduck, RehmanPolanski, sonntag78, MargaretToigo"
+    },
+    {
+      "id": "o4saken_long01",
+      "label": "длинная 2",
+      "license": "CC0",
+      "pack": "hair01",
+      "author": "Cortu, culturalibre, Elvaerwyn, Faydaen, littleright, punkduck, RehmanPolanski, sonntag78, MargaretToigo"
+    },
+    {
+      "id": "punkduck_alpha7_long",
+      "label": "длинная 3",
+      "license": "CC-BY",
+      "pack": "hair03",
+      "author": "culturalibre, grinsegold, punkduck"
+    },
+    {
+      "id": "punkduck_alpha7_long2",
+      "label": "длинная 4",
+      "license": "CC-BY",
+      "pack": "hair03",
+      "author": "culturalibre, grinsegold, punkduck"
+    },
+    {
+      "id": "o4saken_chinesebob01",
+      "label": "каре восток",
+      "license": "CC-BY",
+      "pack": "hair03",
+      "author": "culturalibre, grinsegold, punkduck"
+    },
+    {
+      "id": "littleright_bobcut_hair",
+      "label": "каре под линию",
+      "license": "CC0",
+      "pack": "hair01",
+      "author": "Cortu, culturalibre, Elvaerwyn, Faydaen, littleright, punkduck, RehmanPolanski, sonntag78, MargaretToigo"
+    },
+    {
+      "id": "toigo_curled_under_bob",
+      "label": "каре подворот",
+      "license": "CC0",
+      "pack": "hair01",
+      "author": "Cortu, culturalibre, Elvaerwyn, Faydaen, littleright, punkduck, RehmanPolanski, sonntag78, MargaretToigo"
+    },
+    {
+      "id": "toigo_curled_under_bob_with_bangs",
+      "label": "каре подворот с чёлкой",
+      "license": "CC0",
+      "pack": "hair01",
+      "author": "Cortu, culturalibre, Elvaerwyn, Faydaen, littleright, punkduck, RehmanPolanski, sonntag78, MargaretToigo"
+    },
+    {
+      "id": "toigo_inverted_bob",
+      "label": "каре укороченное",
+      "license": "CC0",
+      "pack": "hair01",
+      "author": "Cortu, culturalibre, Elvaerwyn, Faydaen, littleright, punkduck, RehmanPolanski, sonntag78, MargaretToigo"
+    },
+    {
+      "id": "toigo_inverted_bob_with_bangs",
+      "label": "каре укороченное с чёлкой",
+      "license": "CC0",
+      "pack": "hair01",
+      "author": "Cortu, culturalibre, Elvaerwyn, Faydaen, littleright, punkduck, RehmanPolanski, sonntag78, MargaretToigo"
+    },
+    {
+      "id": "elvs_keylth_hair",
+      "label": "кейльт",
+      "license": "CC-BY",
+      "pack": "hair02",
+      "author": "Elvaerwyn"
+    },
+    {
+      "id": "elvs_short_daisy_hair",
+      "label": "короткая ромашка",
+      "license": "CC-BY",
+      "pack": "hair02",
+      "author": "Elvaerwyn"
+    },
+    {
+      "id": "elvs_grump_hair",
+      "label": "короткая ёж",
+      "license": "CC-BY",
+      "pack": "hair02",
+      "author": "Elvaerwyn"
+    },
+    {
+      "id": "elvs_witchy_lil_bob",
+      "label": "короткое каре",
+      "license": "CC-BY",
+      "pack": "hair02",
+      "author": "Elvaerwyn"
+    },
+    {
+      "id": "elvs_unkempt_french_braid",
+      "label": "коса растрёпанная",
+      "license": "CC0",
+      "pack": "hair01",
+      "author": "Cortu, culturalibre, Elvaerwyn, Faydaen, littleright, punkduck, RehmanPolanski, sonntag78, MargaretToigo"
+    },
+    {
+      "id": "culturalibre_hair_01",
+      "label": "кудри",
+      "license": "CC0",
+      "pack": "hair01",
+      "author": "Cortu, culturalibre, Elvaerwyn, Faydaen, littleright, punkduck, RehmanPolanski, sonntag78, MargaretToigo"
+    },
+    {
+      "id": "culturalibre_hair_18",
+      "label": "кудри 10",
+      "license": "CC-BY",
+      "pack": "hair03",
+      "author": "culturalibre, grinsegold, punkduck"
+    },
+    {
+      "id": "culturalibre_hair_02",
+      "label": "кудри 2",
+      "license": "CC0",
+      "pack": "hair01",
+      "author": "Cortu, culturalibre, Elvaerwyn, Faydaen, littleright, punkduck, RehmanPolanski, sonntag78, MargaretToigo"
+    },
+    {
+      "id": "culturalibre_hair_05",
+      "label": "кудри 3",
+      "license": "CC0",
+      "pack": "hair01",
+      "author": "Cortu, culturalibre, Elvaerwyn, Faydaen, littleright, punkduck, RehmanPolanski, sonntag78, MargaretToigo"
+    },
+    {
+      "id": "culturalibre_hair_06",
+      "label": "кудри 4",
+      "license": "CC0",
+      "pack": "hair01",
+      "author": "Cortu, culturalibre, Elvaerwyn, Faydaen, littleright, punkduck, RehmanPolanski, sonntag78, MargaretToigo"
+    },
+    {
+      "id": "culturalibre_hair_11",
+      "label": "кудри 5",
+      "license": "CC-BY",
+      "pack": "hair03",
+      "author": "culturalibre, grinsegold, punkduck"
+    },
+    {
+      "id": "culturalibre_hair_12",
+      "label": "кудри 6",
+      "license": "CC-BY",
+      "pack": "hair03",
+      "author": "culturalibre, grinsegold, punkduck"
+    },
+    {
+      "id": "culturalibre_hair_13",
+      "label": "кудри 7",
+      "license": "CC-BY",
+      "pack": "hair03",
+      "author": "culturalibre, grinsegold, punkduck"
+    },
+    {
+      "id": "culturalibre_hair_14",
+      "label": "кудри 8",
+      "license": "CC-BY",
+      "pack": "hair03",
+      "author": "culturalibre, grinsegold, punkduck"
+    },
+    {
+      "id": "culturalibre_hair_17",
+      "label": "кудри 9",
+      "license": "CC-BY",
+      "pack": "hair03",
+      "author": "culturalibre, grinsegold, punkduck"
+    },
+    {
+      "id": "punkduck_alpha7_curly",
+      "label": "кудри длинные",
+      "license": "CC-BY",
+      "pack": "hair03",
+      "author": "culturalibre, grinsegold, punkduck"
+    },
+    {
+      "id": "punkduck_alpha7_curly2",
+      "label": "кудри длинные 2",
+      "license": "CC-BY",
+      "pack": "hair03",
+      "author": "culturalibre, grinsegold, punkduck"
+    },
+    {
+      "id": "o4saken_curly01",
+      "label": "кудри панк",
+      "license": "CC-BY",
+      "pack": "hair03",
+      "author": "culturalibre, grinsegold, punkduck"
+    },
+    {
+      "id": "elvs_inverted_curly_bob",
+      "label": "кудрявое каре",
+      "license": "CC-BY",
+      "pack": "hair02",
+      "author": "Elvaerwyn"
+    },
+    {
+      "id": "elvs_katherine_hair",
+      "label": "кэтрин",
+      "license": "CC-BY",
+      "pack": "hair02",
+      "author": "Elvaerwyn"
+    },
+    {
+      "id": "elvs_lara_hair",
+      "label": "лара",
+      "license": "CC-BY",
+      "pack": "hair02",
+      "author": "Elvaerwyn"
+    },
+    {
+      "id": "elvs_island_princess_hair",
+      "label": "локоны",
+      "license": "CC-BY",
+      "pack": "hair02",
+      "author": "Elvaerwyn"
+    },
+    {
+      "id": "cortu_shaggy_green_hair",
+      "label": "лохматая",
+      "license": "CC0",
+      "pack": "hair01",
+      "author": "Cortu, culturalibre, Elvaerwyn, Faydaen, littleright, punkduck, RehmanPolanski, sonntag78, MargaretToigo"
+    },
+    {
+      "id": "elvs_maxwell_hair",
+      "label": "максвелл",
+      "license": "CC-BY",
+      "pack": "hair02",
+      "author": "Elvaerwyn"
+    },
+    {
+      "id": "elvs_short_side_do",
+      "label": "набок",
+      "license": "CC-BY",
+      "pack": "hair02",
+      "author": "Elvaerwyn"
+    },
+    {
+      "id": "cortu_strawberry_cloud_hair",
+      "label": "облако",
+      "license": "CC0",
+      "pack": "hair01",
+      "author": "Cortu, culturalibre, Elvaerwyn, Faydaen, littleright, punkduck, RehmanPolanski, sonntag78, MargaretToigo"
+    },
+    {
+      "id": "sonntag78_blond_with_headband",
+      "label": "ободок",
+      "license": "CC0",
+      "pack": "hair01",
+      "author": "Cortu, culturalibre, Elvaerwyn, Faydaen, littleright, punkduck, RehmanPolanski, sonntag78, MargaretToigo"
+    },
+    {
+      "id": "sonntag78_junglebook_hair",
+      "label": "паж",
+      "license": "CC0",
+      "pack": "hair01",
+      "author": "Cortu, culturalibre, Elvaerwyn, Faydaen, littleright, punkduck, RehmanPolanski, sonntag78, MargaretToigo"
+    },
+    {
+      "id": "toigo_blunt_bob",
+      "label": "прямое каре",
+      "license": "CC0",
+      "pack": "hair01",
+      "author": "Cortu, culturalibre, Elvaerwyn, Faydaen, littleright, punkduck, RehmanPolanski, sonntag78, MargaretToigo"
+    },
+    {
+      "id": "toigo_blunt_bob_with_bangs",
+      "label": "прямое каре с чёлкой",
+      "license": "CC0",
+      "pack": "hair01",
+      "author": "Cortu, culturalibre, Elvaerwyn, Faydaen, littleright, punkduck, RehmanPolanski, sonntag78, MargaretToigo"
+    },
+    {
+      "id": "rehmanpolanski_hair_bun_brown",
+      "label": "пучок",
+      "license": "CC0",
+      "pack": "hair01",
+      "author": "Cortu, culturalibre, Elvaerwyn, Faydaen, littleright, punkduck, RehmanPolanski, sonntag78, MargaretToigo"
+    },
+    {
+      "id": "grinsegold_wig_bun_blonde_braids",
+      "label": "пучок и косы",
+      "license": "CC-BY",
+      "pack": "hair03",
+      "author": "culturalibre, grinsegold, punkduck"
+    },
+    {
+      "id": "elvs_reverse_french_braid_bun",
+      "label": "пучок с косой",
+      "license": "CC0",
+      "pack": "hair01",
+      "author": "Cortu, culturalibre, Elvaerwyn, Faydaen, littleright, punkduck, RehmanPolanski, sonntag78, MargaretToigo"
+    },
+    {
+      "id": "elvs_braid_bun",
+      "label": "пучок-коса",
+      "license": "CC-BY",
+      "pack": "hair02",
+      "author": "Elvaerwyn"
+    },
+    {
+      "id": "cortu_short_messy_hair",
+      "label": "растрёпанная",
+      "license": "CC0",
+      "pack": "hair01",
+      "author": "Cortu, culturalibre, Elvaerwyn, Faydaen, littleright, punkduck, RehmanPolanski, sonntag78, MargaretToigo"
+    },
+    {
+      "id": "elvs_daisy_hair",
+      "label": "ромашка",
+      "license": "CC-BY",
+      "pack": "hair02",
+      "author": "Elvaerwyn"
+    },
+    {
+      "id": "elvs_braided_rows",
+      "label": "ряды кос",
+      "license": "CC-BY",
+      "pack": "hair02",
+      "author": "Elvaerwyn"
+    },
+    {
+      "id": "faydaen_hair_1",
+      "label": "файдаен",
+      "license": "CC0",
+      "pack": "hair01",
+      "author": "Cortu, culturalibre, Elvaerwyn, Faydaen, littleright, punkduck, RehmanPolanski, sonntag78, MargaretToigo"
+    },
+    {
+      "id": "elvs_french_braid_variation",
+      "label": "французская",
+      "license": "CC0",
+      "pack": "hair01",
+      "author": "Cortu, culturalibre, Elvaerwyn, Faydaen, littleright, punkduck, RehmanPolanski, sonntag78, MargaretToigo"
+    },
+    {
+      "id": "elvs_hazel_hair",
+      "label": "хейзел",
+      "license": "CC-BY",
+      "pack": "hair02",
+      "author": "Elvaerwyn"
+    },
+    {
+      "id": "elvs_lady_hippy_hair",
+      "label": "хиппи",
+      "license": "CC-BY",
+      "pack": "hair02",
+      "author": "Elvaerwyn"
+    },
+    {
+      "id": "cortu_straight_bangs",
+      "label": "чёлка",
+      "license": "CC0",
+      "pack": "hair01",
+      "author": "Cortu, culturalibre, Elvaerwyn, Faydaen, littleright, punkduck, RehmanPolanski, sonntag78, MargaretToigo"
+    },
+    {
+      "id": "elvs_ashley_may_hair",
+      "label": "эшли",
+      "license": "CC-BY",
+      "pack": "hair02",
+      "author": "Elvaerwyn"
+    }
+  ]
+}
