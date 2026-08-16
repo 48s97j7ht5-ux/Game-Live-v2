@@ -12,6 +12,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Install bake deps
+        run: pip install numpy
       - name: Morph and Pages contract
         run: |
           python3 factory/fetch_makehuman.py
