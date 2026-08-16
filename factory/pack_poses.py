@@ -15,18 +15,21 @@ TARGETS = ROOT / "factory/mh/targets/armslegs"
 OUT = ROOT / "web/data/body-poses.json"
 BODY_VERTS = 13380
 
+# MH l-hand-* targets deform the model +X limb; r-hand-* the −X limb (not mesh-left/right labels).
+POSE_RECIPE_VERSION = "akimbo-v2-no-trans-out"
+
 POSE_RECIPES = {
     "poseAkimbo": {
         "label": "руки в боки",
         "mix": [
-            ("l-hand-trans-out.target", 1.0),
-            ("r-hand-trans-out.target", 1.0),
-            ("l-hand-trans-in.target", 0.5),
-            ("r-hand-trans-in.target", 0.5),
-            ("l-upperarm-scale-horiz-incr.target", 0.85),
-            ("r-upperarm-scale-horiz-incr.target", 0.85),
-            ("l-lowerarm-scale-horiz-incr.target", 0.75),
-            ("r-lowerarm-scale-horiz-incr.target", 0.75),
+            ("l-hand-trans-in.target", 1.0),
+            ("r-hand-trans-in.target", 1.0),
+            ("l-upperarm-scale-horiz-decr.target", 0.9),
+            ("r-upperarm-scale-horiz-decr.target", 0.9),
+            ("l-lowerarm-scale-horiz-decr.target", 0.85),
+            ("r-lowerarm-scale-horiz-decr.target", 0.85),
+            ("l-lowerarm-scale-depth-incr.target", 0.6),
+            ("r-lowerarm-scale-depth-incr.target", 0.6),
         ],
     },
     "poseStep": {
@@ -85,6 +88,7 @@ def pack() -> dict:
         "mesh": "hm08",
         "license": "CC0 MakeHuman arms/legs modeling targets",
         "method": "official-targets-v1",
+        "poseRecipeVersion": POSE_RECIPE_VERSION,
         "source": "makehumancommunity/makehuman makehuman/data/targets/armslegs",
         "index": indices,
         "rest": [],

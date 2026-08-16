@@ -269,6 +269,7 @@ def test_poses_on_body_screen() -> None:
     assert "bindBodyBasemesh" not in viewer
     packed = json.loads((ROOT / "web/data/body-poses.json").read_text())
     assert packed.get("method") == "official-targets-v1"
+    assert packed.get("poseRecipeVersion") == "akimbo-v2-no-trans-out"
     assert len(packed["poses"]) == 3
     assert len(packed["targets"]["poseAkimbo"]["s"]) > 800
     manifest = json.loads((ROOT / "web/parts/manifest.json").read_text())

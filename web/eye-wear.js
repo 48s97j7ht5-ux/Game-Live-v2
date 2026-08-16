@@ -2,8 +2,8 @@
  * Official MakeHuman HighPolyEyes on the clay. Not helper-l-eye / helper-r-eye.
  * Same MHCLO fit as hair. Texture is the official brown iris, not clay matcap.
  */
-import { applyDeltasToHuman, fitProxy, parseMhclo, parseObjTextured } from "./mhclo.js?v=c54";
-import { mixDeltas } from "./chest-morph.js?v=c54";
+import { applyDeltasToHuman, fitProxy, parseMhclo, parseObjTextured } from "./mhclo.js?v=c55";
+import { mixDeltas } from "./chest-morph.js?v=c55";
 
 export function createEyes({ THREE }) {
   let dummy = null;
