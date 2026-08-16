@@ -1,5 +1,5 @@
 {
-  "cache": "c44",
+  "cache": "c45",
   "official": "makehumancommunity/makehuman makehuman/data/modifiers/modeling_sliders.json",
   "parts": "web/parts/",
   "rules": [
@@ -11,14 +11,14 @@
     "kind=body is the dummy. Clay is MakeHuman hm08",
     "kind=hair is one code slot (color / style / shelf). Head screen shows all three rows at once in even canvas slots",
     "kind=makeup paints official hm08 UV (default.mhmat vertexColors false). Lip/cheek pixels come from official mouth-*-lip-volume and *-cheek-volume targets, not a bounding box",
-    "kind=pose applies fixed official arms/legs target mixes on the body screen (←/→ when no morph zone is open)",
+    "kind=pose applies official MH body pose units (body-poseunits.json) baked on hm08 joint helpers",
     "Eyes are official HighPolyEyes clothes, always on the dummy. helper-l-eye is a cage and is not drawn",
     "Pages must ship the whole web/ folder; bump cache in manifest.json and all ?v= URLs together"
   ],
   "packed_not_in_ui": ["pelvisToneDecr", "pelvisToneIncr"],
   "next": [
     { "id": "head-focus", "note": "Tap skull/wig: body→hair→face. Tap elsewhere: one step back. Face crop is for makeup later. Hair is three parts: hair-color, hair-style, hair-shelf" },
-    { "id": "poses", "kind": "pose", "note": "Body screen: ←/→ cycles rest / akimbo / step from official arms-legs targets" },
+    { "id": "poses", "kind": "pose", "note": "Body pose bar: official pose units baked to hm08 verts (not modeling targets)" },
     { "id": "clothes", "kind": "overlay", "note": "MakeHuman MHCLO wardrobe later; not helper cages" },
     { "mh_group": "Hip", "mod": "hip/hip-trans-in|out", "note": "add floors to web/parts/hips.json" },
     { "mh_group": "Pelvis", "note": "own part JSON, not buttocks" },

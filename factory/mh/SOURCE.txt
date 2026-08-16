@@ -19,11 +19,8 @@ The official skin shader colours the body with texture2D on the
 hm08 UV, not per-vertex colours. Makeup in this repo paints those
 official UV islands.
 
-Pose mixes (factory/pack_poses.py):
-  makehuman/data/targets/armslegs/l-hand-trans-out.target
-  makehuman/data/targets/armslegs/r-hand-trans-out.target
-  makehuman/data/targets/armslegs/l-upperarm-scale-horiz-incr.target
-  makehuman/data/targets/armslegs/r-upperarm-scale-horiz-incr.target
-  makehuman/data/targets/armslegs/l-foot-trans-forward.target
-  makehuman/data/targets/armslegs/r-foot-trans-backward.target
-  makehuman/data/targets/armslegs/l-leg-valgus-incr.target
+Pose baking (factory/pack_poses.py):
+  Official makehuman/data/poseunits/body-poseunits.json (bone quaternions).
+  Vertices rotate in joint helper regions on hm08 — not modeling sliders.
+  Akimbo: UpperArmDownLeft + UpperArmRollOutLeft + LowerArmBend1Left1 + HandDownLeft.
+  Step: UpperLegForwardLeft + LowerLegBendLeft1 (L), UpperLegBackwardLeft (R).

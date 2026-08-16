@@ -276,8 +276,8 @@ def test_poses_on_body_screen() -> None:
     packed = json.loads((ROOT / "web/data/body-poses.json").read_text())
     assert len(packed["poses"]) == 3
     assert packed["targets"]["poseAkimbo"]["s"]
-    assert (ROOT / "factory/pack_poses.py").is_file()
-    assert (ROOT / "factory/mh/targets/armslegs/l-hand-trans-out.target").stat().st_size > 1000
+    assert len(packed["targets"]["poseAkimbo"]["s"]) > 800
+    assert (ROOT / "factory/mh/poseunits/body-poseunits.json").is_file()
 
 
 if __name__ == "__main__":

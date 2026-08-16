@@ -1,5 +1,5 @@
 /**
- * Body poses: fixed mixes of official MakeHuman arms/legs targets (hm08).
+ * Body poses from official MakeHuman body-poseunits.json (baked hm08 vertex deltas).
  */
 
 export function createPoseStudio({ applyBody, morphBoundRef, poseBoundRef, bodyStateRef, recipeRef, refit }) {
