@@ -65,9 +65,10 @@ function buildBoneHierarchy(packed) {
 
 function attachSkinAttributes(bodyMesh, packed, restHuman) {
   const globalByPos = new Map();
-  for (let g = 0; g < Math.min(BODY_VERTS, restHuman.length); g += 1) {
-    const p = restHuman[g];
-    globalByPos.set(key3(p.x, p.y, p.z), g);
+  const vertCount = Math.floor(restHuman.length / 3);
+  for (let g = 0; g < Math.min(BODY_VERTS, vertCount); g += 1) {
+    const o = g * 3;
+    globalByPos.set(key3(restHuman[o], restHuman[o + 1], restHuman[o + 2]), g);
   }
   const pos = bodyMesh.geometry.getAttribute("position");
   const count = pos.count;

@@ -1,11 +1,11 @@
 import * as THREE from "three";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
-import { applyBody, bindMorph, loadTargets } from "./chest-morph.js?v=c47";
-import { createHairStudio, parseObjVerts } from "./hair.js?v=c47";
-import { createEyes } from "./eye-wear.js?v=c47";
-import { createMakeupStudio } from "./makeup.js?v=c47";
-import { createPoseStudio } from "./pose.js?v=c47";
-import { bindBodyRig, createPoseDriver, loadBodyRig, loadPoseUnits } from "./body-rig.js?v=c47";
+import { applyBody, bindMorph, loadTargets } from "./chest-morph.js?v=c48";
+import { createHairStudio, parseObjVerts } from "./hair.js?v=c48";
+import { createEyes } from "./eye-wear.js?v=c48";
+import { createMakeupStudio } from "./makeup.js?v=c48";
+import { createPoseStudio } from "./pose.js?v=c48";
+import { bindBodyRig, createPoseDriver, loadBodyRig, loadPoseUnits } from "./body-rig.js?v=c48";
 import {
   bodyModel,
   bodyPart,
@@ -16,7 +16,7 @@ import {
   overlays,
   sizeLabels,
   tapZones,
-} from "./registry.js?v=c47";
+} from "./registry.js?v=c48";
 
 const AXIS_STEPS = 7;
 // Tap skull: body → hair → face. Tap not-skull: one step back. Face crop is for makeup later.
@@ -105,12 +105,20 @@ function syncPoseBar() {
   const onBody = focusMode === "body";
   if (poseBar) poseBar.hidden = !onBody;
   if (!onBody) return;
-  const pose = poseStudio.current();
-  if (poseLabel) poseLabel.textContent = pose ? `поза · ${pose.label}` : "поза";
   const count = poseStudio.poses?.length || 1;
   const index = poseStudio.state.index;
-  if (poseLeftBtn) poseLeftBtn.disabled = index <= 0;
-  if (poseRightBtn) poseRightBtn.disabled = index >= count - 1;
+  const canCycle = count > 1;
+  if (poseLeftBtn) poseLeftBtn.disabled = !canCycle;
+  if (poseRightBtn) poseRightBtn.disabled = !canCycle;
+  const pose = poseStudio.current();
+  if (poseLabel) {
+    poseLabel.textContent =
+      canCycle && pose
+        ? `поза · ${pose.label} (${index + 1}/${count})`
+        : pose
+          ? `поза · ${pose.label}`
+          : "поза";
+  }
 }
 
 function stepPose(delta) {
@@ -638,16 +646,22 @@ async function switchBody(bodyId, variantId) {
   try {
     const modelUrl = `${model}?v=${catalog.manifest.cache}`;
     const restHuman = parseObjVerts(await (await fetch(modelUrl)).text());
-    if (currentBody === "clay" && bodyMesh?.parent) {
+    const poseMetaUrl = new URL(`./data/body-poses.json?v=${catalog.manifest.cache}`, import.meta.url);
+    let poseMeta = null;
+    try {
+      poseMeta = await loadTargets(poseMetaUrl);
+      poseStudio.setCatalog(poseMeta.poses);
+      poseStudio.reset();
+    } catch (poseMetaError) {
+      console.warn("pose catalog skip", poseMetaError);
+      poseStudio.reset();
+    }
+    syncPoseBar();
+    if (currentBody === "clay" && bodyMesh?.parent && poseMeta?.recipes) {
       try {
         const skelUrl = new URL(`./data/body-skeleton.json?v=${catalog.manifest.cache}`, import.meta.url);
         const poseUnitsUrl = new URL(`./data/body-poseunits.json?v=${catalog.manifest.cache}`, import.meta.url);
-        const poseMetaUrl = new URL(`./data/body-poses.json?v=${catalog.manifest.cache}`, import.meta.url);
-        const [skelPacked, poseUnits, poseMeta] = await Promise.all([
-          loadBodyRig(skelUrl),
-          loadPoseUnits(poseUnitsUrl),
-          loadTargets(poseMetaUrl),
-        ]);
+        const [skelPacked, poseUnits] = await Promise.all([loadBodyRig(skelUrl), loadPoseUnits(poseUnitsUrl)]);
         bodyRig = bindBodyRig({
           bodyMesh,
           parent: bodyMesh.parent,
@@ -657,13 +671,11 @@ async function switchBody(bodyId, variantId) {
         });
         if (bodyRig) {
           bodyMesh = bodyRig.skinnedMesh;
-          poseStudio.setCatalog(poseMeta.poses);
           poseDriver = createPoseDriver({
             rig: bodyRig,
             poseUnits,
             recipes: poseMeta.recipes,
           });
-          poseStudio.reset();
         }
       } catch (rigError) {
         console.warn("skeleton skip", rigError);
@@ -812,7 +824,7 @@ async function attachPixelFilter() {
   const box = document.querySelector("#pixelMode");
   if (!box) return;
   try {
-    const mod = await import("./pixel-mode.js?v=c47");
+    const mod = await import("./pixel-mode.js?v=c48");
     pixelFilter = mod.createPixelFilter(renderer);
     box.addEventListener("change", () => pixelFilter.setEnabled(box.checked));
   } catch (error) {
@@ -822,7 +834,7 @@ async function attachPixelFilter() {
 }
 
 async function boot() {
-  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c47", import.meta.url));
+  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c48", import.meta.url));
   currentBody = catalog.manifest.defaultBody || bodyParts(catalog)[0]?.id || "clay";
   buildBodySwitcher();
   await switchBody(currentBody);
