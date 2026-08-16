@@ -126,8 +126,8 @@ def test_clay_is_the_only_body() -> None:
     assert not (ROOT / "models/mblab").exists()
     viewer = (ROOT / "web/viewer.js").read_text()
     assert "setFocus" in viewer
-    assert 'data-focus="head"' in (ROOT / "index.html").read_text()
-    assert "голова" in (ROOT / "index.html").read_text()
+    assert 'id="focus"' not in (ROOT / "index.html").read_text()
+    assert 'data-focus="head"' not in (ROOT / "index.html").read_text()
     bodies = [part for part in iter_parts() if part.get("kind") == "body"]
     assert [part["id"] for part in bodies] == ["clay"]
 
@@ -187,9 +187,16 @@ def test_hair_is_three_head_modules() -> None:
 
 def test_head_focus_keeps_camera_crop() -> None:
     viewer = (ROOT / "web/viewer.js").read_text()
+    html = (ROOT / "index.html").read_text()
     assert "FOCUS" in viewer
     assert "head:" in viewer
-    assert 'data-focus="head"' in (ROOT / "index.html").read_text()
+    assert "HEAD_Y_FRAC" in viewer
+    assert "hitDummy" in viewer
+    assert "isHeadHit" in viewer
+    assert 'setFocus("head")' in viewer
+    assert 'setFocus("body")' in viewer
+    assert 'id="focus"' not in html
+    assert 'data-focus="head"' not in html
 
 
 if __name__ == "__main__":

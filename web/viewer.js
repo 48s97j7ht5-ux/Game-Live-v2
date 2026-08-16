@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
-import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c31";
-import { createHairStudio, parseObjVerts } from "./hair.js?v=c31";
+import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c32";
+import { createHairStudio, parseObjVerts } from "./hair.js?v=c32";
 import {
   bodyModel,
   bodyPart,
@@ -12,13 +12,14 @@ import {
   overlays,
   sizeLabels,
   tapZones,
-} from "./registry.js?v=c31";
+} from "./registry.js?v=c32";
 
 const AXIS_STEPS = 7;
 const FOCUS = {
   body: { yFrac: 0.5, span: 1 },
   head: { yFrac: 0.8, span: 0.46 },
 };
+const HEAD_Y_FRAC = 0.84;
 
 const sideLeft = document.querySelector("#sideLeft");
 const sideRight = document.querySelector("#sideRight");
@@ -230,6 +231,26 @@ function hitZone(clientY) {
   return best;
 }
 
+function hitDummy(clientX, clientY) {
+  if (!dummy) return null;
+  const rect = canvas.getBoundingClientRect();
+  pointerNdc.set(
+    ((clientX - rect.left) / rect.width) * 2 - 1,
+    -((clientY - rect.top) / rect.height) * 2 + 1,
+  );
+  raycaster.setFromCamera(pointerNdc, camera);
+  for (const hit of raycaster.intersectObject(dummy, true)) {
+    if (hit.object.visible) return hit;
+  }
+  return null;
+}
+
+function isHeadHit(hit) {
+  const name = partName(hit.object);
+  if (name === "hair" || name === "hair-scalp") return true;
+  return hit.point.y >= bodyHeight * HEAD_Y_FRAC;
+}
+
 function makeClayMatcap() {
   const size = 256;
   const board = document.createElement("canvas");
@@ -274,6 +295,8 @@ scene.background = new THREE.Color(0x1c1e24);
 const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.01, 2000);
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+const raycaster = new THREE.Raycaster();
+const pointerNdc = new THREE.Vector2();
 
 scene.add(new THREE.HemisphereLight(0xffffff, 0x334455, 1.1));
 const key = new THREE.DirectionalLight(0xffffff, 1.4);
@@ -426,9 +449,6 @@ function setFocus(mode) {
     sideRight.classList.remove("open");
   }
   zones = tapZones(catalog, currentBody, focusMode);
-  document.querySelectorAll("#focus button").forEach((button) => {
-    button.classList.toggle("active", button.dataset.focus === focusMode);
-  });
   applyScale();
   placeCamera();
   if (focusMode === "head") openHairStudio();
@@ -580,9 +600,6 @@ document.querySelector("#turnRight").addEventListener("click", (event) => {
   event.stopPropagation();
   stepTurn(-1);
 });
-document.querySelectorAll("#focus button").forEach((button) => {
-  button.addEventListener("click", () => setFocus(button.dataset.focus));
-});
 document.querySelectorAll(".heights button").forEach((button) => {
   button.addEventListener("click", () => setHeight(Number(button.dataset.height)));
 });
@@ -600,7 +617,15 @@ stage.addEventListener("pointerup", (event) => {
   if (event.target.closest("button")) return;
   if (Math.hypot(dx, dy) > 12) return;
   if (!dummy) return;
-  if (focusMode === "head") return;
+  if (focusMode === "head") {
+    setFocus("body");
+    return;
+  }
+  const hit = hitDummy(event.clientX, event.clientY);
+  if (hit && isHeadHit(hit)) {
+    setFocus("head");
+    return;
+  }
   const zone = hitZone(event.clientY);
   if (zone) {
     toggleZone(zone);
@@ -629,7 +654,7 @@ async function attachPixelFilter() {
   const box = document.querySelector("#pixelMode");
   if (!box) return;
   try {
-    const mod = await import("./pixel-mode.js?v=c31");
+    const mod = await import("./pixel-mode.js?v=c32");
     pixelFilter = mod.createPixelFilter(renderer);
     box.addEventListener("change", () => pixelFilter.setEnabled(box.checked));
   } catch (error) {
@@ -639,7 +664,7 @@ async function attachPixelFilter() {
 }
 
 async function boot() {
-  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c31", import.meta.url));
+  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c32", import.meta.url));
   currentBody = catalog.manifest.defaultBody || bodyParts(catalog)[0]?.id || "clay";
   buildBodySwitcher();
   await switchBody(currentBody);

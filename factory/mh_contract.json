@@ -1,5 +1,5 @@
 {
-  "cache": "c31",
+  "cache": "c32",
   "official": "makehumancommunity/makehuman makehuman/data/modifiers/modeling_sliders.json",
   "parts": "web/parts/",
   "rules": [
@@ -14,7 +14,7 @@
   ],
   "packed_not_in_ui": ["pelvisToneDecr", "pelvisToneIncr"],
   "next": [
-    { "id": "head-focus", "note": "Header тело/голова. Hair is three parts: hair-color, hair-style, hair-shelf" },
+    { "id": "head-focus", "note": "Tap the dummy head or wig to zoom into hair; tap again to return to the body. No header тело/голова. Hair is three parts: hair-color, hair-style, hair-shelf" },
     { "id": "clothes", "kind": "overlay", "note": "MakeHuman MHCLO wardrobe later; not helper cages" },
     { "mh_group": "Hip", "mod": "hip/hip-trans-in|out", "note": "add floors to web/parts/hips.json" },
     { "mh_group": "Pelvis", "note": "own part JSON, not buttocks" },
