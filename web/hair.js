@@ -7,10 +7,10 @@
  *
  * Official CC0 system shelf plus optional community packs (hair01–03).
  */
-import { applyDeltasToHuman, fitProxy, parseMhclo, parseObjMesh, parseObjVerts } from "./mhclo.js?v=c28";
-import { mixDeltas } from "./chest-morph.js?v=c28";
+import { applyDeltasToHuman, fitProxy, parseMhclo, parseObjMesh, parseObjVerts } from "./mhclo.js?v=c29";
+import { mixDeltas } from "./chest-morph.js?v=c29";
 
-export const HAIR_CACHE = "c28";
+export const HAIR_CACHE = "c29";
 
 const STYLES = [
   { id: "none", label: "нет" },
@@ -69,7 +69,9 @@ export function createHairStudio({ THREE }) {
         extra = [];
         return;
       }
-      extra = (await res.json()).styles || [];
+      extra = ((await res.json()).styles || [])
+        .map((item) => (typeof item === "string" ? { id: item, label: item } : item))
+        .filter((item) => item && item.id && item.label);
     } catch {
       extra = [];
     }
@@ -215,10 +217,11 @@ export function createHairStudio({ THREE }) {
     return `голова · ${shelf}${style.label} · ${color.label}`;
   }
 
-  function cycle(key, list, dir) {
-    const next = state[key] + dir;
+  function cycleStyle(dir) {
+    const list = shelfStyles();
+    const next = state.style + dir;
     if (next < 0 || next >= list.length) return;
-    state[key] = next;
+    state.style = next;
     apply();
   }
 
@@ -232,7 +235,6 @@ export function createHairStudio({ THREE }) {
   }
 
   function floors() {
-    const styles = shelfStyles();
     const rows = [];
     if (extra.length) {
       rows.push({
@@ -250,10 +252,10 @@ export function createHairStudio({ THREE }) {
         id: "hair-style",
         label: "стиль",
         kind: "choice",
-        hint: () => styles[state.style]?.label || "",
-        onStep: (dir) => cycle("style", styles, dir),
+        hint: () => shelfStyles()[state.style]?.label || "",
+        onStep: cycleStyle,
         atMin: () => state.style === 0,
-        atMax: () => state.style === styles.length - 1,
+        atMax: () => state.style === shelfStyles().length - 1,
       },
       {
         id: "hair-color",

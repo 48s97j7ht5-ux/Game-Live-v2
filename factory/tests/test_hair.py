@@ -69,6 +69,10 @@ def test_community_catalog_if_present() -> None:
     assert data["styles"]
     studio = (ROOT / "web/hair.js").read_text()
     assert "loadExtra" in studio
+    assert "shelfStyles()" in studio
+    assert "cycleStyle" in studio
+    assert 'cycle("style", styles, dir)' not in studio
+    assert len(data["styles"]) >= 50
     for item in data["styles"]:
         name = item["id"]
         assert name != "learning_anime_hair"
