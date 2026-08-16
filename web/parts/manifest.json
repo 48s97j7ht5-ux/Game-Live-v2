@@ -1,5 +1,5 @@
 {
-  "cache": "c50",
+  "cache": "c51",
   "defaultBody": "clay",
   "poseMethod": "mh-skinmesh-v1",
   "body": "./models/base.obj",

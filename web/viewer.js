@@ -1,10 +1,10 @@
 import * as THREE from "three";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
-import { applyBody, bindMorph, loadTargets } from "./chest-morph.js?v=c50";
-import { createHairStudio, parseObjVerts } from "./hair.js?v=c50";
-import { createEyes } from "./eye-wear.js?v=c50";
-import { createMakeupStudio } from "./makeup.js?v=c50";
-import { createPoseStudio } from "./pose.js?v=c50";
+import { applyBody, bindBodyPose, bindMorph, loadTargets } from "./chest-morph.js?v=c51";
+import { createHairStudio, parseObjVerts } from "./hair.js?v=c51";
+import { createEyes } from "./eye-wear.js?v=c51";
+import { createMakeupStudio } from "./makeup.js?v=c51";
+import { createPoseStudio } from "./pose.js?v=c51";
 import {
   bodyModel,
   bodyPart,
@@ -15,7 +15,7 @@ import {
   overlays,
   sizeLabels,
   tapZones,
-} from "./registry.js?v=c50";
+} from "./registry.js?v=c51";
 
 const AXIS_STEPS = 7;
 // Tap skull: body → hair → face. Tap not-skull: one step back. Face crop is for makeup later.
@@ -654,10 +654,9 @@ async function switchBody(bodyId, variantId) {
     const morphUrl = new URL(`${morphFile}?v=${catalog.manifest.cache}`, import.meta.url);
     const packed = await loadTargets(morphUrl);
     morphBound = bindMorph(dummy, packed);
-    if (
-      (poseMeta?.method === "official-targets-v1" || poseMeta?.method === "mh-skinmesh-v1") &&
-      poseMeta?.targets
-    ) {
+    if (poseMeta?.method === "mh-skinmesh-v1" && poseMeta?.targets) {
+      poseBound = bindBodyPose(dummy, poseMeta, restHuman);
+    } else if (poseMeta?.method === "official-targets-v1" && poseMeta?.targets) {
       poseBound = bindMorph(dummy, poseMeta);
     } else {
       poseBound = null;
@@ -800,7 +799,7 @@ async function attachPixelFilter() {
   const box = document.querySelector("#pixelMode");
   if (!box) return;
   try {
-    const mod = await import("./pixel-mode.js?v=c50");
+    const mod = await import("./pixel-mode.js?v=c51");
     pixelFilter = mod.createPixelFilter(renderer);
     box.addEventListener("change", () => pixelFilter.setEnabled(box.checked));
   } catch (error) {
@@ -810,7 +809,7 @@ async function attachPixelFilter() {
 }
 
 async function boot() {
-  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c50", import.meta.url));
+  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c51", import.meta.url));
   currentBody = catalog.manifest.defaultBody || bodyParts(catalog)[0]?.id || "clay";
   buildBodySwitcher();
   await switchBody(currentBody);

@@ -17,6 +17,7 @@ from factory.mh_pose_bake import PoseUnitSpec, bake_pose_vertices, load_body_pos
 
 OBJ = ROOT / "models/base.obj"
 OUT = ROOT / "web/data/body-poses.json"
+BODY_VERTS = 13380
 
 # Official body-poseunits.json blends (see factory/mh/recipes/*.json).
 POSE_RECIPES: dict[str, dict] = {
@@ -53,6 +54,8 @@ def parse_obj_verts(path: Path) -> list[tuple[float, float, float]]:
 def delta_dict(rest: list[tuple[float, float, float]], posed) -> dict[int, tuple[float, float, float]]:
     out: dict[int, tuple[float, float, float]] = {}
     for i, (x, y, z) in enumerate(rest):
+        if i >= BODY_VERTS:
+            continue
         px, py, pz = float(posed[i, 0]), float(posed[i, 1]), float(posed[i, 2])
         dx, dy, dz = px - x, py - y, pz - z
         if abs(dx) + abs(dy) + abs(dz) < 1e-6:
@@ -64,7 +67,7 @@ def delta_dict(rest: list[tuple[float, float, float]], posed) -> dict[int, tuple
 def pack() -> dict:
     load_body_pose_json()
     verts = parse_obj_verts(OBJ)
-    if len(verts) < 13380:
+    if len(verts) < BODY_VERTS:
         raise ValueError(f"hm08 body too small: {len(verts)} verts")
 
     loaded: dict[str, dict[int, tuple[float, float, float]]] = {}
