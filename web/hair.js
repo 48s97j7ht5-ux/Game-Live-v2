@@ -11,9 +11,9 @@ import {
   OFFICIAL,
   SHELVES,
   loadCommunity,
-} from "./hair-catalog.js?v=c43";
-import { createWear } from "./hair-wear.js?v=c43";
-import { parseObjVerts } from "./mhclo.js?v=c43";
+} from "./hair-catalog.js?v=c44";
+import { createWear } from "./hair-wear.js?v=c44";
+import { parseObjVerts } from "./mhclo.js?v=c44";
 
 export { HAIR_CACHE, parseObjVerts };
 

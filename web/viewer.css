@@ -13,7 +13,7 @@ html, body {
 
 body {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
 }
 
 .stage {
@@ -132,6 +132,22 @@ canvas {
 .variants button {
   min-height: 34px;
   font-size: 12px;
+}
+
+.bottom.pose {
+  padding-bottom: 6px;
+  border-bottom: 1px solid #141820;
+}
+
+#poseBar[hidden] {
+  display: none !important;
+}
+
+#poseLabel {
+  text-align: center;
+  color: #d8ff62;
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .bottom {

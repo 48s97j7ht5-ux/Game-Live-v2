@@ -202,7 +202,7 @@ def test_head_focus_keeps_camera_crop() -> None:
     assert 'setFocus("body")' in viewer
     assert "span: 0.16" in viewer
     assert "span: 0.46" in viewer
-    assert 'id="focus"' not in html
+    assert 'id="poseBar"' in html
     assert 'data-focus="head"' not in html
 
 
@@ -268,8 +268,8 @@ def test_poses_on_body_screen() -> None:
     pose = (ROOT / "web/pose.js").read_text()
     assert "createPoseStudio" in viewer
     assert "poseStudio" in viewer
-    assert "POSE_Y_FRAC" in viewer
-    assert "syncBodySideBars" in viewer
+    assert "syncPoseBar" in viewer
+    assert "poseBar" in viewer
     assert "applyBody" in viewer
     assert "createPoseStudio" in pose
     assert "cycle" in pose

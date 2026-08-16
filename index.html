@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#0b0d11">
   <title>Станок · болванка</title>
-  <link rel="stylesheet" href="web/viewer.css?v=c43">
+  <link rel="stylesheet" href="web/viewer.css?v=c44">
 </head>
 <body>
   <header class="bar">
@@ -31,6 +31,11 @@
     <aside class="side left" id="sideLeft" aria-label="Слева"></aside>
     <aside class="side right" id="sideRight" aria-label="Справа"></aside>
   </div>
+  <nav class="bar bottom pose" id="poseBar" hidden aria-label="Поза">
+    <button type="button" id="poseLeft" aria-label="Предыдущая поза">←</button>
+    <span id="poseLabel">поза · стоя</span>
+    <button type="button" id="poseRight" aria-label="Следующая поза">→</button>
+  </nav>
   <nav class="bar bottom" id="turnBar">
     <button type="button" id="turnLeft" aria-label="Повернуть влево">←</button>
     <span id="turnLabel">перед</span>
@@ -44,6 +49,6 @@
     }
   }
   </script>
-  <script type="module" src="web/viewer.js?v=c43"></script>
+  <script type="module" src="web/viewer.js?v=c44"></script>
 </body>
 </html>

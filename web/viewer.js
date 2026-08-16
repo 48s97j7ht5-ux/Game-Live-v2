@@ -1,10 +1,10 @@
 import * as THREE from "three";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
-import { applyBody, bindMorph, loadTargets } from "./chest-morph.js?v=c43";
-import { createHairStudio, parseObjVerts } from "./hair.js?v=c43";
-import { createEyes } from "./eye-wear.js?v=c43";
-import { createMakeupStudio } from "./makeup.js?v=c43";
-import { createPoseStudio } from "./pose.js?v=c43";
+import { applyBody, bindMorph, loadTargets } from "./chest-morph.js?v=c44";
+import { createHairStudio, parseObjVerts } from "./hair.js?v=c44";
+import { createEyes } from "./eye-wear.js?v=c44";
+import { createMakeupStudio } from "./makeup.js?v=c44";
+import { createPoseStudio } from "./pose.js?v=c44";
 import {
   bodyModel,
   bodyPart,
@@ -15,7 +15,7 @@ import {
   overlays,
   sizeLabels,
   tapZones,
-} from "./registry.js?v=c43";
+} from "./registry.js?v=c44";
 
 const AXIS_STEPS = 7;
 // Tap skull: body → hair → face. Tap not-skull: one step back. Face crop is for makeup later.
@@ -25,7 +25,6 @@ const FOCUS = {
   face: { yFrac: 0.9, span: 0.16 },
 };
 const HEAD_Y_FRAC = 0.84;
-const POSE_Y_FRAC = 0.56;
 const POSE_PART_ID = "pose";
 
 const sideLeft = document.querySelector("#sideLeft");
@@ -33,6 +32,10 @@ const sideRight = document.querySelector("#sideRight");
 const canvas = document.querySelector("#view");
 const statusEl = document.querySelector("#status");
 const stage = document.querySelector(".stage");
+const poseBar = document.querySelector("#poseBar");
+const poseLabel = document.querySelector("#poseLabel");
+const poseLeftBtn = document.querySelector("#poseLeft");
+const poseRightBtn = document.querySelector("#poseRight");
 const floorButtons = [];
 
 let catalog = { manifest: { hints: {} }, parts: [] };
@@ -95,19 +98,25 @@ function currentFloors() {
   if (focusMode === "body" && editZone) {
     return zoneById(editZone)?.floors || [];
   }
-  if (focusMode === "body") {
-    return poseStudio.floorsFor(POSE_PART_ID);
-  }
   return [];
 }
 
-function syncBodySideBars() {
-  if (focusMode !== "body") return;
-  buildSideBars();
-  sideLeft.classList.add("open");
-  sideRight.classList.add("open");
-  updateFloorDisabled();
-  layoutFloorButtons();
+function syncPoseBar() {
+  const onBody = focusMode === "body";
+  if (poseBar) poseBar.hidden = !onBody;
+  if (!onBody) return;
+  const pose = poseStudio.current();
+  if (poseLabel) poseLabel.textContent = pose ? `поза · ${pose.label}` : "поза";
+  const count = poseStudio.poses?.length || 1;
+  const index = poseStudio.state.index;
+  if (poseLeftBtn) poseLeftBtn.disabled = index <= 0;
+  if (poseRightBtn) poseRightBtn.disabled = index >= count - 1;
+}
+
+function stepPose(delta) {
+  poseStudio.cycle(delta);
+  syncPoseBar();
+  statusEl.textContent = idleStatus();
 }
 
 function openHairStudio() {
@@ -182,6 +191,7 @@ function stepFloor(floor, delta) {
     floor.onStep(delta);
     statusEl.textContent = idleStatus();
     updateFloorDisabled();
+    syncPoseBar();
     return;
   }
   if (floor.kind === "size") {
@@ -214,7 +224,7 @@ function setEditZone(name) {
   editZone = name;
   lastFloor = currentFloors()[0]?.id || "";
   buildSideBars();
-  const open = Boolean(name) || focusMode === "body" || focusMode === "head" || focusMode === "face";
+  const open = Boolean(name);
   sideLeft.classList.toggle("open", open);
   sideRight.classList.toggle("open", open);
   statusEl.textContent = dummy ? idleStatus() : statusEl.textContent;
@@ -241,20 +251,6 @@ function layoutFloorButtons() {
     for (let i = 0; i < count; i += 1) {
       const y = ((i + 1) / (count + 1)) * height;
       const item = floorButtons[i];
-      item.left.style.top = `${y}px`;
-      item.right.style.top = `${y}px`;
-      item.left.style.height = `${buttonSize}px`;
-      item.right.style.height = `${buttonSize}px`;
-      item.left.style.transform = "translateY(-50%)";
-      item.right.style.transform = "translateY(-50%)";
-    }
-    return;
-  }
-  if (focusMode === "body" && !editZone) {
-    const buttonSize = Math.min(44, Math.max(32, height / 8));
-    const y = worldToCanvasY(bodyHeight * POSE_Y_FRAC);
-    const item = floorButtons[0];
-    if (item) {
       item.left.style.top = `${y}px`;
       item.right.style.top = `${y}px`;
       item.left.style.height = `${buttonSize}px`;
@@ -529,8 +525,8 @@ function setFocus(mode) {
   placeCamera();
   if (focusMode === "head") openHairStudio();
   else if (focusMode === "face") openMakeupStudio();
-  else if (focusMode === "body") syncBodySideBars();
-  else if (dummy) statusEl.textContent = idleStatus();
+  syncPoseBar();
+  if (dummy && focusMode === "body" && !editZone) statusEl.textContent = idleStatus();
 }
 
 function setHeight(px) {
@@ -629,6 +625,7 @@ async function switchBody(bodyId, variantId) {
   scene.add(dummy);
   frameObject(dummy);
   statusEl.textContent = idleStatus();
+  syncPoseBar();
   await loadOverlays(dummy);
   const morphFile = body.morphs || (currentBody === "clay" ? catalog.manifest.morphs : "");
   if (!morphFile) return;
@@ -681,10 +678,11 @@ async function switchBody(bodyId, variantId) {
     });
     if (focusMode === "head") openHairStudio();
     else if (focusMode === "face") openMakeupStudio();
-    else syncBodySideBars();
+    syncPoseBar();
   } catch (error) {
     console.error(error);
     statusEl.textContent = "тело есть, правки формы не загрузились";
+    syncPoseBar();
   }
 }
 
@@ -713,6 +711,14 @@ document.querySelector("#turnLeft").addEventListener("click", (event) => {
 document.querySelector("#turnRight").addEventListener("click", (event) => {
   event.stopPropagation();
   stepTurn(-1);
+});
+poseLeftBtn?.addEventListener("click", (event) => {
+  event.stopPropagation();
+  stepPose(-1);
+});
+poseRightBtn?.addEventListener("click", (event) => {
+  event.stopPropagation();
+  stepPose(1);
 });
 document.querySelectorAll(".heights button").forEach((button) => {
   button.addEventListener("click", () => setHeight(Number(button.dataset.height)));
@@ -755,7 +761,6 @@ stage.addEventListener("pointerup", (event) => {
     return;
   }
   if (editZone) setEditZone(null);
-  else syncBodySideBars();
 });
 stage.addEventListener("pointercancel", () => {
   pointerStart = null;
@@ -778,7 +783,7 @@ async function attachPixelFilter() {
   const box = document.querySelector("#pixelMode");
   if (!box) return;
   try {
-    const mod = await import("./pixel-mode.js?v=c43");
+    const mod = await import("./pixel-mode.js?v=c44");
     pixelFilter = mod.createPixelFilter(renderer);
     box.addEventListener("change", () => pixelFilter.setEnabled(box.checked));
   } catch (error) {
@@ -788,13 +793,13 @@ async function attachPixelFilter() {
 }
 
 async function boot() {
-  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c43", import.meta.url));
+  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c44", import.meta.url));
   currentBody = catalog.manifest.defaultBody || bodyParts(catalog)[0]?.id || "clay";
   buildBodySwitcher();
   await switchBody(currentBody);
+  syncPoseBar();
 }
 
-buildSideBars();
 window.addEventListener("resize", resize);
 resize();
 attachPixelFilter();
