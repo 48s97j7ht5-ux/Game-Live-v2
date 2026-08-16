@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
-import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c32";
-import { createHairStudio, parseObjVerts } from "./hair.js?v=c32";
+import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c33";
+import { createHairStudio, parseObjVerts } from "./hair.js?v=c33";
 import {
   bodyModel,
   bodyPart,
@@ -12,12 +12,14 @@ import {
   overlays,
   sizeLabels,
   tapZones,
-} from "./registry.js?v=c32";
+} from "./registry.js?v=c33";
 
 const AXIS_STEPS = 7;
+// Tap skull: body → hair → face. Tap not-skull: one step back. Face crop is for makeup later.
 const FOCUS = {
   body: { yFrac: 0.5, span: 1 },
   head: { yFrac: 0.8, span: 0.46 },
+  face: { yFrac: 0.9, span: 0.16 },
 };
 const HEAD_Y_FRAC = 0.84;
 
@@ -71,6 +73,7 @@ function floorValue(floor) {
 }
 
 function idleStatus() {
+  if (focusMode === "face") return "лицо · мейкап скоро";
   if (focusMode === "head") return hairStudio.statusLine();
   if (!editZone) {
     const hints = catalog.manifest.hints || {};
@@ -440,7 +443,7 @@ function stepTurn(delta) {
 }
 
 function setFocus(mode) {
-  focusMode = mode === "head" ? "head" : "body";
+  focusMode = mode in FOCUS ? mode : "body";
   if (focusMode !== "head" && isHairZone(editZone)) {
     editZone = null;
     lastFloor = "";
@@ -617,7 +620,16 @@ stage.addEventListener("pointerup", (event) => {
   if (event.target.closest("button")) return;
   if (Math.hypot(dx, dy) > 12) return;
   if (!dummy) return;
+  if (focusMode === "face") {
+    setFocus("head");
+    return;
+  }
   if (focusMode === "head") {
+    const hit = hitDummy(event.clientX, event.clientY);
+    if (hit && isHeadHit(hit)) {
+      setFocus("face");
+      return;
+    }
     setFocus("body");
     return;
   }
@@ -654,7 +666,7 @@ async function attachPixelFilter() {
   const box = document.querySelector("#pixelMode");
   if (!box) return;
   try {
-    const mod = await import("./pixel-mode.js?v=c32");
+    const mod = await import("./pixel-mode.js?v=c33");
     pixelFilter = mod.createPixelFilter(renderer);
     box.addEventListener("change", () => pixelFilter.setEnabled(box.checked));
   } catch (error) {
@@ -664,7 +676,7 @@ async function attachPixelFilter() {
 }
 
 async function boot() {
-  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c32", import.meta.url));
+  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c33", import.meta.url));
   currentBody = catalog.manifest.defaultBody || bodyParts(catalog)[0]?.id || "clay";
   buildBodySwitcher();
   await switchBody(currentBody);

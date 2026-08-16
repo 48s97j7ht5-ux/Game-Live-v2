@@ -190,11 +190,16 @@ def test_head_focus_keeps_camera_crop() -> None:
     html = (ROOT / "index.html").read_text()
     assert "FOCUS" in viewer
     assert "head:" in viewer
+    assert "face:" in viewer
     assert "HEAD_Y_FRAC" in viewer
     assert "hitDummy" in viewer
     assert "isHeadHit" in viewer
     assert 'setFocus("head")' in viewer
+    assert 'setFocus("face")' in viewer
     assert 'setFocus("body")' in viewer
+    assert "лицо · мейкап скоро" in viewer
+    assert "span: 0.16" in viewer
+    assert "span: 0.46" in viewer
     assert 'id="focus"' not in html
     assert 'data-focus="head"' not in html
 
