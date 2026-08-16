@@ -29,6 +29,7 @@ def test_cache_token_everywhere() -> None:
     assert f"chest-morph.js?v={CACHE}" in viewer
     assert f"registry.js?v={CACHE}" in viewer
     assert f"hair.js?v={CACHE}" in viewer
+    assert f"eye-wear.js?v={CACHE}" in viewer
     hair = (ROOT / "web/hair.js").read_text()
     catalog_js = (ROOT / "web/hair-catalog.js").read_text()
     assert f"hair-catalog.js?v={CACHE}" in hair
@@ -60,7 +61,7 @@ def test_assemble_contains_imports() -> None:
         viewer = (dest / "web/viewer.js").read_text()
         html = (dest / "index.html").read_text()
         rels = set(re.findall(r'(?:src|href)="(\./[^"?]+|web/[^"?]+)"', html))
-        for name in ("viewer.js", "hair.js", "hair-catalog.js", "hair-wear.js"):
+        for name in ("viewer.js", "hair.js", "hair-catalog.js", "hair-wear.js", "eye-wear.js"):
             text = (dest / "web" / name).read_text()
             rels.update(re.findall(r'from "(\./[^"?]+)"', text))
             rels.update(re.findall(r'new URL\("(\./[^"?]+)"', text))
@@ -204,6 +205,19 @@ def test_head_focus_keeps_camera_crop() -> None:
     assert 'data-focus="head"' not in html
 
 
+def test_eyes_are_official_clothes() -> None:
+    viewer = (ROOT / "web/viewer.js").read_text()
+    wear = (ROOT / "web/eye-wear.js").read_text()
+    assert "createEyes" in viewer
+    assert "eyes.wear" in viewer
+    assert "eyes.refit" in viewer
+    assert 'name === "eyes"' in viewer
+    assert "helper-l-eye" in wear
+    assert (ROOT / "models/eyes/high-poly.obj").is_file()
+    assert (ROOT / "models/eyes/high-poly.mhclo").is_file()
+    assert (ROOT / "models/eyes/brown_eye.png").is_file()
+
+
 if __name__ == "__main__":
     test_cache_token_everywhere()
     test_no_unofficial_morph_hacks()
@@ -214,4 +228,5 @@ if __name__ == "__main__":
     test_clay_is_the_only_body()
     test_hair_is_three_head_modules()
     test_head_focus_keeps_camera_crop()
+    test_eyes_are_official_clothes()
     print("ok contract")

@@ -1,5 +1,5 @@
 /**
- * MakeHuman clothes proxy (MHCLO). Hair is clothes.
+ * MakeHuman clothes proxy (MHCLO). Hair and eyes are clothes.
  *
  * Clothes vertex = w0*h[v0] + w1*h[v1] + w2*h[v2] + scale*offset
  * See makehuman/shared/proxy.py ProxyRefVert.fromTriple.
@@ -37,6 +37,27 @@ export function parseObjMesh(text) {
     }
   }
   return { verts, faces };
+}
+
+export function parseObjTextured(text) {
+  const verts = [];
+  const uvs = [];
+  const faces = [];
+  for (const line of text.split(/\r?\n/)) {
+    const parts = line.trim().split(/\s+/);
+    if (parts[0] === "v") verts.push([+parts[1], +parts[2], +parts[3]]);
+    else if (parts[0] === "vt") uvs.push([+parts[1], +parts[2]]);
+    else if (parts[0] === "f") {
+      const corners = parts.slice(1).map((item) => {
+        const bits = item.split("/");
+        return { v: parseInt(bits[0], 10) - 1, vt: bits[1] ? parseInt(bits[1], 10) - 1 : 0 };
+      });
+      for (let i = 1; i < corners.length - 1; i += 1) {
+        faces.push([corners[0], corners[i], corners[i + 1]]);
+      }
+    }
+  }
+  return { verts, uvs, faces };
 }
 
 export function parseObjVerts(text) {

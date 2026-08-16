@@ -1,7 +1,8 @@
 import * as THREE from "three";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
-import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c33";
-import { createHairStudio, parseObjVerts } from "./hair.js?v=c33";
+import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c34";
+import { createHairStudio, parseObjVerts } from "./hair.js?v=c34";
+import { createEyes } from "./eye-wear.js?v=c34";
 import {
   bodyModel,
   bodyPart,
@@ -12,7 +13,7 @@ import {
   overlays,
   sizeLabels,
   tapZones,
-} from "./registry.js?v=c33";
+} from "./registry.js?v=c34";
 
 const AXIS_STEPS = 7;
 // Tap skull: body → hair → face. Tap not-skull: one step back. Face crop is for makeup later.
@@ -42,6 +43,7 @@ let currentVariant = "";
 let bodyLoad = 0;
 let focusMode = "body";
 const hairStudio = createHairStudio({ THREE });
+const eyes = createEyes({ THREE });
 
 function zoneById(id) {
   return zones.find((zone) => zone.id === id);
@@ -139,6 +141,7 @@ function stepFloor(floor, delta) {
   updateFloorDisabled();
   applyMorph(morphBound, bodyState, recipe);
   hairStudio.refit();
+  eyes.refit();
 }
 
 function updateFloorDisabled() {
@@ -250,7 +253,7 @@ function hitDummy(clientX, clientY) {
 
 function isHeadHit(hit) {
   const name = partName(hit.object);
-  if (name === "hair" || name === "hair-scalp") return true;
+  if (name === "hair" || name === "hair-scalp" || name === "eyes") return true;
   return hit.point.y >= bodyHeight * HEAD_Y_FRAC;
 }
 
@@ -365,7 +368,7 @@ function hideHelpers(group) {
   group.traverse((child) => {
     if (!child.isMesh) return;
     const name = partName(child);
-    child.visible = name === "body" || name.startsWith("body") || name === "hair" || name === "hair-scalp";
+    child.visible = name === "body" || name.startsWith("body") || name === "hair" || name === "hair-scalp" || name === "eyes";
   });
 }
 
@@ -482,6 +485,7 @@ async function loadOverlays(parent) {
 
 function disposeDummy() {
   hairStudio.dispose();
+  eyes.dispose();
   if (!dummy) return;
   scene.remove(dummy);
   dummy.traverse((child) => {
@@ -555,9 +559,10 @@ async function switchBody(bodyId, variantId) {
     const packed = await loadTargets(morphUrl);
     morphBound = bindMorph(dummy, packed);
     applyMorph(morphBound, bodyState, recipe);
+    const restHuman = parseObjVerts(await (await fetch(`${model}?v=${catalog.manifest.cache}`)).text());
     hairStudio.bind({
       dummy,
-      restHuman: parseObjVerts(await (await fetch(`${model}?v=${catalog.manifest.cache}`)).text()),
+      restHuman,
       packed,
       recipe,
       bodyState,
@@ -568,8 +573,14 @@ async function switchBody(bodyId, variantId) {
         if (dummy) statusEl.textContent = idleStatus();
       },
     });
+    eyes.bind({ dummy, restHuman, packed, recipe, bodyState, cache: catalog.manifest.cache });
     await hairStudio.loadExtra();
     await hairStudio.apply();
+    try {
+      await eyes.wear();
+    } catch (eyeError) {
+      console.warn("eyes skip", eyeError);
+    }
     if (focusMode === "head") openHairStudio();
   } catch (error) {
     console.error(error);
@@ -666,7 +677,7 @@ async function attachPixelFilter() {
   const box = document.querySelector("#pixelMode");
   if (!box) return;
   try {
-    const mod = await import("./pixel-mode.js?v=c33");
+    const mod = await import("./pixel-mode.js?v=c34");
     pixelFilter = mod.createPixelFilter(renderer);
     box.addEventListener("change", () => pixelFilter.setEnabled(box.checked));
   } catch (error) {
@@ -676,7 +687,7 @@ async function attachPixelFilter() {
 }
 
 async function boot() {
-  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c33", import.meta.url));
+  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c34", import.meta.url));
   currentBody = catalog.manifest.defaultBody || bodyParts(catalog)[0]?.id || "clay";
   buildBodySwitcher();
   await switchBody(currentBody);
