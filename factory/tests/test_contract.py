@@ -266,31 +266,28 @@ def test_poses_on_body_screen() -> None:
     assert part["focus"] == "body"
     viewer = (ROOT / "web/viewer.js").read_text()
     pose = (ROOT / "web/pose.js").read_text()
+    morph = (ROOT / "web/chest-morph.js").read_text()
     assert "createPoseStudio" in viewer
     assert "poseStudio" in viewer
     assert "syncPoseBar" in viewer
-    assert "poseBar" in viewer
-    assert "applyBody" in viewer
+    assert "bindBodyBasemesh" in viewer
+    assert "mh-posed-obj-v1" in viewer
+    assert "bindBodyBasemesh" in morph
     assert "createPoseStudio" in pose
-    assert "cycle" in pose
-    assert "bindBodyPose" not in viewer
     packed = json.loads((ROOT / "web/data/body-poses.json").read_text())
-    assert packed.get("method") == "official-targets-v1"
+    assert packed.get("method") == "mh-posed-obj-v1"
     assert len(packed["poses"]) == 3
-    assert packed["targets"]["poseAkimbo"]["s"]
-    assert len(packed["targets"]["poseAkimbo"]["s"]) > 800
-    assert (ROOT / "factory/mh/POSES.md").is_file()
+    assert (ROOT / "models/poses/akimbo.obj").is_file()
+    assert (ROOT / "models/poses/step.obj").is_file()
     manifest = json.loads((ROOT / "web/parts/manifest.json").read_text())
-    assert manifest.get("poseMethod") == "official-targets-v1"
-    packer = (ROOT / "factory/pack_poses.py").read_text()
-    assert "official-targets-v1" in packer
-    assert "pose-units-v1" not in packer
+    assert manifest.get("poseMethod") == "mh-posed-obj-v1"
+    assert (ROOT / "factory/bake_pose_objs.py").is_file()
+    assert (ROOT / "factory/mh/POSES.md").is_file()
     pages = (ROOT / ".github/workflows/pages.yml").read_text()
     checks = (ROOT / ".github/workflows/checks.yml").read_text()
-    assert "pack_poses.py" in checks
-    assert "pack_poses.py" in pages
-    assert "bake_body_poses.py" not in pages
-    assert "fetch_makehuman.py" not in checks
+    assert "bake_pose_objs.py" in checks
+    assert "bake_pose_objs.py" in pages
+    assert "pack_poses.py" not in pages
 
 
 if __name__ == "__main__":
