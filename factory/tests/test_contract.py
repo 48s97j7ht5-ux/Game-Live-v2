@@ -31,6 +31,7 @@ def test_cache_token_everywhere() -> None:
     assert f"hair.js?v={CACHE}" in viewer
     assert f"eye-wear.js?v={CACHE}" in viewer
     assert f"makeup.js?v={CACHE}" in viewer
+    assert f"pose.js?v={CACHE}" in viewer
     hair = (ROOT / "web/hair.js").read_text()
     catalog_js = (ROOT / "web/hair-catalog.js").read_text()
     assert f"hair-catalog.js?v={CACHE}" in hair
@@ -259,6 +260,26 @@ def test_makeup_is_two_face_modules() -> None:
     assert (ROOT / "factory/mh/targets/mouth/mouth-angles-up.target").is_file()
 
 
+def test_poses_on_body_screen() -> None:
+    part = json.loads((PARTS_DIR / "poses.json").read_text())
+    assert part["kind"] == "pose"
+    assert part["focus"] == "body"
+    viewer = (ROOT / "web/viewer.js").read_text()
+    pose = (ROOT / "web/pose.js").read_text()
+    assert "createPoseStudio" in viewer
+    assert "poseStudio" in viewer
+    assert "POSE_Y_FRAC" in viewer
+    assert "syncBodySideBars" in viewer
+    assert "applyBody" in viewer
+    assert "createPoseStudio" in pose
+    assert "cycle" in pose
+    packed = json.loads((ROOT / "web/data/body-poses.json").read_text())
+    assert len(packed["poses"]) == 3
+    assert packed["targets"]["poseAkimbo"]["s"]
+    assert (ROOT / "factory/pack_poses.py").is_file()
+    assert (ROOT / "factory/mh/targets/armslegs/l-hand-trans-out.target").stat().st_size > 1000
+
+
 if __name__ == "__main__":
     test_cache_token_everywhere()
     test_no_unofficial_morph_hacks()
@@ -271,4 +292,5 @@ if __name__ == "__main__":
     test_head_focus_keeps_camera_crop()
     test_eyes_are_official_clothes()
     test_makeup_is_two_face_modules()
+    test_poses_on_body_screen()
     print("ok contract")

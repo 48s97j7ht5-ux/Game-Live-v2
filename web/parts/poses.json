@@ -1,0 +1,10 @@
+{
+  "id": "pose",
+  "kind": "pose",
+  "label": "поза",
+  "focus": "body",
+  "bodies": ["clay"],
+  "yFrac": 0.56,
+  "views": ["front", "front34", "frontHalf", "side", "backHalf", "back34", "back"],
+  "floors": [{ "id": "pose", "label": "поза", "kind": "choice" }]
+}

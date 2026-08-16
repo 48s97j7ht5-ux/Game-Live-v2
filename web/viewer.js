@@ -1,9 +1,10 @@
 import * as THREE from "three";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
-import { applyMorph, bindMorph, loadTargets } from "./chest-morph.js?v=c42";
-import { createHairStudio, parseObjVerts } from "./hair.js?v=c42";
-import { createEyes } from "./eye-wear.js?v=c42";
-import { createMakeupStudio } from "./makeup.js?v=c42";
+import { applyBody, bindMorph, loadTargets } from "./chest-morph.js?v=c43";
+import { createHairStudio, parseObjVerts } from "./hair.js?v=c43";
+import { createEyes } from "./eye-wear.js?v=c43";
+import { createMakeupStudio } from "./makeup.js?v=c43";
+import { createPoseStudio } from "./pose.js?v=c43";
 import {
   bodyModel,
   bodyPart,
@@ -14,7 +15,7 @@ import {
   overlays,
   sizeLabels,
   tapZones,
-} from "./registry.js?v=c42";
+} from "./registry.js?v=c43";
 
 const AXIS_STEPS = 7;
 // Tap skull: body → hair → face. Tap not-skull: one step back. Face crop is for makeup later.
@@ -24,6 +25,8 @@ const FOCUS = {
   face: { yFrac: 0.9, span: 0.16 },
 };
 const HEAD_Y_FRAC = 0.84;
+const POSE_Y_FRAC = 0.56;
+const POSE_PART_ID = "pose";
 
 const sideLeft = document.querySelector("#sideLeft");
 const sideRight = document.querySelector("#sideRight");
@@ -46,6 +49,18 @@ let focusMode = "body";
 const hairStudio = createHairStudio({ THREE });
 const eyes = createEyes({ THREE });
 const makeupStudio = createMakeupStudio({ THREE });
+let poseBound = null;
+const poseStudio = createPoseStudio({
+  applyBody,
+  morphBoundRef: () => morphBound,
+  poseBoundRef: () => poseBound,
+  bodyStateRef: () => bodyState,
+  recipeRef: () => recipe,
+  refit: () => {
+    hairStudio.refit();
+    eyes.refit();
+  },
+});
 
 function zoneById(id) {
   return zones.find((zone) => zone.id === id);
@@ -63,6 +78,13 @@ function isMakeupZone(id) {
   return typeof id === "string" && id.startsWith("makeup-");
 }
 
+function applyShape() {
+  const key = poseStudio.current()?.key || null;
+  applyBody(morphBound, bodyState, recipe, poseBound, key);
+  hairStudio.refit();
+  eyes.refit();
+}
+
 function currentFloors() {
   if (focusMode === "head") {
     return HAIR_HEAD_IDS.flatMap((id) => hairStudio.floorsFor(id));
@@ -70,7 +92,22 @@ function currentFloors() {
   if (focusMode === "face") {
     return MAKEUP_FACE_IDS.flatMap((id) => makeupStudio.floorsFor(id));
   }
-  return zoneById(editZone)?.floors || [];
+  if (focusMode === "body" && editZone) {
+    return zoneById(editZone)?.floors || [];
+  }
+  if (focusMode === "body") {
+    return poseStudio.floorsFor(POSE_PART_ID);
+  }
+  return [];
+}
+
+function syncBodySideBars() {
+  if (focusMode !== "body") return;
+  buildSideBars();
+  sideLeft.classList.add("open");
+  sideRight.classList.add("open");
+  updateFloorDisabled();
+  layoutFloorButtons();
 }
 
 function openHairStudio() {
@@ -92,6 +129,7 @@ function floorValue(floor) {
 function idleStatus() {
   if (focusMode === "face") return makeupStudio.statusLine();
   if (focusMode === "head") return hairStudio.statusLine();
+  if (focusMode === "body" && !editZone) return poseStudio.statusLine();
   if (!editZone) {
     const hints = catalog.manifest.hints || {};
     return hints[currentView()] || hints.default || "";
@@ -154,9 +192,7 @@ function stepFloor(floor, delta) {
   }
   statusEl.textContent = idleStatus();
   updateFloorDisabled();
-  applyMorph(morphBound, bodyState, recipe);
-  hairStudio.refit();
-  eyes.refit();
+  applyShape();
 }
 
 function updateFloorDisabled() {
@@ -178,7 +214,7 @@ function setEditZone(name) {
   editZone = name;
   lastFloor = currentFloors()[0]?.id || "";
   buildSideBars();
-  const open = Boolean(name);
+  const open = Boolean(name) || focusMode === "body" || focusMode === "head" || focusMode === "face";
   sideLeft.classList.toggle("open", open);
   sideRight.classList.toggle("open", open);
   statusEl.textContent = dummy ? idleStatus() : statusEl.textContent;
@@ -205,6 +241,20 @@ function layoutFloorButtons() {
     for (let i = 0; i < count; i += 1) {
       const y = ((i + 1) / (count + 1)) * height;
       const item = floorButtons[i];
+      item.left.style.top = `${y}px`;
+      item.right.style.top = `${y}px`;
+      item.left.style.height = `${buttonSize}px`;
+      item.right.style.height = `${buttonSize}px`;
+      item.left.style.transform = "translateY(-50%)";
+      item.right.style.transform = "translateY(-50%)";
+    }
+    return;
+  }
+  if (focusMode === "body" && !editZone) {
+    const buttonSize = Math.min(44, Math.max(32, height / 8));
+    const y = worldToCanvasY(bodyHeight * POSE_Y_FRAC);
+    const item = floorButtons[0];
+    if (item) {
       item.left.style.top = `${y}px`;
       item.right.style.top = `${y}px`;
       item.left.style.height = `${buttonSize}px`;
@@ -479,6 +529,7 @@ function setFocus(mode) {
   placeCamera();
   if (focusMode === "head") openHairStudio();
   else if (focusMode === "face") openMakeupStudio();
+  else if (focusMode === "body") syncBodySideBars();
   else if (dummy) statusEl.textContent = idleStatus();
 }
 
@@ -516,6 +567,7 @@ function disposeDummy() {
   });
   dummy = null;
   morphBound = null;
+  poseBound = null;
 }
 
 function syncBodyUi() {
@@ -584,7 +636,18 @@ async function switchBody(bodyId, variantId) {
     const morphUrl = new URL(`${morphFile}?v=${catalog.manifest.cache}`, import.meta.url);
     const packed = await loadTargets(morphUrl);
     morphBound = bindMorph(dummy, packed);
-    applyMorph(morphBound, bodyState, recipe);
+    try {
+      const poseUrl = new URL(`./data/body-poses.json?v=${catalog.manifest.cache}`, import.meta.url);
+      const posePacked = await loadTargets(poseUrl);
+      poseStudio.setCatalog(posePacked.poses);
+      poseBound = bindMorph(dummy, posePacked);
+      poseStudio.reset();
+    } catch (poseError) {
+      console.warn("poses skip", poseError);
+      poseBound = null;
+      poseStudio.reset();
+    }
+    applyShape();
     const restHuman = parseObjVerts(await (await fetch(`${model}?v=${catalog.manifest.cache}`)).text());
     hairStudio.bind({
       dummy,
@@ -618,6 +681,7 @@ async function switchBody(bodyId, variantId) {
     });
     if (focusMode === "head") openHairStudio();
     else if (focusMode === "face") openMakeupStudio();
+    else syncBodySideBars();
   } catch (error) {
     console.error(error);
     statusEl.textContent = "тело есть, правки формы не загрузились";
@@ -691,6 +755,7 @@ stage.addEventListener("pointerup", (event) => {
     return;
   }
   if (editZone) setEditZone(null);
+  else syncBodySideBars();
 });
 stage.addEventListener("pointercancel", () => {
   pointerStart = null;
@@ -713,7 +778,7 @@ async function attachPixelFilter() {
   const box = document.querySelector("#pixelMode");
   if (!box) return;
   try {
-    const mod = await import("./pixel-mode.js?v=c42");
+    const mod = await import("./pixel-mode.js?v=c43");
     pixelFilter = mod.createPixelFilter(renderer);
     box.addEventListener("change", () => pixelFilter.setEnabled(box.checked));
   } catch (error) {
@@ -723,7 +788,7 @@ async function attachPixelFilter() {
 }
 
 async function boot() {
-  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c42", import.meta.url));
+  catalog = await loadCatalog(new URL("./parts/manifest.json?v=c43", import.meta.url));
   currentBody = catalog.manifest.defaultBody || bodyParts(catalog)[0]?.id || "clay";
   buildBodySwitcher();
   await switchBody(currentBody);

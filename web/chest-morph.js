@@ -82,23 +82,49 @@ export function bindMorph(group, packed) {
   return { packed, bindings };
 }
 
-export function applyMorph(bound, state, recipe) {
-  if (!bound) return;
-  const deltas = mixDeltas(bound.packed.targets, state, bound.packed.index.length * 3, recipe);
-  for (const item of bound.bindings) {
+export function applyMorph(bound, state, recipe, poseBound = null, poseKey = null) {
+  applyBody(bound, state, recipe, poseBound, poseKey);
+}
+
+export function applyBody(morphBound, state, recipe, poseBound = null, poseKey = null) {
+  if (!morphBound) return;
+  const morphDeltas = mixDeltas(
+    morphBound.packed.targets,
+    state,
+    morphBound.packed.index.length * 3,
+    recipe,
+  );
+  let poseDeltas = null;
+  if (poseBound && poseKey && poseBound.packed.targets[poseKey]) {
+    poseDeltas = new Float32Array(poseBound.packed.index.length * 3);
+    addWeighted(poseDeltas, poseBound.packed.targets[poseKey], 1);
+  }
+  const poseByMesh = poseBound ? new Map(poseBound.bindings.map((item) => [item.mesh, item])) : null;
+  for (const item of morphBound.bindings) {
+    const poseItem = poseByMesh?.get(item.mesh);
     const position = item.mesh.geometry.getAttribute("position");
     const out = position.array;
     for (let i = 0; i < position.count; i += 1) {
       const o = i * 3;
-      const slot = item.slots[i];
       out[o] = item.rest[o];
       out[o + 1] = item.rest[o + 1];
       out[o + 2] = item.rest[o + 2];
-      if (slot < 0) continue;
-      const d = slot * 3;
-      out[o] += deltas[d];
-      out[o + 1] += deltas[d + 1];
-      out[o + 2] += deltas[d + 2];
+      const slot = item.slots[i];
+      if (slot >= 0) {
+        const d = slot * 3;
+        out[o] += morphDeltas[d];
+        out[o + 1] += morphDeltas[d + 1];
+        out[o + 2] += morphDeltas[d + 2];
+      }
+      if (poseDeltas && poseItem) {
+        const pSlot = poseItem.slots[i];
+        if (pSlot >= 0) {
+          const d = pSlot * 3;
+          out[o] += poseDeltas[d];
+          out[o + 1] += poseDeltas[d + 1];
+          out[o + 2] += poseDeltas[d + 2];
+        }
+      }
     }
     position.needsUpdate = true;
     item.mesh.geometry.computeVertexNormals();
