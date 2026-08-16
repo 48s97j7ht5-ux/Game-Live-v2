@@ -103,7 +103,7 @@ export function createMakeupStudio({ THREE }) {
   }
 
   function apply() {
-    paint(cheekBufferIdx, CHEEK_COLORS[state.cheek].hex, 0.35);
+    paint(cheekBufferIdx, CHEEK_COLORS[state.cheek].hex, 0.55);
     paint(lipBufferIdx, LIP_COLORS[state.lip].hex, 0.6);
     requestRedraw();
   }
@@ -158,5 +158,13 @@ export function createMakeupStudio({ THREE }) {
     cheekBufferIdx = [];
   }
 
-  return { bind, apply, floorsFor, statusLine, dispose, state };
+  return {
+    bind,
+    apply,
+    floorsFor,
+    statusLine,
+    dispose,
+    state,
+    debug: () => ({ lipBufferIdx: lipBufferIdx.slice(), cheekBufferIdx: cheekBufferIdx.slice() }),
+  };
 }

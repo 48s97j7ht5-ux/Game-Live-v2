@@ -16,13 +16,13 @@ BASE_OBJ = ROOT / "models/base.obj"
 OUT = ROOT / "web/data/makeup-zones.json"
 BODY_VERTS = 13380
 
-MOUTH_Y = (5.95, 6.28)
-MOUTH_X_ABS = 0.38
-MOUTH_Z_MIN = 0.9
+MOUTH_Y = (6.42, 6.78)
+MOUTH_X_ABS = 0.36
+MOUTH_Z_MIN = 0.85
 
-CHEEK_Y = (6.35, 7.0)
+CHEEK_Y = (6.55, 7.15)
 CHEEK_X_ABS = (0.45, 1.05)
-CHEEK_Z_MIN = 0.45
+CHEEK_Z_MIN = 0.4
 
 
 def load_verts() -> list[tuple[float, float, float]]:
@@ -51,8 +51,8 @@ def find_zones() -> dict[str, list[int]]:
 
 def main() -> None:
     zones = find_zones()
-    assert 40 <= len(zones["lips"]) <= 200, zones["lips"]
-    assert 100 <= len(zones["cheeks"]) <= 400, len(zones["cheeks"])
+    assert 200 <= len(zones["lips"]) <= 900, len(zones["lips"])
+    assert 200 <= len(zones["cheeks"]) <= 900, len(zones["cheeks"])
     OUT.write_text(json.dumps(zones))
     print(f"lips {len(zones['lips'])} cheeks {len(zones['cheeks'])} -> {OUT}")
 
