@@ -4,12 +4,12 @@ Vertices come from official CC0 mouth/cheek targets (not a bounding box).
 Volume = lip pads. Width + ext = commissures / outer lip. Angles/dimples
 are skipped: those official targets walk onto the cheek.
 
-Only verts with a real displacement are kept — the morph falloff is what
-made lipstick look like a smudge.
+Only verts with a real displacement are kept. Width and angles-up extras
+require lateral |x| and the core lip Y/Z band so philtrum and cheek
+falloff stay unpainted.
 
-UV triangles are the official body faces in models/base.obj whose every
-corner is one of those verts. Makeup paints those UV islands
-(default.mhmat: shaderConfig vertexColors false).
+UV triangles are body faces in models/base.obj: all corners in the lip
+set, or all-but-one when the painted corners are lateral (commissure).
 """
 
 from __future__ import annotations
@@ -25,15 +25,20 @@ OUT = ROOT / "web/data/makeup-zones.json"
 BODY_VERTS = 13380
 MIN_MAG = 0.01
 
-# (path, min displacement). Volume = pads. Width/ext = outer lip.
-# angles-up at high mag = official commissures; low-mag angles walk onto the cheek.
-LIP_FILES = [
+# Core lip pads (volume + ext). Width/angles extras are lateral-only so
+# philtrum and cheek falloff from official targets stay unpainted.
+LIP_CORE_FILES = [
     (TARGETS / "mouth/mouth-upperlip-volume-incr.target", 0.01),
     (TARGETS / "mouth/mouth-lowerlip-volume-incr.target", 0.01),
-    (TARGETS / "mouth/mouth-lowerlip-width-incr.target", 0.0),
     (TARGETS / "mouth/mouth-lowerlip-ext-up.target", 0.01),
-    (TARGETS / "mouth/mouth-angles-up.target", 0.05),
 ]
+LIP_EXTRA = [
+    (TARGETS / "mouth/mouth-lowerlip-width-incr.target", 0.01, 0.20),
+    (TARGETS / "mouth/mouth-angles-up.target", 0.05, 0.26),
+]
+LIP_BAND_PAD = 0.015
+LIP_BORDER_LATERAL = 0.20
+LIP_FILES = LIP_CORE_FILES + [(p, m) for p, m, _ in LIP_EXTRA]
 CHEEK_FILES = [
     (TARGETS / "cheek/l-cheek-volume-incr.target", 0.01),
     (TARGETS / "cheek/r-cheek-volume-incr.target", 0.01),
@@ -55,6 +60,44 @@ def parse_target(path: Path, min_mag: float = MIN_MAG) -> list[int]:
         if mag >= min_mag:
             out.append(index)
     return out
+
+
+def parse_body_verts() -> list[tuple[float, float, float]]:
+    verts: list[tuple[float, float, float]] = []
+    for line in BASE_OBJ.read_text().splitlines():
+        if line.startswith("v "):
+            _, x, y, z = line.split()[:4]
+            verts.append((float(x), float(y), float(z)))
+    return verts
+
+
+def lip_band(core: set[int], verts: list[tuple[float, float, float]]) -> tuple[float, float, float, float]:
+    ys = [verts[i][1] for i in core]
+    zs = [verts[i][2] for i in core]
+    return (
+        min(ys) - LIP_BAND_PAD,
+        max(ys) + LIP_BAND_PAD,
+        min(zs) - LIP_BAND_PAD,
+        max(zs) + LIP_BAND_PAD,
+    )
+
+
+def collect_lips(verts: list[tuple[float, float, float]]) -> set[int]:
+    lips = {i for path, mag in LIP_CORE_FILES for i in parse_target(path, mag)}
+    y0, y1, z0, z1 = lip_band(lips, verts)
+
+    def in_band(index: int) -> bool:
+        _, y, z = verts[index]
+        return y0 <= y <= y1 and z0 <= z <= z1
+
+    for path, min_mag, min_abs_x in LIP_EXTRA:
+        for index in parse_target(path, min_mag):
+            if index in lips:
+                continue
+            x, _, _ = verts[index]
+            if abs(x) >= min_abs_x and in_band(index):
+                lips.add(index)
+    return lips
 
 
 def parse_body_faces() -> tuple[list[tuple[float, float]], list[list[tuple[int, int]]]]:
@@ -92,14 +135,25 @@ def cheek_boxes(tris: list[list[float]]) -> list[list[float]]:
     return [uv_box(low), uv_box(high)]
 
 
-def uv_tris(ids: set[int], uvs: list[tuple[float, float]], faces: list[list[tuple[int, int]]]) -> list[list[float]]:
+def uv_tris(
+    ids: set[int],
+    uvs: list[tuple[float, float]],
+    faces: list[list[tuple[int, int]]],
+    verts: list[tuple[float, float, float]],
+    *,
+    border_lateral: float | None = None,
+) -> list[list[float]]:
     tris: list[list[float]] = []
     for corners in faces:
         if any(v >= BODY_VERTS for v, _ in corners):
             continue
-        # Border faces at the commissure have one neighbour vert outside the
-        # official lip group. Keep a face when all-but-one corners are lips.
-        if sum(1 for v, _ in corners if v in ids) < len(corners) - 1:
+        lip_corners = [v for v, _ in corners if v in ids]
+        if len(lip_corners) == len(corners):
+            pass
+        elif border_lateral is not None and len(lip_corners) == len(corners) - 1:
+            if not any(abs(verts[v][0]) >= border_lateral for v in lip_corners):
+                continue
+        else:
             continue
         pts = [uvs[vt] for _, vt in corners]
         for i in range(1, len(pts) - 1):
@@ -109,11 +163,12 @@ def uv_tris(ids: set[int], uvs: list[tuple[float, float]], faces: list[list[tupl
 
 
 def find_zones() -> dict:
-    lips = sorted({i for path, mag in LIP_FILES for i in parse_target(path, mag)})
+    verts = parse_body_verts()
+    lips = sorted(collect_lips(verts))
     cheeks = sorted({i for path, mag in CHEEK_FILES for i in parse_target(path, mag)})
     uvs, faces = parse_body_faces()
-    lip_uv = uv_tris(set(lips), uvs, faces)
-    cheek_uv = uv_tris(set(cheeks), uvs, faces)
+    lip_uv = uv_tris(set(lips), uvs, faces, verts, border_lateral=LIP_BORDER_LATERAL)
+    cheek_uv = uv_tris(set(cheeks), uvs, faces, verts)
     return {
         "source": {
             "official": "makehumancommunity/makehuman makehuman/data/targets",
@@ -132,7 +187,7 @@ def find_zones() -> dict:
 
 def main() -> None:
     zones = find_zones()
-    assert 200 <= len(zones["lips"]) <= 360, len(zones["lips"])
+    assert 140 <= len(zones["lips"]) <= 220, len(zones["lips"])
     assert 120 <= len(zones["cheeks"]) <= 250, len(zones["cheeks"])
     assert 250 <= len(zones["lipUv"]) <= 700, len(zones["lipUv"])
     assert 20 <= len(zones["cheekUv"]) <= 400, len(zones["cheekUv"])
