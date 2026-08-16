@@ -1,5 +1,6 @@
 /**
- * Body poses from official MakeHuman body-poseunits.json (baked hm08 vertex deltas).
+ * Body poses from official MakeHuman arms/legs modeling targets (packed hm08 deltas).
+ * Real MH poses need skeleton + body-poseunits.json; see factory/pack_poses.py.
  */
 
 export function createPoseStudio({ applyBody, morphBoundRef, poseBoundRef, bodyStateRef, recipeRef, refit }) {

@@ -19,8 +19,22 @@ The official skin shader colours the body with texture2D on the
 hm08 UV, not per-vertex colours. Makeup in this repo paints those
 official UV islands.
 
-Pose baking (factory/pack_poses.py):
-  Official makehuman/data/poseunits/body-poseunits.json (bone quaternions).
-  Vertices rotate in joint helper regions on hm08 — not modeling sliders.
-  Akimbo: UpperArmDownLeft + UpperArmRollOutLeft + LowerArmBend1Left1 + HandDownLeft.
-  Step: UpperLegForwardLeft + LowerLegBendLeft1 (L), UpperLegBackwardLeft (R).
+Poses (factory/pack_poses.py):
+  Official MH *poses* need skeleton + makehuman/data/poseunits/body-poseunits.json
+  + skin weights (see makehuman animation3d). hm08 web export has no armature;
+  we do not rotate verts around joints (breaks normals).
+
+  Until skeleton export: official arms/legs *modeling* targets at weight 1.0
+  (same as modeling_sliders UniversalModifier):
+    makehuman/data/targets/armslegs/l-hand-trans-out.target
+    makehuman/data/targets/armslegs/r-hand-trans-out.target
+    makehuman/data/targets/armslegs/l-upperarm-scale-horiz-incr.target
+    makehuman/data/targets/armslegs/r-upperarm-scale-horiz-incr.target
+    makehuman/data/targets/armslegs/l-lowerarm-scale-horiz-incr.target
+    makehuman/data/targets/armslegs/r-lowerarm-scale-horiz-incr.target
+    (step) l-foot-trans-forward, r-foot-trans-backward, l-foot-trans-up,
+           l-leg-valgus-incr
+
+  body-poseunits.json is vendored under factory/mh/poseunits/ for a future skinned path.
+  Akimbo skeleton units (reference only): UpperArmDownLeft, UpperArmRollOutLeft,
+  LowerArmBend1Left1, HandDownLeft.

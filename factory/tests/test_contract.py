@@ -274,10 +274,16 @@ def test_poses_on_body_screen() -> None:
     assert "createPoseStudio" in pose
     assert "cycle" in pose
     packed = json.loads((ROOT / "web/data/body-poses.json").read_text())
+    assert packed.get("method") == "official-targets-v1"
     assert len(packed["poses"]) == 3
     assert packed["targets"]["poseAkimbo"]["s"]
     assert len(packed["targets"]["poseAkimbo"]["s"]) > 800
     assert (ROOT / "factory/mh/poseunits/body-poseunits.json").is_file()
+    assert (ROOT / "factory/mh/targets/armslegs/l-hand-trans-out.target").is_file()
+    assert (ROOT / "factory/mh/targets/armslegs/l-lowerarm-scale-horiz-incr.target").is_file()
+    packer = (ROOT / "factory/pack_poses.py").read_text()
+    assert "POSE_STRENGTH" not in packer
+    assert "official-targets-v1" in packer
 
 
 if __name__ == "__main__":
