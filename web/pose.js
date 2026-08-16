@@ -1,6 +1,6 @@
 /**
- * Body poses: vertex deltas from factory/bake_body_poses.py (mh-skinmesh-v1).
- * See factory/mh/POSES.md for why body-poseunits.json is not applied like face BVH in core MH.
+ * Body poses: official MakeHuman modeling targets (factory/pack_poses.py).
+ * See factory/mh/POSES.md.
  */
 
 export function createPoseStudio({ applyBody, morphBoundRef, poseBoundRef, bodyStateRef, recipeRef, refit }) {
